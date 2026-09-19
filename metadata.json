@@ -1,0 +1,6 @@
+{
+  "name": "1XLMZALIT - UCL 2026 Predictions",
+  "description": "منصة توقعات دوري أبطال أوروبا 2026 مع بوابة حماية بكلمة السر والمصادقة البيومترية الحيوية وثيم دوري أبطال أوروبا المتكامل",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

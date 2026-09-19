@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Outfit', 'Cairo', 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #080C19;
+    color: #E2E8F0;
+    line-height: 1.65;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: #F8FAFC;
+    letter-spacing: -0.015em;
+  }
+}
+
+/* =========================================================================
+   MIDNIGHT STAR THEME (UEFA Champions League)
+   Palette:
+   - Deep Navy Background: #080C19
+   - Dark Slate Cards: #10172A (eliminates screen glare)
+   - Electric Cyan Key Actions & Glow: #00E5FF
+   - Starball Silver Secondary & Icons: #94A3B8
+   - Off-White Text: #E2E8F0 (prevents eye fatigue)
+   - Dark Subtle Borders: #1E293B / rgba(148, 163, 184, 0.12)
+   ========================================================================= */
+
+/* Background with 5% Low-Opacity Starball Mesh Watermark & Atmosphere */
+.ucl-theme-bg {
+  background-color: #080C19;
+  background-image: 
+    /* Soft cyan and royal floodlight ambient cones */
+    radial-gradient(ellipse 65% 35% at 50% -5%, rgba(0, 229, 255, 0.12) 0%, transparent 60%),
+    radial-gradient(circle at 10% 15%, rgba(0, 70, 255, 0.1) 0%, transparent 45%),
+    radial-gradient(circle at 90% 15%, rgba(0, 229, 255, 0.08) 0%, transparent 45%),
+    /* Starball 5% Opacity Mesh Watermark Pattern */
+    url("data:image/svg+xml,%3Csvg width='140' height='140' viewBox='0 0 140 140' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M70 12L74 40.5L99 43L78 59L85 84L64 69L43 85L50 60L29 44L54 41.5L70 12Z' stroke='%2394A3B8' stroke-width='0.8' stroke-opacity='0.05' fill='none'/%3E%3Ccircle cx='70' cy='70' r='56' stroke='%2300E5FF' stroke-width='0.6' stroke-opacity='0.04' stroke-dasharray='4 4'/%3E%3Ccircle cx='8' cy='8' r='1.2' fill='%2394A3B8' fill-opacity='0.07'/%3E%3Ccircle cx='132' cy='132' r='1.2' fill='%2394A3B8' fill-opacity='0.07'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #080C19 0%, #060914 100%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 140px 140px, 100% 100%;
+  background-attachment: fixed;
+}
+
+/* Dark Slate Floating Cards (#10172A) with Subtle Dark Borders */
+.ucl-card {
+  background-color: #10172A;
+  border: 1px solid #1E293B;
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.65), 0 0 16px -2px rgba(0, 229, 255, 0.04);
+}
+
+.ucl-card-hover {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ucl-card-hover:hover {
+  border-color: rgba(0, 229, 255, 0.35);
+  background-color: #131E35;
+  box-shadow: 
+    0 18px 42px -4px rgba(0, 0, 0, 0.75), 
+    0 0 28px -2px rgba(0, 229, 255, 0.22),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+/* Electric Cyan (#00E5FF) Key Action Button */
+.ucl-btn-primary {
+  background-color: #00E5FF;
+  background-image: linear-gradient(135deg, #00E5FF 0%, #00B4D8 50%, #0096C7 100%);
+  color: #050811;
+  font-weight: 900;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 4px 20px -2px rgba(0, 229, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: all 0.2s ease;
+}
+
+.ucl-btn-primary:hover {
+  background-image: linear-gradient(135deg, #38EFFF 0%, #00D2F4 50%, #00A6D6 100%);
+  box-shadow: 0 6px 28px 0 rgba(0, 229, 255, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transform: translateY(-1px);
+}
+
+.ucl-btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Soft Cyan Ambient Glow on Active Fields and Focus States */
+.ucl-cyan-glow {
+  box-shadow: 0 0 22px -2px rgba(0, 229, 255, 0.35);
+}
+
+.ucl-cyan-border-active {
+  border-color: #00E5FF !important;
+  box-shadow: 0 0 18px -2px rgba(0, 229, 255, 0.3) !important;
+}
+
+/* Starball Silver Secondary Accent */
+.ucl-silver-text {
+  background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #94A3B8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.ucl-silver-badge {
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  color: #E2E8F0;
+}
+
+/* Frosted-Glass Header Bar */
+.ucl-header-bg {
+  background-color: rgba(8, 12, 25, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  background-image: 
+    /* Starball Mesh Subtle Texture */
+    radial-gradient(circle at 50% -20%, rgba(0, 229, 255, 0.14) 0%, transparent 55%),
+    radial-gradient(circle at 10% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 90% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
+    radial-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 14px 14px;
+}
+
+/* Athletic Title "1XLMZALIT" with Starball Cool-White / Silver Sheen */
+.ucl-title-starball {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 30%, #E2E8F0 65%, #94A3B8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7));
+  letter-spacing: 0.04em;
+}
+
+/* UCL 2026 Frosted Glass Badge with Glowing Silver Border */
+.ucl-badge-glass {
+  background: rgba(16, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  box-shadow: 0 0 14px -2px rgba(0, 229, 255, 0.18), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+  color: #38EFFF;
+}
+
+/* Metallic Platinum / Silver Trophy Container */
+.ucl-trophy-platinum {
+  background: linear-gradient(145deg, #FFFFFF 0%, #F1F5F9 25%, #E2E8F0 60%, #CBD5E1 100%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 
+    0 0 20px rgba(0, 229, 255, 0.25),
+    0 0 10px rgba(255, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Input Fields with Soft Cyan Glow on Focus */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #00E5FF !important;
+  box-shadow: 0 0 14px -2px rgba(0, 229, 255, 0.35) !important;
+}
+
+
