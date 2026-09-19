@@ -34,6 +34,7 @@ export interface Prediction {
 
 export interface AppUser {
   username: string;
+  email?: string;
   role: 'user' | 'admin';
   points: number;
   status: 'pending' | 'approved';

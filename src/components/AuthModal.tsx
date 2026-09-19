@@ -10,13 +10,20 @@ import {
   Lock, 
   AlertCircle,
   CheckCircle2,
-  Shield
+  Shield,
+  Mail,
+  UserPlus,
+  LogIn,
+  Info
 } from 'lucide-react';
 import { AppUser } from '../types';
 
+export type AuthSlide = 'login' | 'signup' | 'admin';
+
 interface AuthModalProps {
   isOpen: boolean;
-  initialRole: 'user' | 'admin';
+  initialRole?: 'user' | 'admin';
+  initialTab?: AuthSlide;
   users: AppUser[];
   onClose: () => void;
   onLoginSuccess: (user: AppUser) => void;
@@ -25,74 +32,71 @@ interface AuthModalProps {
 
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
-  initialRole,
+  initialRole = 'user',
+  initialTab,
   users,
   onClose,
   onLoginSuccess,
   onRegisterUser
 }) => {
-  const [role, setRole] = useState<'user' | 'admin'>(initialRole);
-  const [username, setUsername] = useState('');
-  const [memberPassword, setMemberPassword] = useState('');
-  const [showMemberPassword, setShowMemberPassword] = useState(false);
+  // Current active slide: 'login' | 'signup' | 'admin'
+  const [activeSlide, setActiveSlide] = useState<AuthSlide>(
+    initialTab || (initialRole === 'admin' ? 'admin' : 'login')
+  );
+
+  // Login form states
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+
+  // Sign Up form states
+  const [signupUsername, setSignupUsername] = useState('');
+  const [signupGmail, setSignupGmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
+
+  // Admin form states
   const [adminPasscode, setAdminPasscode] = useState('');
   const [showAdminPasscode, setShowAdminPasscode] = useState(false);
+
+  // Notification / Alert message
   const [statusAlert, setStatusAlert] = useState<{ type: 'error' | 'success' | 'info'; text: string } | null>(null);
 
   useEffect(() => {
-    setRole(initialRole);
+    if (initialTab) {
+      setActiveSlide(initialTab);
+    } else {
+      setActiveSlide(initialRole === 'admin' ? 'admin' : 'login');
+    }
     setStatusAlert(null);
-    setUsername('');
-    setMemberPassword('');
+    setLoginUsername('');
+    setLoginPassword('');
+    setSignupUsername('');
+    setSignupGmail('');
+    setSignupPassword('');
+    setSignupConfirmPassword('');
     setAdminPasscode('');
-    setShowMemberPassword(false);
+    setShowLoginPassword(false);
+    setShowSignupPassword(false);
+    setShowSignupConfirmPassword(false);
     setShowAdminPasscode(false);
-  }, [initialRole, isOpen]);
+  }, [initialRole, initialTab, isOpen]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Handle Login submission
+  const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setStatusAlert(null);
 
-    // 1. ADMIN LOGIN - STRICTLY requires the Admin Secret Code (05082007)
-    if (role === 'admin') {
-      if (adminPasscode.trim() !== '05082007') {
-        setStatusAlert({
-          type: 'error',
-          text: 'رمز سر الآدمن غير صحيح! يرجى إدخال الرمز السري الصحيح للإدارة.'
-        });
-        return;
-      }
-
-      // Mark admin session as validated with secret code
-      sessionStorage.setItem('cl_admin_verified', '05082007');
-
-      // Find existing admin or initialize default admin
-      let adminUser = users.find(u => u.role === 'admin');
-      if (!adminUser) {
-        adminUser = {
-          username: 'الآدمن (Admin)',
-          role: 'admin',
-          points: 0,
-          status: 'approved'
-        };
-        onRegisterUser(adminUser);
-      }
-
-      onLoginSuccess(adminUser);
-      onClose();
-      return;
-    }
-
-    // 2. MEMBER LOGIN / REGISTRATION
-    const cleanUsername = username.trim();
+    const cleanUsername = loginUsername.trim();
     if (!cleanUsername) {
       setStatusAlert({ type: 'error', text: 'الرجاء إدخال اسم المستخدم!' });
       return;
     }
 
-    // PREVENT BYPASS: Reject any attempt to access or register admin via the member portal
     const lowerName = cleanUsername.toLowerCase();
     if (
       lowerName === 'admin' ||
@@ -103,105 +107,218 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     ) {
       setStatusAlert({
         type: 'error',
-        text: 'هذا الاسم مخصص لإدارة النظام حصراً! لا يمكن تسجيل الدخول أو التسجيل كآدمن من هنا. يرجى استخدام "بوابة الآدمن" وإدخال الرمز السري للإدارة.'
+        text: 'هذا الاسم مخصص لإدارة النظام! يرجى استخدام بوابة الآدمن للدخول.'
       });
       return;
     }
 
-    if (!memberPassword.trim()) {
+    if (!loginPassword.trim()) {
       setStatusAlert({ type: 'error', text: 'الرجاء إدخال كلمة المرور لحسابك!' });
       return;
     }
 
-    const cleanPassword = memberPassword.trim();
+    const cleanPassword = loginPassword.trim();
     const existingUser = users.find(u => u.username.toLowerCase() === cleanUsername.toLowerCase());
-    const deviceUser = localStorage.getItem('cl_device_user');
 
-    if (existingUser) {
-      // PREVENT BYPASS: If existing user is admin, block login via member portal!
-      if (existingUser.role === 'admin') {
-        setStatusAlert({
-          type: 'error',
-          text: 'هذا الحساب مخصص للإدارة! لا يمكن الدخول إليه من بوابة الأعضاء. يرجى التوجه إلى "بوابة الآدمن" وإدخال الرمز السري للإدارة.'
-        });
-        return;
-      }
-
-      // User exists: verify their password strictly
-      if (existingUser.password && existingUser.password !== cleanPassword) {
-        setStatusAlert({
-          type: 'error',
-          text: 'اسم المستخدم هذا مسجل مسبقاً! كلمة المرور غير صحيحة، يرجى إدخال كلمتك الصحيحة أو اختيار اسم مستخدم فريد غير مكرر.'
-        });
-        return;
-      }
-
-      // If user had no password previously, set it now
-      if (!existingUser.password) {
-        existingUser.password = cleanPassword;
-      }
-
-      // Check member approval status
-      if (existingUser.status === 'pending') {
-        setStatusAlert({
-          type: 'info',
-          text: 'عذراً، طلب حسابك قيد المراجعة حالياً. يرجى الانتظار حتى موافقة الآدمن على عضويتك لتتمكن من التوقع.'
-        });
-        return;
-      }
-
-      // Successful member login
-      onLoginSuccess(existingUser);
-      onClose();
-    } else {
-      // New member registration
-      if (cleanPassword.length < 3) {
-        setStatusAlert({
-          type: 'error',
-          text: 'كلمة المرور يجب أن تكون 3 خانات أو أكثر لحماية حسابك.'
-        });
-        return;
-      }
-
-      // Device lock check (1 account per device)
-      if (deviceUser && deviceUser.toLowerCase() !== cleanUsername.toLowerCase()) {
-        setStatusAlert({
-          type: 'error',
-          text: `عذراً، تم الوصول للحد الأقصى! يُسمح بإنشاء حساب واحد فقط لكل جهاز (الحساب المسجل على هذا الجهاز: ${deviceUser}).`
-        });
-        return;
-      }
-
-      const newUser: AppUser = {
-        username: cleanUsername,
-        password: cleanPassword,
-        role: 'user',
-        points: 0,
-        status: 'pending'
-      };
-
-      localStorage.setItem('cl_device_user', cleanUsername);
-      onRegisterUser(newUser);
+    if (!existingUser) {
       setStatusAlert({
-        type: 'success',
-        text: `تم تسجيل حسابك (${cleanUsername}) بنجاح بكلمة المرور الخاصة بك! تم إرسال الطلب إلى الآدمن للموافقة عليه.`
+        type: 'error',
+        text: `اسم المستخدم (${cleanUsername}) غير مسجل! إذا كنت عضواً جديداً، يرجى الانتقال إلى قسم "إنشاء حساب".`
       });
+      return;
     }
+
+    if (existingUser.role === 'admin') {
+      setStatusAlert({
+        type: 'error',
+        text: 'هذا الحساب مخصص للإدارة! يرجى التوجه إلى "بوابة الآدمن" وإدخال الرمز السري.'
+      });
+      return;
+    }
+
+    // Verify password if recorded
+    if (existingUser.password && existingUser.password !== cleanPassword) {
+      setStatusAlert({
+        type: 'error',
+        text: 'كلمة المرور غير صحيحة! يرجى التأكد من كلمة المرور الخاصة بحسابك.'
+      });
+      return;
+    }
+
+    // Check approval status
+    if (existingUser.status === 'pending') {
+      setStatusAlert({
+        type: 'info',
+        text: 'طلب حسابك قيد المراجعة حالياً من قبل الآدمن. يرجى الانتظار حتى تتم الموافقة لتتمكن من التوقع.'
+      });
+      return;
+    }
+
+    // Successful login
+    onLoginSuccess(existingUser);
+    onClose();
+  };
+
+  // Handle Sign Up submission
+  const handleSignupSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatusAlert(null);
+
+    const cleanUsername = signupUsername.trim();
+    const cleanGmail = signupGmail.trim().toLowerCase();
+    const cleanPassword = signupPassword.trim();
+    const cleanConfirm = signupConfirmPassword.trim();
+
+    // 1. Username validations
+    if (!cleanUsername) {
+      setStatusAlert({ type: 'error', text: 'الرجاء إدخال اسم المستخدم!' });
+      return;
+    }
+
+    if (cleanUsername.length < 3) {
+      setStatusAlert({ type: 'error', text: 'اسم المستخدم يجب أن يتكون من 3 أحرف أو أكثر!' });
+      return;
+    }
+
+    const lowerName = cleanUsername.toLowerCase();
+    if (
+      lowerName === 'admin' ||
+      lowerName === 'administrator' ||
+      lowerName.includes('آدمن') ||
+      lowerName.includes('ادمن') ||
+      lowerName.includes('مدير')
+    ) {
+      setStatusAlert({
+        type: 'error',
+        text: 'لا يمكن اختيار اسم يحتوي على مسميات الإدارة! يرجى اختيار اسم شخصي فريد.'
+      });
+      return;
+    }
+
+    // Check username uniqueness
+    const userExists = users.some(u => u.username.toLowerCase() === lowerName);
+    if (userExists) {
+      setStatusAlert({
+        type: 'error',
+        text: `اسم المستخدم (${cleanUsername}) محجوز ومسجل مسبقاً! يرجى اختيار اسم مستخدم آخر.`
+      });
+      return;
+    }
+
+    // 2. Gmail validation (Must end with @gmail.com)
+    if (!cleanGmail) {
+      setStatusAlert({ type: 'error', text: 'الرجاء إدخال بريد Gmail الخاص بك!' });
+      return;
+    }
+
+    const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+    if (!gmailRegex.test(cleanGmail)) {
+      setStatusAlert({
+        type: 'error',
+        text: 'يرجى إدخال بريد Gmail صالح ينتهي بـ @gmail.com (مثال: name@gmail.com) لتوثيق الحساب!'
+      });
+      return;
+    }
+
+    // Check Gmail uniqueness among existing users
+    const emailExists = users.some(u => u.email && u.email.toLowerCase() === cleanGmail);
+    if (emailExists) {
+      setStatusAlert({
+        type: 'error',
+        text: 'هذا البريد (Gmail) مرتبط بحساب مسجل مسبقاً! يرجى استخدام بريد Gmail الخاص بك أو تسجيل الدخول.'
+      });
+      return;
+    }
+
+    // 3. Password validations
+    if (!cleanPassword) {
+      setStatusAlert({ type: 'error', text: 'الرجاء إدخال كلمة المرور لحسابك!' });
+      return;
+    }
+
+    if (cleanPassword.length < 3) {
+      setStatusAlert({ type: 'error', text: 'كلمة المرور يجب أن تتكون من 3 خانات أو أكثر لحماية حسابك.' });
+      return;
+    }
+
+    if (cleanPassword !== cleanConfirm) {
+      setStatusAlert({ type: 'error', text: 'كلمتا المرور غير متطابقتين! يرجى التأكد من إعادة كتابة كلمة المرور بدقة.' });
+      return;
+    }
+
+    // 4. Device lock check (1 account per device)
+    const deviceUser = localStorage.getItem('cl_device_user');
+    if (deviceUser && deviceUser.toLowerCase() !== lowerName) {
+      setStatusAlert({
+        type: 'error',
+        text: `تنبيه: يُسمح بإنشاء حساب واحد فقط لكل جهاز (الحساب المسجل على هذا الجهاز: ${deviceUser}).`
+      });
+      return;
+    }
+
+    // Register new member
+    const newUser: AppUser = {
+      username: cleanUsername,
+      email: cleanGmail,
+      password: cleanPassword,
+      role: 'user',
+      points: 0,
+      status: 'pending'
+    };
+
+    localStorage.setItem('cl_device_user', cleanUsername);
+    onRegisterUser(newUser);
+
+    setStatusAlert({
+      type: 'success',
+      text: `تم إنشاء حسابك (${cleanUsername}) وربطه بـ (${cleanGmail}) بنجاح! تم إرسال طلب الانضمام إلى الآدمن للموافقة عليه قبل بدء التوقع.`
+    });
+  };
+
+  // Handle Admin Passcode submission
+  const handleAdminSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatusAlert(null);
+
+    if (adminPasscode.trim() !== '05082007') {
+      setStatusAlert({
+        type: 'error',
+        text: 'رمز سر الآدمن غير صحيح! يرجى إدخال الرمز السري الصحيح المعتمد للإدارة.'
+      });
+      return;
+    }
+
+    // Mark admin session as validated
+    sessionStorage.setItem('cl_admin_verified', '05082007');
+
+    let adminUser = users.find(u => u.role === 'admin');
+    if (!adminUser) {
+      adminUser = {
+        username: 'الآدمن (Admin)',
+        role: 'admin',
+        points: 0,
+        status: 'approved'
+      };
+      onRegisterUser(adminUser);
+    }
+
+    onLoginSuccess(adminUser);
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className="ucl-card p-5 sm:p-7 rounded-3xl max-w-md w-full border border-yellow-500/30 ucl-gold-glow relative text-right shadow-2xl my-auto max-h-[94vh] flex flex-col justify-between">
+    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto" dir="rtl">
+      <div className="ucl-card p-5 sm:p-7 rounded-3xl max-w-md w-full border border-slate-800 relative text-right shadow-2xl my-auto max-h-[95vh] flex flex-col justify-between">
         
         {/* Top bar with Close Button */}
-        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
           <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-yellow-400" />
-            <span className="text-xs font-black text-slate-300">تسجيل الدخول / الأمان</span>
+            <Shield className="w-4 h-4 text-[#00E5FF]" />
+            <span className="text-xs font-black text-slate-300">منظومة الحسابات والأمان</span>
           </div>
           <button 
             onClick={onClose} 
-            className="text-slate-400 hover:text-white p-2 rounded-xl hover:bg-slate-800/80 transition cursor-pointer"
+            className="text-[#94A3B8] hover:text-white p-2 rounded-xl hover:bg-slate-800/80 transition cursor-pointer"
             title="إغلاق"
             aria-label="Close modal"
           >
@@ -209,59 +326,82 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </button>
         </div>
 
-        {/* Role Switch Tabs */}
-        <div className="flex border-b border-slate-800 mb-4 gap-2">
+        {/* 3 Slides Tabs Navigation */}
+        <div className="flex bg-[#080C19] p-1 rounded-2xl border border-slate-800/80 mb-5 gap-1">
+          {/* Slide 1: Login */}
           <button 
             type="button" 
-            onClick={() => { setRole('user'); setStatusAlert(null); }}
-            className={`flex-1 py-3 px-2 text-xs sm:text-sm font-bold rounded-t-xl border-b-2 transition flex items-center justify-center gap-1.5 cursor-pointer select-none min-h-[44px] ${
-              role === 'user' 
-                ? 'border-yellow-400 text-yellow-400 bg-slate-900/80 shadow-sm' 
-                : 'border-transparent text-slate-400 hover:text-yellow-400'
+            onClick={() => { setActiveSlide('login'); setStatusAlert(null); }}
+            className={`flex-1 py-2.5 px-2 text-xs sm:text-sm font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer select-none min-h-[42px] ${
+              activeSlide === 'login' 
+                ? 'bg-[#10172A] text-[#00E5FF] shadow-[0_0_12px_rgba(0,229,255,0.25)] border border-[#00E5FF]/30' 
+                : 'text-[#94A3B8] hover:text-[#E2E8F0]'
             }`}
           >
-            <User className="w-4 h-4 text-yellow-400 shrink-0" />
-            <span>بوابة الأعضاء</span>
+            <LogIn className="w-3.5 h-3.5 shrink-0" />
+            <span>تسجيل الدخول</span>
           </button>
 
+          {/* Slide 2: Sign Up */}
           <button 
             type="button" 
-            onClick={() => { setRole('admin'); setStatusAlert(null); }}
-            className={`flex-1 py-3 px-2 text-xs sm:text-sm font-bold rounded-t-xl border-b-2 transition flex items-center justify-center gap-1.5 cursor-pointer select-none min-h-[44px] ${
-              role === 'admin' 
-                ? 'border-rose-500 text-rose-400 bg-rose-950/40 shadow-sm' 
-                : 'border-transparent text-slate-400 hover:text-rose-400'
+            onClick={() => { setActiveSlide('signup'); setStatusAlert(null); }}
+            className={`flex-1 py-2.5 px-2 text-xs sm:text-sm font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer select-none min-h-[42px] ${
+              activeSlide === 'signup' 
+                ? 'bg-[#10172A] text-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.25)] border border-amber-400/30' 
+                : 'text-[#94A3B8] hover:text-[#E2E8F0]'
             }`}
           >
-            <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
-            <span>بوابة الآدمن</span>
+            <UserPlus className="w-3.5 h-3.5 shrink-0" />
+            <span>إنشاء حساب</span>
+          </button>
+
+          {/* Slide 3: Admin */}
+          <button 
+            type="button" 
+            onClick={() => { setActiveSlide('admin'); setStatusAlert(null); }}
+            className={`flex-1 py-2.5 px-2 text-xs sm:text-sm font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer select-none min-h-[42px] ${
+              activeSlide === 'admin' 
+                ? 'bg-rose-950/60 text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.25)] border border-rose-500/40' 
+                : 'text-[#94A3B8] hover:text-rose-400'
+            }`}
+          >
+            <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+            <span>الآدمن</span>
           </button>
         </div>
 
-        {/* Header Titles */}
+        {/* Slide Header Titles */}
         <div className="mb-4">
           <h3 className="text-lg sm:text-xl font-black mb-1 flex items-center gap-2">
-            {role === 'admin' ? (
+            {activeSlide === 'login' && (
+              <>
+                <UserCheck className="w-5 h-5 text-[#00E5FF] shrink-0" />
+                <span className="text-[#00E5FF]">تسجيل دخول الأعضاء</span>
+              </>
+            )}
+            {activeSlide === 'signup' && (
+              <>
+                <UserPlus className="w-5 h-5 text-amber-400 shrink-0" />
+                <span className="text-amber-400">إنشاء حساب عضو جديد</span>
+              </>
+            )}
+            {activeSlide === 'admin' && (
               <>
                 <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0" />
-                <span className="text-rose-400">بوابة الإدارة والتحكم</span>
-              </>
-            ) : (
-              <>
-                <UserCheck className="w-5 h-5 text-yellow-400 shrink-0" />
-                <span className="text-yellow-400">دخول وتسجيل الأعضاء</span>
+                <span className="text-rose-400">بوابة الإدارة والتحكم (Admin)</span>
               </>
             )}
           </h3>
 
-          <p className="text-xs text-slate-400 leading-relaxed">
-            {role === 'admin'
-              ? 'الرجاء إدخال رمز سر الآدمن فقط للدخول المباشر إلى لوحة الإدارة.'
-              : 'أدخل اسم المستخدم وكلمة المرور الخاصة بك. الأسماء فريدة ومحمية ولا تتكرر.'}
+          <p className="text-xs text-[#94A3B8] leading-relaxed">
+            {activeSlide === 'login' && 'أدخل اسم المستخدم وكلمة المرور الخاصة بحسابك لمتابعة وتعديل توقعاتك.'}
+            {activeSlide === 'signup' && 'قم بإنشاء حسابك وتعيين بريد Gmail الرسمي لحفظ وتوثيق نتائجك في البطولة.'}
+            {activeSlide === 'admin' && 'أدخل رمز سر الآدمن المعتمد حصراً للوصول المباشر إلى لوحة التحكم.'}
           </p>
         </div>
 
-        {/* Status Alerts */}
+        {/* Status Alert Notification */}
         {statusAlert && (
           <div className={`mb-4 p-3 rounded-2xl border text-xs font-bold leading-relaxed flex items-start gap-2.5 ${
             statusAlert.type === 'error'
@@ -272,65 +412,188 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           }`}>
             {statusAlert.type === 'error' ? (
               <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-            ) : (
+            ) : statusAlert.type === 'success' ? (
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            ) : (
+              <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             )}
             <div className="flex-1">{statusAlert.text}</div>
           </div>
         )}
 
-        {/* Auth Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          
-          {/* MEMBER FORM: Ask for Username AND Password */}
-          {role === 'user' ? (
-            <>
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-yellow-400" />
-                  <span>اسم المستخدم (فريد وغير مكرر)</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="أدخل اسم المستخدم..."
-                  autoFocus
-                  className="w-full bg-slate-900 border border-slate-700 rounded-2xl p-3.5 text-white text-base sm:text-sm outline-none focus:border-yellow-400 transition placeholder:text-slate-600 min-h-[48px]"
-                />
-              </div>
+        {/* SLIDE 1: LOGIN FORM */}
+        {activeSlide === 'login' && (
+          <form onSubmit={handleLoginSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-[#00E5FF]" />
+                <span>اسم المستخدم</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={loginUsername}
+                onChange={(e) => setLoginUsername(e.target.value)}
+                placeholder="أدخل اسم المستخدم..."
+                autoFocus
+                className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3.5 text-white text-base sm:text-sm outline-none focus:border-[#00E5FF] transition placeholder:text-slate-600 min-h-[48px]"
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
-                  <Lock className="w-3.5 h-3.5 text-yellow-400" />
-                  <span>كلمة المرور لحسابك</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type={showMemberPassword ? 'text' : 'password'}
-                    required
-                    value={memberPassword}
-                    onChange={(e) => setMemberPassword(e.target.value)}
-                    placeholder="أدخل كلمة المرور..."
-                    className="w-full bg-slate-900 border border-slate-700 rounded-2xl p-3.5 pl-12 text-white text-base sm:text-sm outline-none focus:border-yellow-400 transition placeholder:text-slate-600 min-h-[48px]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowMemberPassword(!showMemberPassword)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-2 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
-                    title={showMemberPassword ? 'إخفاء' : 'إظهار'}
-                  >
-                    {showMemberPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                <span className="text-[11px] text-slate-400 mt-1 block">
-                  إذا كان الحساب جديداً ستصبح هذه كلمته، وإذا كان مسجلاً أدخل كلمتك للدخول.
-                </span>
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-[#00E5FF]" />
+                <span>كلمة المرور</span>
+              </label>
+              <div className="relative">
+                <input
+                  type={showLoginPassword ? 'text' : 'password'}
+                  required
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="أدخل كلمة المرور..."
+                  className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3.5 pl-12 text-white text-base sm:text-sm outline-none focus:border-[#00E5FF] transition placeholder:text-slate-600 min-h-[48px]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-2 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
+                  title={showLoginPassword ? 'إخفاء' : 'إظهار'}
+                >
+                  {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
-            </>
-          ) : (
-            /* ADMIN FORM: STRICTLY asks for Admin Secret Code ONLY */
+            </div>
+
+            <button
+              type="submit"
+              className="w-full font-black py-3.5 rounded-2xl transition shadow-lg mt-2 text-sm cursor-pointer active:scale-[0.99] min-h-[48px] flex items-center justify-center bg-gradient-to-r from-cyan-500 to-[#00E5FF] hover:from-cyan-400 hover:to-cyan-300 text-slate-950 shadow-cyan-500/20"
+            >
+              تسجيل الدخول
+            </button>
+
+            <div className="text-center pt-2">
+              <button
+                type="button"
+                onClick={() => { setActiveSlide('signup'); setStatusAlert(null); }}
+                className="text-xs text-[#00E5FF] hover:underline cursor-pointer font-bold inline-flex items-center gap-1"
+              >
+                <span>ليس لديك حساب؟ اضغط هنا لإنشاء حساب جديد</span>
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* SLIDE 2: SIGN UP FORM (Asks for Gmail, Username, and Password) */}
+        {activeSlide === 'signup' && (
+          <form onSubmit={handleSignupSubmit} className="space-y-3.5">
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-amber-400" />
+                <span>اسم المستخدم (فريد)</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={signupUsername}
+                onChange={(e) => setSignupUsername(e.target.value)}
+                placeholder="مثال: يوسف، أحمد..."
+                autoFocus
+                className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3 text-white text-sm outline-none focus:border-amber-400 transition placeholder:text-slate-600 min-h-[44px]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-amber-400" />
+                <span>بريد Gmail (مطلوب لتوثيق العضوية)</span>
+              </label>
+              <input
+                type="email"
+                required
+                value={signupGmail}
+                onChange={(e) => setSignupGmail(e.target.value)}
+                placeholder="yourname@gmail.com"
+                className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3 text-white text-sm outline-none focus:border-amber-400 transition placeholder:text-slate-600 font-sans min-h-[44px]"
+                dir="ltr"
+              />
+              <span className="text-[10px] text-slate-400 mt-1 block">
+                يجب أن يكون بريداً صالحاً ينتهي بـ @gmail.com
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                <span>كلمة المرور</span>
+              </label>
+              <div className="relative">
+                <input
+                  type={showSignupPassword ? 'text' : 'password'}
+                  required
+                  value={signupPassword}
+                  onChange={(e) => setSignupPassword(e.target.value)}
+                  placeholder="كلمة المرور (3 خانات فأكثر)..."
+                  className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3 pl-10 text-white text-sm outline-none focus:border-amber-400 transition placeholder:text-slate-600 min-h-[44px]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSignupPassword(!showSignupPassword)}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-1.5 cursor-pointer"
+                  title={showSignupPassword ? 'إخفاء' : 'إظهار'}
+                >
+                  {showSignupPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                <span>تأكيد كلمة المرور</span>
+              </label>
+              <div className="relative">
+                <input
+                  type={showSignupConfirmPassword ? 'text' : 'password'}
+                  required
+                  value={signupConfirmPassword}
+                  onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                  placeholder="أعد إدخال كلمة المرور..."
+                  className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3 pl-10 text-white text-sm outline-none focus:border-amber-400 transition placeholder:text-slate-600 min-h-[44px]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSignupConfirmPassword(!showSignupConfirmPassword)}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-1.5 cursor-pointer"
+                  title={showSignupConfirmPassword ? 'إخفاء' : 'إظهار'}
+                >
+                  {showSignupConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full font-black py-3.5 rounded-2xl transition shadow-lg mt-2 text-sm cursor-pointer active:scale-[0.99] min-h-[48px] flex items-center justify-center bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 shadow-amber-500/20"
+            >
+              إنشاء الحساب وإرسال للموافقة
+            </button>
+
+            <div className="text-center pt-1.5">
+              <button
+                type="button"
+                onClick={() => { setActiveSlide('login'); setStatusAlert(null); }}
+                className="text-xs text-amber-400 hover:underline cursor-pointer font-bold inline-flex items-center gap-1"
+              >
+                <span>لديك حساب مسجل بالفعل؟ تسجيل الدخول</span>
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* SLIDE 3: ADMIN FORM (Passcode only) */}
+        {activeSlide === 'admin' && (
+          <form onSubmit={handleAdminSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-rose-400 mb-1.5 flex items-center gap-1.5">
                 <KeyRound className="w-3.5 h-3.5 text-rose-400" />
@@ -344,7 +607,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   value={adminPasscode}
                   onChange={(e) => setAdminPasscode(e.target.value)}
                   placeholder="أدخل الرمز السري للإدارة..."
-                  className="w-full bg-slate-900 border border-rose-500/60 rounded-2xl p-3.5 pl-12 text-white text-base sm:text-sm outline-none focus:border-rose-400 transition shadow-inner placeholder:text-slate-600 min-h-[48px]"
+                  className="w-full bg-[#080C19] border border-rose-500/60 rounded-2xl p-3.5 pl-12 text-white text-base sm:text-sm outline-none focus:border-rose-400 transition shadow-inner placeholder:text-slate-600 min-h-[48px]"
                 />
                 <button
                   type="button"
@@ -359,27 +622,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 الدخول كآدمن لا يتطلب أي اسم مستخدم، فقط الرمز السري المعتمد للإدارة.
               </span>
             </div>
-          )}
 
-          <button
-            type="submit"
-            className={`w-full font-black py-3.5 rounded-2xl transition shadow-lg mt-2 text-sm cursor-pointer active:scale-[0.99] min-h-[48px] flex items-center justify-center ${
-              role === 'admin'
-                ? 'bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-rose-600/25'
-                : 'bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-500 hover:from-yellow-400 hover:to-amber-300 text-slate-950 shadow-yellow-500/25'
-            }`}
-          >
-            {role === 'admin' ? 'التحقق والدخول المباشر كآدمن' : 'تسجيل الدخول / إنشاء حساب'}
-          </button>
-        </form>
+            <button
+              type="submit"
+              className="w-full font-black py-3.5 rounded-2xl transition shadow-lg mt-2 text-sm cursor-pointer active:scale-[0.99] min-h-[48px] flex items-center justify-center bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-rose-600/25"
+            >
+              التحقق والدخول المباشر كآدمن
+            </button>
+          </form>
+        )}
 
         {/* Security badge at bottom */}
-        <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+        <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-[#94A3B8]">
           <span className="flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-blue-400" />
+            <Shield className="w-3.5 h-3.5 text-[#00E5FF]" />
             حماية الحسابات
           </span>
-          <span className="text-slate-400">حساب واحد لكل جهاز</span>
+          <span>حساب موثق واحد لكل جهاز</span>
         </div>
       </div>
     </div>

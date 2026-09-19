@@ -1,0 +1,75 @@
+{
+  "entities": {
+    "Team": {
+      "title": "Team",
+      "description": "UEFA Champions League team and squad",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 100 },
+        "logo": { "type": "string", "maxLength": 500 },
+        "squad": { "type": "array" }
+      },
+      "required": ["name", "logo", "squad"]
+    },
+    "Match": {
+      "title": "Match",
+      "description": "Match fixture details, deadline, and results",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 100 },
+        "homeTeam": { "type": "string", "maxLength": 100 },
+        "awayTeam": { "type": "string", "maxLength": 100 },
+        "deadline": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["OPEN", "SETTLED"] }
+      },
+      "required": ["id", "homeTeam", "awayTeam", "deadline", "status"]
+    },
+    "Prediction": {
+      "title": "Prediction",
+      "description": "Member prediction for a match",
+      "type": "object",
+      "properties": {
+        "matchId": { "type": "string", "maxLength": 100 },
+        "username": { "type": "string", "maxLength": 50 },
+        "homeScore": { "type": "number" },
+        "awayScore": { "type": "number" },
+        "homeScorers": { "type": "array" },
+        "awayScorers": { "type": "array" },
+        "mvp": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["matchId", "username", "homeScore", "awayScore", "homeScorers", "awayScorers"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Member account profile and leaderboard score",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string", "maxLength": 50 },
+        "email": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "points": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "approved"] }
+      },
+      "required": ["username", "role", "points", "status"]
+    }
+  },
+  "firestore": {
+    "/teams/{teamId}": {
+      "schema": { "$ref": "#/entities/Team" },
+      "description": "Collection of UCL teams"
+    },
+    "/matches/{matchId}": {
+      "schema": { "$ref": "#/entities/Match" },
+      "description": "Collection of match fixtures"
+    },
+    "/predictions/{predictionId}": {
+      "schema": { "$ref": "#/entities/Prediction" },
+      "description": "Collection of submitted match predictions"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Collection of user profiles and scores"
+    }
+  }
+}

@@ -647,11 +647,16 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               ) : (
                 pendingUsers.map(u => (
                   <div key={u.username} className="p-3 bg-slate-950 rounded-xl border border-amber-500/30 flex items-center justify-between gap-2">
-                    <div>
-                      <span className="font-bold text-xs text-white block">{u.username}</span>
+                    <div className="min-w-0 flex-1">
+                      <span className="font-bold text-xs text-white block truncate">{u.username}</span>
+                      {u.email && (
+                        <span className="text-[10px] text-cyan-400 font-mono block truncate" dir="ltr">
+                          {u.email}
+                        </span>
+                      )}
                       <span className="text-[10px] text-amber-400 font-semibold">بانتظار الموافقة</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         onClick={() => handleApproveUser(u.username)}
                         className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer"
@@ -685,13 +690,18 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               ) : (
                 approvedUsers.map(u => (
                   <div key={u.username} className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
-                    <div>
-                      <span className="font-bold text-xs text-white block">{u.username}</span>
+                    <div className="min-w-0 flex-1">
+                      <span className="font-bold text-xs text-white block truncate">{u.username}</span>
+                      {u.email && (
+                        <span className="text-[10px] text-cyan-400 font-mono block truncate" dir="ltr">
+                          {u.email}
+                        </span>
+                      )}
                       <span className="text-[10px] text-slate-400 font-semibold">{u.points || 0} نقطة</span>
                     </div>
                     <button
                       onClick={() => handleRevokeUser(u.username)}
-                      className="bg-slate-800 hover:bg-rose-900 text-rose-400 border border-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-lg transition cursor-pointer"
+                      className="bg-slate-800 hover:bg-rose-900 text-rose-400 border border-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-lg transition cursor-pointer shrink-0"
                     >
                       تعليق
                     </button>

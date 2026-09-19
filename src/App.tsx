@@ -11,6 +11,19 @@ import {
 import { Team, Match, Prediction, AppUser } from './types';
 import { DEFAULT_TEAMS, INITIAL_MATCHES } from './data/defaultData';
 import { isFriendAuthenticated, setFriendAuthenticated } from './utils/security';
+import { 
+  subscribeTeams, 
+  syncSaveTeam, 
+  syncDeleteTeam,
+  subscribeMatches, 
+  syncSaveMatch, 
+  syncDeleteMatch, 
+  subscribePredictions, 
+  syncSavePrediction, 
+  syncDeletePrediction, 
+  subscribeUsers, 
+  syncSaveUser 
+} from './lib/firebase';
 import { SecurityGate } from './components/SecurityGate';
 import { UclHeader } from './components/UclHeader';
 import { MatchesSection } from './components/MatchesSection';
@@ -38,6 +51,7 @@ export default function App() {
   // Modals & Toast State
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
   const [authModalRole, setAuthModalRole] = useState<'user' | 'admin'>('user');
+  const [authModalTab, setAuthModalTab] = useState<'login' | 'signup' | 'admin'>('login');
   const [securityModalOpen, setSecurityModalOpen] = useState<boolean>(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [matchToDelete, setMatchToDelete] = useState<Match | null>(null);
@@ -120,6 +134,43 @@ export default function App() {
         setCurrentUser(null);
       }
     }
+
+    // 3. Real-time Firebase Firestore Synchronizers
+    const unsubTeams = subscribeTeams((firestoreTeams) => {
+      if (firestoreTeams && Object.keys(firestoreTeams).length > 0) {
+        setTeams(firestoreTeams);
+        localStorage.setItem('cl_teams', JSON.stringify(firestoreTeams));
+      }
+    });
+
+    const unsubMatches = subscribeMatches((firestoreMatches) => {
+      if (firestoreMatches && firestoreMatches.length > 0) {
+        setMatches(firestoreMatches);
+        localStorage.setItem('cl_matches', JSON.stringify(firestoreMatches));
+      }
+    });
+
+    const unsubPreds = subscribePredictions((firestorePreds) => {
+      if (firestorePreds && Object.keys(firestorePreds).length > 0) {
+        setPredictions(firestorePreds);
+        localStorage.setItem('cl_predictions', JSON.stringify(firestorePreds));
+      }
+    });
+
+    const unsubUsers = subscribeUsers((firestoreUsers) => {
+      if (firestoreUsers && firestoreUsers.length > 0) {
+        const cleanUsers = firestoreUsers.filter(u => u.username.toLowerCase() !== 'amine');
+        setUsers(cleanUsers);
+        localStorage.setItem('cl_users', JSON.stringify(cleanUsers));
+      }
+    });
+
+    return () => {
+      unsubTeams();
+      unsubMatches();
+      unsubPreds();
+      unsubUsers();
+    };
   }, []);
 
   // Auto-switch to matches if admin tab is somehow active without admin role
@@ -129,10 +180,13 @@ export default function App() {
     }
   }, [activeTab, currentUser]);
 
-  // Update handlers
+  // Update handlers with Firestore real-time synchronization
   const handleUpdateUsers = (nextUsers: AppUser[]) => {
     setUsers(nextUsers);
     localStorage.setItem('cl_users', JSON.stringify(nextUsers));
+    nextUsers.forEach(u => {
+      syncSaveUser(u).catch(err => console.error("Firebase save user error:", err));
+    });
     if (currentUser) {
       const updatedCurrent = nextUsers.find(u => u.username.toLowerCase() === currentUser.username.toLowerCase());
       if (updatedCurrent) {
@@ -145,11 +199,17 @@ export default function App() {
   const handleUpdateMatches = (nextMatches: Match[]) => {
     setMatches(nextMatches);
     localStorage.setItem('cl_matches', JSON.stringify(nextMatches));
+    nextMatches.forEach(m => {
+      syncSaveMatch(m).catch(err => console.error("Firebase save match error:", err));
+    });
   };
 
   const handleUpdateTeams = (nextTeams: Record<string, Team>) => {
     setTeams(nextTeams);
     localStorage.setItem('cl_teams', JSON.stringify(nextTeams));
+    Object.entries(nextTeams).forEach(([id, t]) => {
+      syncSaveTeam(id, t).catch(err => console.error("Firebase save team error:", err));
+    });
   };
 
   const handleSavePrediction = (pred: Prediction) => {
@@ -171,6 +231,10 @@ export default function App() {
     const nextPreds = { ...predictions, [key]: updatedPred };
     setPredictions(nextPreds);
     localStorage.setItem('cl_predictions', JSON.stringify(nextPreds));
+
+    // Save to Firebase Firestore
+    syncSavePrediction(updatedPred).catch(err => console.error("Firebase save prediction error:", err));
+
     addToast('تم حفظ وتحديث أحدث توقع لك بنجاح!', 'success');
   };
 
@@ -186,11 +250,15 @@ export default function App() {
     setMatches(nextMatches);
     localStorage.setItem('cl_matches', JSON.stringify(nextMatches));
 
+    // Delete match from Firestore
+    syncDeleteMatch(matchId).catch(err => console.error("Firebase delete match error:", err));
+
     // Cleanup related predictions
     const nextPreds = { ...predictions };
     Object.keys(nextPreds).forEach(k => {
       if (nextPreds[k].matchId === matchId) {
         delete nextPreds[k];
+        syncDeletePrediction(k).catch(err => console.error("Firebase delete prediction error:", err));
       }
     });
     setPredictions(nextPreds);
@@ -225,8 +293,17 @@ export default function App() {
     setIsUnlocked(false);
   };
 
-  const handleOpenAuth = (role: 'user' | 'admin') => {
-    setAuthModalRole(role);
+  const handleOpenAuth = (roleOrTab: 'user' | 'admin' | 'login' | 'signup' = 'login') => {
+    if (roleOrTab === 'admin') {
+      setAuthModalRole('admin');
+      setAuthModalTab('admin');
+    } else if (roleOrTab === 'signup') {
+      setAuthModalRole('user');
+      setAuthModalTab('signup');
+    } else {
+      setAuthModalRole('user');
+      setAuthModalTab('login');
+    }
     setAuthModalOpen(true);
   };
 
@@ -502,6 +579,7 @@ export default function App() {
       <AuthModal
         isOpen={authModalOpen}
         initialRole={authModalRole}
+        initialTab={authModalTab}
         users={users}
         onClose={() => setAuthModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}

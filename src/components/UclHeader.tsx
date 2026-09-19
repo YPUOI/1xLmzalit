@@ -3,6 +3,7 @@ import {
   Trophy, 
   RotateCw, 
   User, 
+  UserPlus,
   ShieldAlert, 
   LogOut, 
   Sliders, 
@@ -14,7 +15,7 @@ import { AppUser } from '../types';
 
 interface UclHeaderProps {
   currentUser: AppUser | null;
-  onOpenAuth: (role: 'user' | 'admin') => void;
+  onOpenAuth: (roleOrTab: 'user' | 'admin' | 'login' | 'signup') => void;
   onLogout: () => void;
   onLockApp?: () => void;
   onOpenSecurityModal: () => void;
@@ -102,15 +103,22 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
           ) : (
             <div className="flex items-center gap-2">
               <button 
-                onClick={() => onOpenAuth('user')}
+                onClick={() => onOpenAuth('login')}
                 className="ucl-btn-primary font-black text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
               >
                 <User className="w-3.5 h-3.5" />
                 <span>دخول الأعضاء</span>
               </button>
               <button 
+                onClick={() => onOpenAuth('signup')}
+                className="bg-[#10172A] hover:bg-[#16213B] text-amber-400 hover:text-amber-300 border border-amber-500/30 hover:border-amber-400/60 font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <UserPlus className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden sm:inline">حساب جديد</span>
+              </button>
+              <button 
                 onClick={() => onOpenAuth('admin')}
-                className="bg-[#10172A] hover:bg-[#16213B] text-[#94A3B8] hover:text-white border border-slate-800 font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                className="bg-[#10172A] hover:bg-[#16213B] text-[#94A3B8] hover:text-rose-400 border border-slate-800 font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
               >
                 <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
                 <span>الآدمن</span>
