@@ -28,39 +28,35 @@ export function saveSecurityConfig(config: SecurityConfig): void {
   localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(config));
 }
 
-export function isFriendAuthenticated(): boolean {
-  // Check session storage first (for active tab session)
-  const sessionAuth = sessionStorage.getItem(STORAGE_KEY_AUTH_STATUS);
-  if (sessionAuth === 'true') return true;
-
-  // Check persistent storage if remembered
-  const localAuth = localStorage.getItem(STORAGE_KEY_AUTH_STATUS);
-  const authTime = localStorage.getItem(STORAGE_KEY_AUTH_TIMESTAMP);
-  if (localAuth === 'true' && authTime) {
-    const elapsed = Date.now() - parseInt(authTime, 10);
-    // Keep remembered for 7 days
-    if (elapsed < 7 * 24 * 60 * 60 * 1000) {
-      return true;
-    } else {
-      localStorage.removeItem(STORAGE_KEY_AUTH_STATUS);
-      localStorage.removeItem(STORAGE_KEY_AUTH_TIMESTAMP);
-    }
+export function applySyncedFriendPassword(friendPassword: string): void {
+  if (!friendPassword) return;
+  const current = getSecurityConfig();
+  if (current.friendPassword !== friendPassword) {
+    const updated = { ...current, friendPassword };
+    saveSecurityConfig(updated);
   }
-
-  return false;
 }
 
-export function setFriendAuthenticated(authenticated: boolean, remember: boolean = false): void {
-  if (authenticated) {
-    sessionStorage.setItem(STORAGE_KEY_AUTH_STATUS, 'true');
-    if (remember) {
-      localStorage.setItem(STORAGE_KEY_AUTH_STATUS, 'true');
-      localStorage.setItem(STORAGE_KEY_AUTH_TIMESTAMP, Date.now().toString());
-    }
-  } else {
+export function isFriendAuthenticated(): boolean {
+  // Always require password on page load / refresh per strict security requirement
+  try {
     sessionStorage.removeItem(STORAGE_KEY_AUTH_STATUS);
     localStorage.removeItem(STORAGE_KEY_AUTH_STATUS);
     localStorage.removeItem(STORAGE_KEY_AUTH_TIMESTAMP);
+  } catch {
+    // Ignore storage access errors
+  }
+  return false;
+}
+
+export function setFriendAuthenticated(authenticated: boolean, _remember: boolean = false): void {
+  // Never persist across page refreshes; clean up any persistent tokens
+  try {
+    sessionStorage.removeItem(STORAGE_KEY_AUTH_STATUS);
+    localStorage.removeItem(STORAGE_KEY_AUTH_STATUS);
+    localStorage.removeItem(STORAGE_KEY_AUTH_TIMESTAMP);
+  } catch {
+    // Ignore storage access errors
   }
 }
 

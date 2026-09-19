@@ -9,8 +9,18 @@ import {
   setDoc, 
   deleteDoc
 } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+import firebaseAppletConfig from '../../firebase-applet-config.json';
 import { Match, Team, Prediction, AppUser } from '../types';
+
+const firebaseConfig = {
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseAppletConfig.appId,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseAppletConfig.apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseAppletConfig.authDomain,
+  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || firebaseAppletConfig.firestoreDatabaseId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseAppletConfig.storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseAppletConfig.messagingSenderId,
+};
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId); /* CRITICAL: The app will break without this line */
@@ -221,5 +231,38 @@ export const syncDeleteUser = async (username: string) => {
     await deleteDoc(doc(db, 'users', username));
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, path);
+  }
+};
+
+// 5. Settings / Security Config Synchronization
+export const subscribeSecurityConfig = (onUpdate: (data: { friendPassword?: string }) => void) => {
+  const path = 'settings';
+  return onSnapshot(
+    collection(db, path),
+    (snapshot) => {
+      snapshot.forEach(docSnap => {
+        if (docSnap.id === 'security') {
+          const data = docSnap.data() as { friendPassword?: string };
+          if (data && data.friendPassword) {
+            onUpdate(data);
+          }
+        }
+      });
+    },
+    (error) => {
+      console.warn("Settings sync notice:", error);
+    }
+  );
+};
+
+export const syncSaveSecurityConfig = async (friendPassword: string) => {
+  const path = 'settings/security';
+  try {
+    await setDoc(doc(db, 'settings', 'security'), {
+      friendPassword: friendPassword.trim(),
+      updatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
   }
 };

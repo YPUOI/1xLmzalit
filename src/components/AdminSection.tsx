@@ -24,10 +24,12 @@ import {
   CheckCircle2,
   Layers,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  RotateCw
 } from 'lucide-react';
 import { Match, Team, AppUser, Prediction, SecurityConfig } from '../types';
 import { getSecurityConfig, saveSecurityConfig } from '../utils/security';
+import { subscribeSecurityConfig, syncSaveSecurityConfig } from '../lib/firebase';
 import { ConfirmDialog } from './ConfirmDialog';
 import { POPULAR_CLUB_PRESETS, parsePlayersText, generateFallbackLogo, ClubPreset } from '../data/clubPresets';
 
@@ -123,6 +125,17 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   const [securityConfig, setSecurityConfig] = useState<SecurityConfig>(getSecurityConfig());
   const [newFriendPassword, setNewFriendPassword] = useState<string>(securityConfig.friendPassword);
   const [securitySuccess, setSecuritySuccess] = useState<string | null>(null);
+  const [isSavingSecurity, setIsSavingSecurity] = useState(false);
+
+  useEffect(() => {
+    const unsub = subscribeSecurityConfig((data) => {
+      if (data.friendPassword) {
+        setSecurityConfig(prev => ({ ...prev, friendPassword: data.friendPassword! }));
+        setNewFriendPassword(data.friendPassword);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   const notify = (msg: string, type: 'success' | 'error' | 'info' = 'success') => {
     if (onShowToast) {

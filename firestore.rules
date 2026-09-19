@@ -57,5 +57,11 @@ service cloud.firestore {
         request.resource.data.status in ['pending', 'approved'];
       allow delete: if isAdmin();
     }
+
+    // Application Settings (including global friend password)
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if true;
+    }
   }
 }

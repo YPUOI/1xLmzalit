@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { Team, Match, Prediction, AppUser } from './types';
 import { DEFAULT_TEAMS, INITIAL_MATCHES } from './data/defaultData';
-import { isFriendAuthenticated, setFriendAuthenticated } from './utils/security';
+import { setFriendAuthenticated } from './utils/security';
 import { 
   subscribeTeams, 
   syncSaveTeam, 
@@ -73,9 +73,9 @@ export default function App() {
 
   // Initialization
   useEffect(() => {
-    // 1. Check if friend is authenticated
-    const authenticated = isFriendAuthenticated();
-    setIsUnlocked(authenticated);
+    // 1. Secret friend password must be asked every time someone enters, even after page refresh
+    setFriendAuthenticated(false);
+    setIsUnlocked(false);
 
     // 2. Initialize Database and LocalStorage
     const storedVersion = localStorage.getItem('cl_db_version');

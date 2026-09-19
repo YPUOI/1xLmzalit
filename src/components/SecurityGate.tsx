@@ -13,8 +13,10 @@ import {
 import { 
   getSecurityConfig, 
   verifyFriendPassword, 
-  setFriendAuthenticated 
+  setFriendAuthenticated,
+  applySyncedFriendPassword
 } from '../utils/security';
+import { subscribeSecurityConfig } from '../lib/firebase';
 import { SecurityConfig } from '../types';
 
 interface SecurityGateProps {
@@ -24,13 +26,20 @@ interface SecurityGateProps {
 export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [, setConfig] = useState<SecurityConfig>(getSecurityConfig());
 
   useEffect(() => {
     setConfig(getSecurityConfig());
+    // Listen for real-time changes to the friend password in Firestore
+    const unsub = subscribeSecurityConfig((data) => {
+      if (data.friendPassword) {
+        applySyncedFriendPassword(data.friendPassword);
+        setConfig(getSecurityConfig());
+      }
+    });
+    return () => unsub();
   }, []);
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
@@ -47,9 +56,9 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
     if (isValid) {
       setSuccessMsg('تم التحقق بنجاح! جاري فتح المنصة...');
       setTimeout(() => {
-        setFriendAuthenticated(true, rememberMe);
+        setFriendAuthenticated(true);
         onUnlock();
-      }, 600);
+      }, 500);
     } else {
       setErrorMsg('كلمة المرور غير صحيحة! هذه المنصة مخصصة للأصدقاء فقط.');
     }
@@ -65,22 +74,27 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
       {/* Main Security Card */}
       <div className="w-full max-w-md ucl-card rounded-3xl p-6 sm:p-8 ucl-card-glow relative z-10 border border-blue-500/30 shadow-2xl">
         
-        {/* UCL Starball & Lock Badge */}
+        {/* Official 1xLmzalit Logo & Lock Badge */}
         <div className="flex justify-center mb-5">
           <div className="relative">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-500 via-amber-400 to-yellow-600 flex items-center justify-center shadow-xl shadow-yellow-500/25 border-2 border-yellow-200/40 transform hover:scale-105 transition">
-              <ShieldCheck className="w-11 h-11 text-slate-950 stroke-[2.2]" />
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shadow-2xl shadow-cyan-500/25 border-2 border-[#00E5FF]/60 p-1 bg-[#080C19] transform hover:scale-105 transition flex items-center justify-center">
+              <img 
+                src="/xlmzalit_emblem.png" 
+                alt="1xLmzalit Logo" 
+                className="w-full h-full object-contain"
+                referrerPolicy="no-referrer"
+              />
             </div>
-            <div className="absolute -bottom-2 -left-2 bg-blue-600 text-white p-2 rounded-xl border border-blue-400 shadow-md">
-              <Lock className="w-4 h-4" />
+            <div className="absolute -bottom-2 -left-2 bg-[#00E5FF] text-slate-950 p-2 rounded-xl border border-cyan-300 shadow-lg">
+              <Lock className="w-4 h-4 stroke-[2.5]" />
             </div>
           </div>
         </div>
 
         {/* Header Text */}
         <div className="text-center mb-6">
-          <span className="text-[11px] font-black uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-yellow-300">
-            UEFA CHAMPIONS LEAGUE 2026
+          <span className="text-[12px] font-black uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-[#00E5FF] to-blue-400 font-sans">
+            1xLmzalit v1.0
           </span>
           <h1 className="text-2xl sm:text-3xl font-black mt-1 text-white tracking-wide">
             بوابة دخول الأصدقاء
@@ -134,16 +148,9 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs text-slate-300">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded-md bg-slate-900 border-slate-700 text-yellow-500 focus:ring-0 focus:ring-offset-0 cursor-pointer"
-              />
-              <span>تذكر هذا الجهاز (لمدة 7 أيام)</span>
-            </label>
+          <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-900/70 p-3 rounded-2xl border border-slate-800">
+            <Lock className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
+            <span className="leading-tight">حماية فورية: يُطلب الرمز دائماً عند كل دخول أو تحديث للصفحة.</span>
           </div>
 
           <button
@@ -158,8 +165,8 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
         {/* Footer info badge */}
         <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
           <span className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-            نظام حماية دوري الأبطال 2026
+            <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
+            نظام حماية المزاليط
           </span>
           <span className="text-emerald-400 font-semibold flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>

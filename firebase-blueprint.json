@@ -52,6 +52,16 @@
         "status": { "type": "string", "enum": ["pending", "approved"] }
       },
       "required": ["username", "role", "points", "status"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "Global application configuration such as friend password",
+      "type": "object",
+      "properties": {
+        "friendPassword": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string", "maxLength": 50 }
+      },
+      "required": ["friendPassword"]
     }
   },
   "firestore": {
@@ -70,6 +80,10 @@
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/User" },
       "description": "Collection of user profiles and scores"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/Setting" },
+      "description": "Collection of application settings such as security"
     }
   }
 }

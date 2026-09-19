@@ -42,7 +42,7 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
           dir="ltr"
           title="1XLMZALIT - UEFA Champions League"
         >
-          {/* UCL 2026 Frosted Glass Badge with glowing silver border (Left of Title) */}
+          {/* UCL 2026 Frosted Glass Badge on Left */}
           <div className="ucl-badge-glass px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full flex items-center justify-center shrink-0">
             <span className="text-[11px] sm:text-xs font-black tracking-widest text-[#00E5FF] uppercase">
               UCL 2026
@@ -51,22 +51,45 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
 
           {/* Title and Subtitle Block (Center) */}
           <div className="flex flex-col items-center justify-center text-center">
-            <h1 className="ucl-title-starball text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-black tracking-wider uppercase font-sans leading-none">
-              1XLMZALIT
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="ucl-title-starball text-2xl sm:text-3xl md:text-4xl lg:text-[38px] font-black tracking-wider uppercase font-sans leading-none">
+                1XLMZALIT
+              </h1>
+              <span className="text-[10px] font-black tracking-widest text-[#00E5FF] bg-[#00E5FF]/10 border border-[#00E5FF]/30 px-1.5 py-0.5 rounded-md uppercase hidden sm:inline-block">
+                v1.0
+              </span>
+            </div>
             <p className="text-[#94A3B8] text-[11px] sm:text-xs md:text-sm font-bold tracking-wide mt-1 leading-tight" dir="rtl">
               بطولة دوري أبطال أوروبا
             </p>
           </div>
 
-          {/* Trophy Icon in Metallic Platinum/Silver Container (Right of Title) */}
-          <div className="ucl-trophy-platinum w-11 h-11 sm:w-13 sm:h-13 rounded-2xl flex items-center justify-center shrink-0 shadow-lg group-hover:scale-105 transition">
-            <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-[#080C19] stroke-[2.4]" />
+          {/* Logo inside where the ball is (Replacing Trophy) */}
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(0,229,255,0.35)] border border-[#00E5FF]/50 bg-[#080C19] overflow-hidden group-hover:scale-105 transition p-1">
+            <img 
+              src="/xlmzalit_emblem.png" 
+              alt="1xLmzalit Ball Emblem" 
+              className="w-full h-full object-contain"
+              referrerPolicy="no-referrer"
+            />
           </div>
         </div>
 
         {/* Action Controls & User Account */}
         <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+          
+          {/* Rules Slide Button */}
+          <button
+            onClick={() => onSelectTab('rules')}
+            className={`text-xs font-bold px-3 py-2 rounded-xl border transition flex items-center gap-1.5 cursor-pointer shadow-sm ${
+              activeTab === 'rules'
+                ? 'bg-[#00E5FF]/20 border-[#00E5FF] text-[#00E5FF]'
+                : 'bg-[#10172A] hover:bg-[#16213B] text-[#94A3B8] hover:text-white border-slate-800'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
+            <span>سلايد القواعد</span>
+          </button>
           
           {/* Security & Biometric Settings Button - تحت الصيانة */}
           <button
