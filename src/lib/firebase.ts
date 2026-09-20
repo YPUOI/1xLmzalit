@@ -90,6 +90,11 @@ testConnection();
 
 // Real-time Firestore synchronizers
 
+// Helper for safe team document IDs (handles special characters and slashes safely)
+const getSafeTeamDocId = (teamId: string): string => {
+  return encodeURIComponent(teamId.trim());
+};
+
 // 1. Teams
 export const subscribeTeams = (onUpdate: (teams: Record<string, Team>) => void) => {
   const path = 'teams';
@@ -98,7 +103,9 @@ export const subscribeTeams = (onUpdate: (teams: Record<string, Team>) => void) 
     (snapshot) => {
       const teams: Record<string, Team> = {};
       snapshot.forEach(docSnap => {
-        teams[docSnap.id] = docSnap.data() as Team;
+        const data = docSnap.data() as Team;
+        const key = (data && data.name) ? data.name : decodeURIComponent(docSnap.id);
+        teams[key] = data;
       });
       onUpdate(teams);
     },
@@ -109,18 +116,20 @@ export const subscribeTeams = (onUpdate: (teams: Record<string, Team>) => void) 
 };
 
 export const syncSaveTeam = async (teamId: string, team: Team) => {
-  const path = `teams/${teamId}`;
+  const safeId = getSafeTeamDocId(teamId);
+  const path = `teams/${safeId}`;
   try {
-    await setDoc(doc(db, 'teams', teamId), team);
+    await setDoc(doc(db, 'teams', safeId), team);
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
 };
 
 export const syncDeleteTeam = async (teamId: string) => {
-  const path = `teams/${teamId}`;
+  const safeId = getSafeTeamDocId(teamId);
+  const path = `teams/${safeId}`;
   try {
-    await deleteDoc(doc(db, 'teams', teamId));
+    await deleteDoc(doc(db, 'teams', safeId));
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, path);
   }

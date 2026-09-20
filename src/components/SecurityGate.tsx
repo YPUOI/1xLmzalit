@@ -19,6 +19,7 @@ import {
 import { subscribeSecurityConfig, getLatestFriendPassword } from '../lib/firebase';
 import { SecurityConfig } from '../types';
 import { UclStarsBackground } from './UclStarsBackground';
+import { XlmzalitLogo } from './XlmzalitLogo';
 
 interface SecurityGateProps {
   onUnlock: () => void;
@@ -111,17 +112,10 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
       {/* Main Security Card */}
       <div className="w-full max-w-md ucl-card rounded-3xl p-6 sm:p-8 ucl-card-glow relative z-10 border border-blue-500/30 shadow-2xl">
         
-        {/* Official 1xLmzalit Logo & Lock Badge */}
-        <div className="flex justify-center mb-5">
+        {/* Official 1xlmzalit Logo without white box filling the hero area */}
+        <div className="flex justify-center mb-6">
           <div className="relative">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shadow-2xl shadow-cyan-500/25 border-2 border-[#00E5FF]/60 p-1 bg-[#080C19] transform hover:scale-105 transition flex items-center justify-center">
-              <img 
-                src="/xlmzalit_emblem.png" 
-                alt="1xLmzalit Logo" 
-                className="w-full h-full object-contain"
-                referrerPolicy="no-referrer"
-              />
-            </div>
+            <XlmzalitLogo variant="light" size="xl" className="w-64 sm:w-80" />
             <div className="absolute -bottom-2 -left-2 bg-[#00E5FF] text-slate-950 p-2 rounded-xl border border-cyan-300 shadow-lg">
               <Lock className="w-4 h-4 stroke-[2.5]" />
             </div>

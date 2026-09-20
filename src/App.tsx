@@ -216,6 +216,14 @@ export default function App() {
   };
 
   const handleUpdateTeams = (nextTeams: Record<string, Team>) => {
+    // Find and delete any teams removed in this update from Firestore
+    const currentKeys = Object.keys(teams);
+    const nextKeys = new Set(Object.keys(nextTeams));
+    const deletedKeys = currentKeys.filter(k => !nextKeys.has(k));
+    deletedKeys.forEach(id => {
+      syncDeleteTeam(id).catch(err => console.error("Firebase delete team error:", err));
+    });
+
     setTeams(nextTeams);
     localStorage.setItem('cl_teams', JSON.stringify(nextTeams));
     Object.entries(nextTeams).forEach(([id, t]) => {

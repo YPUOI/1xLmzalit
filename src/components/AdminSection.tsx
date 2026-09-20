@@ -15,6 +15,7 @@ import {
   Users, 
   UserPlus, 
   ShieldCheck, 
+  Shield,
   Lock, 
   Sparkles,
   KeyRound,
@@ -30,13 +31,15 @@ import {
   Activity,
   Flame,
   Award,
-  Filter
+  Filter,
+  Loader2
 } from 'lucide-react';
 import { Match, Team, AppUser, Prediction, SecurityConfig } from '../types';
 import { getSecurityConfig, saveSecurityConfig } from '../utils/security';
 import { subscribeSecurityConfig, syncSaveSecurityConfig } from '../lib/firebase';
 import { ConfirmDialog } from './ConfirmDialog';
 import { POPULAR_CLUB_PRESETS, parsePlayersText, generateFallbackLogo, ClubPreset } from '../data/clubPresets';
+import { removeImageBackground } from '../utils/removeBackground';
 
 interface AdminSectionProps {
   matches: Match[];
@@ -108,6 +111,8 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   const [newTeamInitialSquad, setNewTeamInitialSquad] = useState<string>('');
   const [showPresetPicker, setShowPresetPicker] = useState<boolean>(false);
   const [clearSquadConfirm, setClearSquadConfirm] = useState<string | null>(null);
+  const [isProcessingLogo, setIsProcessingLogo] = useState<boolean>(false);
+  const [autoRemoveBg, setAutoRemoveBg] = useState<boolean>(true);
 
   const detectedBulkPlayers = parsePlayersText(bulkSquadInput);
   const detectedInitialSquad = parsePlayersText(newTeamInitialSquad);
@@ -402,23 +407,120 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     notify(`تم اختيار نادي ${preset.name} وشعاره!`, 'info');
   };
 
-  const handleLogoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      notify('حجم الصورة كبير، يرجى اختيار صورة أقل من 2 ميغابايت', 'error');
+    if (file.size > 10 * 1024 * 1024) {
+      notify('حجم الصورة كبير، يرجى اختيار صورة أقل من 10 ميغابايت', 'error');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setNewTeamLogo(reader.result);
-        notify('تم رفع الشعار بنجاح!', 'success');
+    try {
+      setIsProcessingLogo(true);
+      if (autoRemoveBg) {
+        notify('جارٍ معالجة الشعار وإزالة الخلفية تلقائياً...', 'info');
+        const transparentLogo = await removeImageBackground(file);
+        setNewTeamLogo(transparentLogo);
+        notify('تم رفع الشعار وإزالة الخلفية تلقائياً بنجاح! ✨', 'success');
+      } else {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === 'string') {
+            setNewTeamLogo(reader.result);
+            notify('تم رفع الشعار بنجاح!', 'success');
+          }
+        };
+        reader.readAsDataURL(file);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Logo upload error:', err);
+      // Fallback in case of canvas processing failure
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setNewTeamLogo(reader.result);
+          notify('تم رفع الشعار بالصيغة الأصلية', 'info');
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsProcessingLogo(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleManualRemoveBackground = async () => {
+    if (!newTeamLogo.trim()) {
+      notify('يرجى اختيار أو رفع شعار أولاً لإزالة خلفيته', 'error');
+      return;
+    }
+    try {
+      setIsProcessingLogo(true);
+      notify('جارٍ إزالة خلفية الشعار...', 'info');
+      const transparentLogo = await removeImageBackground(newTeamLogo);
+      setNewTeamLogo(transparentLogo);
+      notify('تمت إزالة خلفية الشعار بنجاح وجعله شفافاً! ✨', 'success');
+    } catch (err) {
+      console.error(err);
+      notify('تعذر إزالة خلفية هذا الشعار تلقائياً (قد يكون الرابط محمي CORS)، يُفضل رفع الصورة من جهازك مباشرة', 'error');
+    } finally {
+      setIsProcessingLogo(false);
+    }
+  };
+
+  const handleUpdateSelectedTeamLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedManageTeam || !teams[selectedManageTeam]) return;
+
+    try {
+      setIsProcessingLogo(true);
+      notify(`جارٍ معالجة شعار ${selectedManageTeam} وإزالة الخلفية تلقائياً...`, 'info');
+      const transparentLogo = await removeImageBackground(file);
+      const nextTeams = {
+        ...teams,
+        [selectedManageTeam]: {
+          ...teams[selectedManageTeam],
+          logo: transparentLogo
+        }
+      };
+      onUpdateTeams(nextTeams);
+      notify(`تم تحديث شعار فريق ${selectedManageTeam} وإزالة الخلفية بنجاح! ✨`, 'success');
+    } catch (err) {
+      console.error(err);
+      notify('فشل معالجة الشعار، يرجى المحاولة مرة أخرى', 'error');
+    } finally {
+      setIsProcessingLogo(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveExistingTeamLogoBg = async () => {
+    const currentTeam = teams[selectedManageTeam];
+    if (!currentTeam || !currentTeam.logo) {
+      notify('لا يوجد شعار محدد لهذا الفريق', 'error');
+      return;
+    }
+
+    try {
+      setIsProcessingLogo(true);
+      notify(`جارٍ إزالة خلفية شعار ${selectedManageTeam}...`, 'info');
+      const transparentLogo = await removeImageBackground(currentTeam.logo);
+      const nextTeams = {
+        ...teams,
+        [selectedManageTeam]: {
+          ...currentTeam,
+          logo: transparentLogo
+        }
+      };
+      onUpdateTeams(nextTeams);
+      notify(`تمت إزالة خلفية شعار ${selectedManageTeam} بنجاح! ✨`, 'success');
+    } catch (err) {
+      console.error(err);
+      notify('تعذر إزالة خلفية هذا الشعار تلقائياً، يمكنك رفع صورة الشعار مباشرة من جهازك', 'error');
+    } finally {
+      setIsProcessingLogo(false);
+    }
   };
 
   const handleGenerateFallbackLogo = () => {
@@ -1323,14 +1425,23 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 {showPresetPicker ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </button>
 
-              <label className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
-                <Upload className="w-3.5 h-3.5 text-blue-400" />
-                <span>رفع شعار من الجهاز</span>
+              <label className={`border text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer select-none ${
+                isProcessingLogo 
+                  ? 'bg-blue-950/80 border-blue-500/50 text-blue-300 animate-pulse' 
+                  : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200'
+              }`}>
+                {isProcessingLogo ? (
+                  <Loader2 className="w-3.5 h-3.5 text-cyan-400 animate-spin" />
+                ) : (
+                  <Upload className="w-3.5 h-3.5 text-blue-400" />
+                )}
+                <span>{isProcessingLogo ? 'جارٍ تفريغ الشعار...' : 'رفع شعار من الجهاز (تفريغ تلقائي)'}</span>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleLogoFileUpload}
                   className="hidden"
+                  disabled={isProcessingLogo}
                 />
               </label>
 
@@ -1396,18 +1507,48 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
             </div>
 
             <div className="md:col-span-5">
-              <label className="text-[11px] text-slate-400 font-bold block mb-1">رابط الشعار أو الصورة:</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] text-slate-400 font-bold">رابط الشعار أو الصورة:</label>
+                <label className="flex items-center gap-1 text-[10px] text-cyan-400 font-bold cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={autoRemoveBg}
+                    onChange={(e) => setAutoRemoveBg(e.target.checked)}
+                    className="w-3.5 h-3.5 rounded accent-cyan-500 cursor-pointer"
+                  />
+                  <span>تفريغ الخلفية تلقائياً</span>
+                </label>
+              </div>
               <div className="flex items-center gap-2">
                 <input
                   type="url"
                   value={newTeamLogo}
                   onChange={(e) => setNewTeamLogo(e.target.value)}
-                  placeholder="https://... أو استخدم زر الرفع/التوليد أعلاه"
+                  placeholder="https://... أو استخدم زر الرفع أعلاه"
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-purple-400 font-mono text-[11px]"
                 />
                 {newTeamLogo && (
-                  <div className="w-9 h-9 shrink-0 bg-slate-950 border border-slate-700 rounded-xl p-1 flex items-center justify-center overflow-hidden">
-                    <img src={newTeamLogo} alt="Preview" className="w-full h-full object-contain" />
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <div 
+                      className="w-9 h-9 bg-slate-950 border border-slate-700 rounded-xl p-1 flex items-center justify-center overflow-hidden relative"
+                      style={{
+                        backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)',
+                        backgroundSize: '6px 6px'
+                      }}
+                      title="معاينة الشعار"
+                    >
+                      <img src={newTeamLogo} alt="Preview" className="w-full h-full object-contain" />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleManualRemoveBackground}
+                      disabled={isProcessingLogo}
+                      className="px-2 py-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 rounded-xl transition cursor-pointer text-[11px] flex items-center gap-1 font-bold"
+                      title="إزالة خلفية هذه الصورة وجعلها شفافة"
+                    >
+                      {isProcessingLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+                      <span className="hidden sm:inline">تفريغ</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -1463,15 +1604,65 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
             </div>
           ) : (
             <>
+              {/* Registered Teams Visual Bar */}
+              <div className="p-3 bg-slate-950/60 rounded-2xl border border-slate-800/80 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-yellow-400" />
+                    <span>الفرق المسجلة في البطولة ({teamKeys.length} فرق):</span>
+                  </span>
+                  <span className="text-[11px] text-slate-500">اضغط على أي فريق لعرضه وإدارة لاعبيه</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {teamKeys.map(tKey => {
+                    const isSelected = tKey === selectedManageTeam;
+                    const tObj = teams[tKey];
+                    return (
+                      <button
+                        key={tKey}
+                        type="button"
+                        onClick={() => setSelectedManageTeam(tKey)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                          isSelected
+                            ? 'bg-blue-600/30 border-blue-400 text-white shadow-md shadow-blue-500/20'
+                            : 'bg-slate-900/90 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800/80'
+                        }`}
+                      >
+                        {tObj?.logo ? (
+                          <img src={tObj.logo} alt="" className="w-5 h-5 object-contain rounded shrink-0 bg-slate-950 p-0.5" />
+                        ) : (
+                          <Shield className="w-4 h-4 text-blue-400 shrink-0" />
+                        )}
+                        <span>{tKey}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono ${
+                          isSelected ? 'bg-blue-500/40 text-blue-200' : 'bg-slate-800 text-slate-400'
+                        }`}>
+                          {tObj?.squad?.length || 0} لاعب
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Selected Team Header Bar */}
               <div className="p-3 bg-slate-900/60 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   {teams[selectedManageTeam]?.logo && (
-                    <img
-                      src={teams[selectedManageTeam].logo}
-                      alt={selectedManageTeam}
-                      className="w-8 h-8 object-contain shrink-0 rounded-lg p-0.5 bg-slate-950 border border-slate-700"
-                    />
+                    <div 
+                      className="w-9 h-9 shrink-0 rounded-xl p-1 bg-slate-950 border border-slate-700 flex items-center justify-center overflow-hidden"
+                      style={{
+                        backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)',
+                        backgroundSize: '6px 6px'
+                      }}
+                      title="شعار الفريق المفرغ"
+                    >
+                      <img
+                        src={teams[selectedManageTeam].logo}
+                        alt={selectedManageTeam}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
                   )}
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-400 font-bold">الفريق الحالي:</span>
@@ -1483,6 +1674,35 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       {teamKeys.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
+
+                  {/* Change Logo / Remove Bg for selected team */}
+                  <label 
+                    className="p-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 select-none"
+                    title="رفع شعار جديد لهذا الفريق من الجهاز وتفريغ خلفيته تلقائياً"
+                  >
+                    {isProcessingLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 text-cyan-400" />}
+                    <span>تغيير الشعار من الجهاز (تفريغ تلقائي)</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUpdateSelectedTeamLogoUpload}
+                      className="hidden"
+                      disabled={isProcessingLogo}
+                    />
+                  </label>
+
+                  {teams[selectedManageTeam]?.logo && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveExistingTeamLogoBg}
+                      disabled={isProcessingLogo}
+                      className="p-2 bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-500/30 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                      title="إزالة خلفية الشعار الحالي لهذا الفريق وجعله شفافاً"
+                    >
+                      <Wand2 className="w-3.5 h-3.5 text-purple-400" />
+                      <span>إزالة خلفية الشعار</span>
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">

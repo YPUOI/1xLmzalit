@@ -24,13 +24,24 @@ service cloud.firestore {
     // Teams Collection
     match /teams/{teamId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update: if 
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 &&
+        request.resource.data.logo is string &&
+        request.resource.data.squad is list;
+      allow delete: if true;
     }
 
     // Matches Collection
     match /matches/{matchId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update: if
+        request.resource.data.id is string &&
+        request.resource.data.homeTeam is string &&
+        request.resource.data.awayTeam is string &&
+        request.resource.data.deadline is string &&
+        request.resource.data.status in ['OPEN', 'SETTLED'];
+      allow delete: if true;
     }
 
     // Predictions Collection

@@ -12,6 +12,7 @@ import {
   Wrench
 } from 'lucide-react';
 import { AppUser } from '../types';
+import { XlmzalitLogo } from './XlmzalitLogo';
 
 interface UclHeaderProps {
   currentUser: AppUser | null;
@@ -33,42 +34,35 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
 }) => {
   return (
     <header className="ucl-header-bg border-b border-slate-800/80 sticky top-0 z-40 backdrop-blur-2xl shadow-2xl shadow-black/80">
-      <div className="max-w-7xl mx-auto px-4 py-3 sm:py-3.5 flex flex-wrap justify-between items-center gap-4">
+      <div className="max-w-7xl mx-auto px-4 py-3 sm:py-3.5 flex flex-wrap justify-between items-center gap-4" dir="ltr">
         
-        {/* UCL Broadcast Brand Logo & Title */}
+        {/* Brand Group at Top Left: First photo on the left, Second photo next to it from the right */}
         <div 
-          className="flex items-center gap-3 sm:gap-3.5 cursor-pointer select-none group" 
+          className="flex items-center gap-3 sm:gap-4 cursor-pointer select-none group" 
           onClick={() => onSelectTab('matches')}
-          title="1XLMZALIT - UEFA Champions League"
+          title="1xlmzalit - بطولة دوري أبطال أوروبا"
         >
-          {/* Logo inside where the ball is (1xLmzalit Emblem) */}
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(0,229,255,0.35)] border border-[#00E5FF]/50 bg-[#080C19] overflow-hidden group-hover:scale-105 transition p-1">
-            <img 
-              src="/xlmzalit_emblem.png" 
-              alt="1xLmzalit Ball Emblem" 
-              className="w-full h-full object-contain"
-              referrerPolicy="no-referrer"
-            />
-          </div>
+          {/* First Photo: Exact 1xlmzalit Brand Vector Logo on Top Left */}
+          <XlmzalitLogo variant="light" size="lg" className="shrink-0 hover:scale-105 transition-transform" />
 
-          {/* Title and Subtitle Block with v1.0 next to بطولة دوري الابطال */}
-          <div className="flex flex-col items-start justify-center">
-            <h1 className="ucl-title-starball text-2xl sm:text-3xl md:text-4xl lg:text-[38px] font-black tracking-wider uppercase font-sans leading-none">
-              1XLMZALIT
-            </h1>
-            <div className="flex items-center gap-2 mt-1">
-              <p className="text-[#94A3B8] text-[11px] sm:text-xs md:text-sm font-bold tracking-wide leading-tight">
-                بطولة دوري أبطال أوروبا
-              </p>
-              <span className="text-[9px] sm:text-[10px] font-black tracking-widest text-[#00E5FF] bg-[#00E5FF]/15 border border-[#00E5FF]/35 px-1.5 py-0.5 rounded-md uppercase shadow-sm">
+          {/* Second Photo: Next to it from the right ([v1.0] badge on left + بطولة دوري أبطال أوروبا on right) */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 bg-slate-900/40 px-2.5 py-1.5 rounded-xl border border-slate-800/50">
+            {/* v1.0 Badge matching photo */}
+            <div className="bg-[#041E34] border border-[#00E5FF]/60 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-lg flex items-center justify-center shadow-[0_0_12px_rgba(0,229,255,0.25)]">
+              <span className="text-[11px] sm:text-xs font-black text-[#00E5FF] tracking-wider font-mono">
                 v1.0
               </span>
             </div>
+
+            {/* بطولة دوري أبطال أوروبا text matching photo */}
+            <span className="text-[#E2E8F0] text-xs sm:text-sm md:text-[15px] font-bold tracking-normal font-['Cairo',sans-serif] whitespace-nowrap">
+              بطولة دوري أبطال أوروبا
+            </span>
           </div>
         </div>
 
-        {/* Action Controls & User Account (Placed on the Left, dir="ltr" ensures UCL 2026/2027 is at the far top-left) */}
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap" dir="ltr">
+        {/* Action Controls & User Account on the Right */}
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap" dir="rtl">
           
           {/* UCL 2026/2027 Frosted Glass Badge at the Top Left */}
           <div className="ucl-badge-glass px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full flex items-center justify-center shrink-0 border border-[#00E5FF]/50 shadow-[0_0_18px_rgba(0,229,255,0.35)] select-none">
