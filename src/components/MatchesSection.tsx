@@ -276,7 +276,8 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
       awayScore: draft.awayScore,
       homeScorers: draft.homeScorers.slice(0, draft.homeScore).map(s => s.trim()),
       awayScorers: draft.awayScorers.slice(0, draft.awayScore).map(s => s.trim()),
-      mvp: draft.mvp?.trim() || ''
+      mvp: draft.mvp?.trim() || '',
+      updatedAt: new Date().toISOString()
     };
 
     onSavePrediction(newPred);

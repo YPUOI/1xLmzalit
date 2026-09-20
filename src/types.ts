@@ -39,6 +39,7 @@ export interface AppUser {
   points: number;
   status: 'pending' | 'approved';
   password?: string;
+  createdAt?: string;
 }
 
 export interface SecurityConfig {

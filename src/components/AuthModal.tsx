@@ -263,7 +263,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       password: cleanPassword,
       role: 'user',
       points: 0,
-      status: 'pending'
+      status: 'pending',
+      createdAt: new Date().toISOString()
     };
 
     localStorage.setItem('cl_device_user', cleanUsername);

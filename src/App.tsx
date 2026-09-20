@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { Team, Match, Prediction, AppUser } from './types';
 import { DEFAULT_TEAMS, INITIAL_MATCHES } from './data/defaultData';
-import { setFriendAuthenticated } from './utils/security';
+import { setFriendAuthenticated, applySyncedFriendPassword } from './utils/security';
 import { 
   subscribeTeams, 
   syncSaveTeam, 
@@ -22,14 +22,18 @@ import {
   syncSavePrediction, 
   syncDeletePrediction, 
   subscribeUsers, 
-  syncSaveUser 
+  syncSaveUser,
+  subscribeSecurityConfig
 } from './lib/firebase';
 import { SecurityGate } from './components/SecurityGate';
 import { UclHeader } from './components/UclHeader';
+import { UclStarsBackground } from './components/UclStarsBackground';
 import { MatchesSection } from './components/MatchesSection';
 import { SquadsSection } from './components/SquadsSection';
 import { LeaderboardSection } from './components/LeaderboardSection';
 import { AdminSection } from './components/AdminSection';
+import { RulesSlide } from './components/RulesSlide';
+import { MembersPredictionsSlide } from './components/MembersPredictionsSlide';
 import { AuthModal } from './components/AuthModal';
 import { SecuritySettingsModal } from './components/SecuritySettingsModal';
 import { ToastContainer, ToastMessage } from './components/ToastContainer';
@@ -39,7 +43,7 @@ const DB_VERSION = "2026.12_TEAMS_CLEARED";
 
 export default function App() {
   const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'matches' | 'leaderboard' | 'admin'>('matches');
+  const [activeTab, setActiveTab] = useState<'matches' | 'members_predictions' | 'leaderboard' | 'rules' | 'admin'>('matches');
 
   // Application Data States
   const [teams, setTeams] = useState<Record<string, Team>>({});
@@ -165,11 +169,18 @@ export default function App() {
       }
     });
 
+    const unsubSecurity = subscribeSecurityConfig((data) => {
+      if (data.friendPassword) {
+        applySyncedFriendPassword(data.friendPassword);
+      }
+    });
+
     return () => {
       unsubTeams();
       unsubMatches();
       unsubPreds();
       unsubUsers();
+      unsubSecurity();
     };
   }, []);
 
@@ -337,9 +348,13 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen ucl-theme-bg starball-bg text-slate-100 flex flex-col justify-between selection:bg-yellow-500/30 selection:text-yellow-200">
-      <div>
-        {/* Navigation & Brand Header */}
+    <div className="min-h-screen ucl-theme-bg relative text-slate-100 flex flex-col justify-between selection:bg-cyan-500/30 selection:text-cyan-200">
+      {/* Eye-Friendly Glowing UEFA Champions League Stars & Atmosphere Background */}
+      <UclStarsBackground />
+
+      <div className="relative z-10 flex flex-col min-h-screen justify-between">
+        <div>
+          {/* Navigation & Brand Header */}
         <UclHeader
           currentUser={currentUser}
           onOpenAuth={handleOpenAuth}
@@ -364,7 +379,7 @@ export default function App() {
               <div className="space-y-2.5 max-w-2xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00E5FF]/15 border border-[#00E5FF]/35 text-[#00E5FF] text-[11px] sm:text-xs font-black tracking-widest uppercase">
                   <span className="w-2 h-2 rounded-full bg-[#00E5FF] animate-ping" />
-                  <span>UEFA CHAMPIONS LEAGUE 2026</span>
+                  <span>UEFA CHAMPIONS LEAGUE 2026/2027</span>
                 </div>
 
                 <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white uppercase font-sans drop-shadow-sm">
@@ -379,11 +394,15 @@ export default function App() {
                 <div className="flex flex-wrap items-center gap-2 pt-1.5 text-xs">
                   <span className="bg-[#080C19] text-[#E2E8F0] border border-slate-800 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5">
                     <Trophy className="w-3.5 h-3.5 text-yellow-400" />
-                    <span>36 نادياً بنظام الدوري الموحد</span>
+                    <span>توقعات إقصائيات دوري الابطال</span>
                   </span>
                   <span className="bg-[#080C19] text-[#E2E8F0] border border-slate-800 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5">
                     <Award className="w-3.5 h-3.5 text-[#00E5FF]" />
-                    <span>نقاط فورية للهدافين ونجم اللقاء</span>
+                    <span>نقاط فورية للنتائج الصحيحة و للهدافين ونجم اللقاء</span>
+                  </span>
+                  <span className="bg-[#080C19] text-[#E2E8F0] border border-slate-800 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>حساب دقيق للنقاط دون اي هامش خطأ</span>
                   </span>
                   <span className="bg-[#00E5FF]/15 text-[#00E5FF] border border-[#00E5FF]/35 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
@@ -415,6 +434,7 @@ export default function App() {
 
           {/* Desktop & Tablet Tabs Navigation (hidden on mobile) */}
           <div className="hidden md:flex border-b border-slate-800/80 mb-6 gap-2 overflow-x-auto pb-1 select-none">
+            {/* 1. المباريات والتوقعات */}
             <button
               onClick={() => setActiveTab('matches')}
               className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
@@ -427,6 +447,20 @@ export default function App() {
               <span>المباريات والتوقعات</span>
             </button>
 
+            {/* 2. سلايد توقعات الأعضاء (بجانب المباريات والتوقعات) */}
+            <button
+              onClick={() => setActiveTab('members_predictions')}
+              className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
+                activeTab === 'members_predictions'
+                  ? 'border-[#00E5FF] text-[#00E5FF] bg-[#00E5FF]/15 shadow-[0_0_15px_rgba(0,229,255,0.2)]'
+                  : 'border-transparent text-[#94A3B8] hover:text-[#E2E8F0]'
+              }`}
+            >
+              <Users className="w-4 h-4 text-[#00E5FF]" />
+              <span>توقعات الأعضاء</span>
+            </button>
+
+            {/* 3. جدول الترتيب */}
             <button
               onClick={() => setActiveTab('leaderboard')}
               className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
@@ -437,6 +471,19 @@ export default function App() {
             >
               <Award className="w-4 h-4 text-amber-400" />
               <span>جدول الترتيب</span>
+            </button>
+
+            {/* 4. القواعد (بجانب جدول الترتيب) */}
+            <button
+              onClick={() => setActiveTab('rules')}
+              className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
+                activeTab === 'rules'
+                  ? 'border-[#00E5FF] text-[#00E5FF] bg-[#00E5FF]/15 shadow-[0_0_15px_rgba(0,229,255,0.2)]'
+                  : 'border-transparent text-[#94A3B8] hover:text-[#E2E8F0]'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-[#00E5FF]" />
+              <span>القواعد</span>
             </button>
 
             {currentUser?.role === 'admin' && (
@@ -473,8 +520,25 @@ export default function App() {
             />
           )}
 
+          {activeTab === 'members_predictions' && (
+            <MembersPredictionsSlide
+              matches={matches}
+              teams={teams}
+              predictions={predictions}
+              users={users}
+            />
+          )}
+
           {activeTab === 'leaderboard' && (
-            <LeaderboardSection users={users} />
+            <LeaderboardSection
+              users={users}
+              matches={matches}
+              predictions={predictions}
+            />
+          )}
+
+          {activeTab === 'rules' && (
+            <RulesSlide onStartPredicting={() => setActiveTab('matches')} />
           )}
 
           {activeTab === 'admin' && currentUser?.role === 'admin' && (
@@ -501,7 +565,7 @@ export default function App() {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#080C19]/95 border-t border-slate-800/80 backdrop-blur-2xl px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom">
         <button
           onClick={() => setActiveTab('matches')}
-          className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition cursor-pointer min-w-[64px] min-h-[48px] ${
+          className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition cursor-pointer min-w-[56px] min-h-[48px] ${
             activeTab === 'matches'
               ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
               : 'text-[#94A3B8] font-bold hover:text-white'
@@ -512,8 +576,20 @@ export default function App() {
         </button>
 
         <button
+          onClick={() => setActiveTab('members_predictions')}
+          className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition cursor-pointer min-w-[56px] min-h-[48px] ${
+            activeTab === 'members_predictions'
+              ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
+              : 'text-[#94A3B8] font-bold hover:text-white'
+          }`}
+        >
+          <Users className="w-5 h-5 text-[#00E5FF]" />
+          <span className="text-[10px]">التوقعات</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('leaderboard')}
-          className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition cursor-pointer min-w-[64px] min-h-[48px] ${
+          className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition cursor-pointer min-w-[56px] min-h-[48px] ${
             activeTab === 'leaderboard'
               ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
               : 'text-[#94A3B8] font-bold hover:text-white'
@@ -521,6 +597,18 @@ export default function App() {
         >
           <Award className="w-5 h-5 text-amber-400" />
           <span className="text-[10px]">الترتيب</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('rules')}
+          className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition cursor-pointer min-w-[56px] min-h-[48px] ${
+            activeTab === 'rules'
+              ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
+              : 'text-[#94A3B8] font-bold hover:text-white'
+          }`}
+        >
+          <Sparkles className="w-5 h-5 text-[#00E5FF]" />
+          <span className="text-[10px]">القواعد</span>
         </button>
 
         {currentUser?.role === 'admin' && (
@@ -593,10 +681,11 @@ export default function App() {
         isAdmin={currentUser?.role === 'admin'}
       />
 
-      {/* Footer */}
-      <footer className="mt-12 py-6 border-t border-slate-800/80 text-center text-xs text-slate-500">
-        <p>1XLMZALIT UCL 2026 Prediction Platform &copy; جميع الحقوق محفوظة</p>
-      </footer>
+        {/* Footer */}
+        <footer className="mt-12 py-6 border-t border-slate-800/80 text-center text-xs text-slate-500">
+          <p>1XLMZALIT UCL 2026/2027 Prediction Platform &copy; جميع الحقوق محفوظة</p>
+        </footer>
+      </div>
     </div>
   );
 }

@@ -16,8 +16,9 @@ import {
   setFriendAuthenticated,
   applySyncedFriendPassword
 } from '../utils/security';
-import { subscribeSecurityConfig } from '../lib/firebase';
+import { subscribeSecurityConfig, getLatestFriendPassword } from '../lib/firebase';
 import { SecurityConfig } from '../types';
+import { UclStarsBackground } from './UclStarsBackground';
 
 interface SecurityGateProps {
   onUnlock: () => void;
@@ -28,13 +29,26 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [syncedPassword, setSyncedPassword] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [, setConfig] = useState<SecurityConfig>(getSecurityConfig());
 
   useEffect(() => {
     setConfig(getSecurityConfig());
-    // Listen for real-time changes to the friend password in Firestore
+    
+    // Immediate fetch of latest cloud password
+    getLatestFriendPassword().then(pass => {
+      if (pass) {
+        setSyncedPassword(pass);
+        applySyncedFriendPassword(pass);
+        setConfig(getSecurityConfig());
+      }
+    });
+
+    // Listen for real-time changes to the friend password in Firestore across all members
     const unsub = subscribeSecurityConfig((data) => {
       if (data.friendPassword) {
+        setSyncedPassword(data.friendPassword);
         applySyncedFriendPassword(data.friendPassword);
         setConfig(getSecurityConfig());
       }
@@ -42,30 +56,53 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
     return () => unsub();
   }, []);
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    if (!password.trim()) {
+    const input = password.trim();
+    if (!input) {
       setErrorMsg('الرجاء إدخال كلمة مرور الأصدقاء للدخول.');
       return;
     }
 
-    const isValid = verifyFriendPassword(password);
+    setIsVerifying(true);
+
+    // Check against memory-synced password or local storage config
+    let isValid = (syncedPassword && input.toLowerCase() === syncedPassword.trim().toLowerCase()) 
+      || verifyFriendPassword(input);
+
+    // If not matching, query live Firestore directly in real-time
+    if (!isValid) {
+      const livePass = await getLatestFriendPassword();
+      if (livePass) {
+        setSyncedPassword(livePass);
+        applySyncedFriendPassword(livePass);
+        if (input.toLowerCase() === livePass.trim().toLowerCase()) {
+          isValid = true;
+        }
+      }
+    }
+
+    setIsVerifying(false);
+
     if (isValid) {
       setSuccessMsg('تم التحقق بنجاح! جاري فتح المنصة...');
       setTimeout(() => {
         setFriendAuthenticated(true);
         onUnlock();
-      }, 500);
+      }, 400);
     } else {
       setErrorMsg('كلمة المرور غير صحيحة! هذه المنصة مخصصة للأصدقاء فقط.');
     }
   };
 
   return (
-    <div className="min-h-screen ucl-theme-bg starball-bg flex flex-col items-center justify-center p-4 relative overflow-hidden text-slate-100">
+    <div className="min-h-screen ucl-theme-bg flex flex-col items-center justify-center p-4 relative overflow-hidden text-slate-100">
+      {/* Eye-Friendly Glowing UEFA Champions League Stars & Atmosphere Background */}
+      <UclStarsBackground />
+
       {/* Background Lighting Orbs */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-blue-600/25 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-80 h-80 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />

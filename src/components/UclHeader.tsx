@@ -35,36 +35,13 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
     <header className="ucl-header-bg border-b border-slate-800/80 sticky top-0 z-40 backdrop-blur-2xl shadow-2xl shadow-black/80">
       <div className="max-w-7xl mx-auto px-4 py-3 sm:py-3.5 flex flex-wrap justify-between items-center gap-4">
         
-        {/* UCL Broadcast Brand Logo & Title (Aligned horizontally with vertical centering) */}
+        {/* UCL Broadcast Brand Logo & Title */}
         <div 
-          className="flex items-center gap-3 sm:gap-4 cursor-pointer select-none group" 
+          className="flex items-center gap-3 sm:gap-3.5 cursor-pointer select-none group" 
           onClick={() => onSelectTab('matches')}
-          dir="ltr"
           title="1XLMZALIT - UEFA Champions League"
         >
-          {/* UCL 2026 Frosted Glass Badge on Left */}
-          <div className="ucl-badge-glass px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full flex items-center justify-center shrink-0">
-            <span className="text-[11px] sm:text-xs font-black tracking-widest text-[#00E5FF] uppercase">
-              UCL 2026
-            </span>
-          </div>
-
-          {/* Title and Subtitle Block (Center) */}
-          <div className="flex flex-col items-center justify-center text-center">
-            <div className="flex items-center gap-2">
-              <h1 className="ucl-title-starball text-2xl sm:text-3xl md:text-4xl lg:text-[38px] font-black tracking-wider uppercase font-sans leading-none">
-                1XLMZALIT
-              </h1>
-              <span className="text-[10px] font-black tracking-widest text-[#00E5FF] bg-[#00E5FF]/10 border border-[#00E5FF]/30 px-1.5 py-0.5 rounded-md uppercase hidden sm:inline-block">
-                v1.0
-              </span>
-            </div>
-            <p className="text-[#94A3B8] text-[11px] sm:text-xs md:text-sm font-bold tracking-wide mt-1 leading-tight" dir="rtl">
-              بطولة دوري أبطال أوروبا
-            </p>
-          </div>
-
-          {/* Logo inside where the ball is (Replacing Trophy) */}
+          {/* Logo inside where the ball is (1xLmzalit Emblem) */}
           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(0,229,255,0.35)] border border-[#00E5FF]/50 bg-[#080C19] overflow-hidden group-hover:scale-105 transition p-1">
             <img 
               src="/xlmzalit_emblem.png" 
@@ -73,23 +50,32 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
               referrerPolicy="no-referrer"
             />
           </div>
+
+          {/* Title and Subtitle Block with v1.0 next to بطولة دوري الابطال */}
+          <div className="flex flex-col items-start justify-center">
+            <h1 className="ucl-title-starball text-2xl sm:text-3xl md:text-4xl lg:text-[38px] font-black tracking-wider uppercase font-sans leading-none">
+              1XLMZALIT
+            </h1>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-[#94A3B8] text-[11px] sm:text-xs md:text-sm font-bold tracking-wide leading-tight">
+                بطولة دوري أبطال أوروبا
+              </p>
+              <span className="text-[9px] sm:text-[10px] font-black tracking-widest text-[#00E5FF] bg-[#00E5FF]/15 border border-[#00E5FF]/35 px-1.5 py-0.5 rounded-md uppercase shadow-sm">
+                v1.0
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Action Controls & User Account */}
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+        {/* Action Controls & User Account (Placed on the Left, dir="ltr" ensures UCL 2026/2027 is at the far top-left) */}
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap" dir="ltr">
           
-          {/* Rules Slide Button */}
-          <button
-            onClick={() => onSelectTab('rules')}
-            className={`text-xs font-bold px-3 py-2 rounded-xl border transition flex items-center gap-1.5 cursor-pointer shadow-sm ${
-              activeTab === 'rules'
-                ? 'bg-[#00E5FF]/20 border-[#00E5FF] text-[#00E5FF]'
-                : 'bg-[#10172A] hover:bg-[#16213B] text-[#94A3B8] hover:text-white border-slate-800'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
-            <span>سلايد القواعد</span>
-          </button>
+          {/* UCL 2026/2027 Frosted Glass Badge at the Top Left */}
+          <div className="ucl-badge-glass px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full flex items-center justify-center shrink-0 border border-[#00E5FF]/50 shadow-[0_0_18px_rgba(0,229,255,0.35)] select-none">
+            <span className="text-[11px] sm:text-xs font-black tracking-widest text-[#00E5FF] uppercase">
+              UCL 2026/2027
+            </span>
+          </div>
           
           {/* Security & Biometric Settings Button - تحت الصيانة */}
           <button

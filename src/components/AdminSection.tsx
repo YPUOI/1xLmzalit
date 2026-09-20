@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   UserCheck, 
   Clock, 
@@ -25,7 +25,12 @@ import {
   Layers,
   ChevronDown,
   ChevronUp,
-  RotateCw
+  RotateCw,
+  Search,
+  Activity,
+  Flame,
+  Award,
+  Filter
 } from 'lucide-react';
 import { Match, Team, AppUser, Prediction, SecurityConfig } from '../types';
 import { getSecurityConfig, saveSecurityConfig } from '../utils/security';
@@ -136,6 +141,38 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     });
     return () => unsub();
   }, []);
+
+  // Activity Log State & Processing
+  const [activitySearch, setActivitySearch] = useState<string>('');
+  const [activityMatchFilter, setActivityMatchFilter] = useState<string>('ALL');
+  const [showActivityLog, setShowActivityLog] = useState<boolean>(true);
+
+  const activityLogs = useMemo(() => {
+    const list = Object.values(predictions).map(pred => {
+      const match = matches.find(m => m.id === pred.matchId);
+      const isPastDeadline = match ? new Date(match.deadline).getTime() <= Date.now() : false;
+      return {
+        pred,
+        match,
+        isPastDeadline,
+        timestamp: pred.updatedAt ? new Date(pred.updatedAt).getTime() : 0
+      };
+    });
+
+    return list
+      .filter(item => {
+        if (activityMatchFilter !== 'ALL' && item.pred.matchId !== activityMatchFilter) return false;
+        if (activitySearch.trim()) {
+          const q = activitySearch.trim().toLowerCase();
+          const matchesUsername = item.pred.username.toLowerCase().includes(q);
+          const matchesHome = item.match?.homeTeam.toLowerCase().includes(q);
+          const matchesAway = item.match?.awayTeam.toLowerCase().includes(q);
+          return matchesUsername || matchesHome || matchesAway;
+        }
+        return true;
+      })
+      .sort((a, b) => b.timestamp - a.timestamp);
+  }, [predictions, matches, activitySearch, activityMatchFilter]);
 
   const notify = (msg: string, type: 'success' | 'error' | 'info' = 'success') => {
     if (onShowToast) {
@@ -283,24 +320,17 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     Object.values(predictions).forEach(pred => {
       if (pred.matchId === match.id) {
         let pts = 0;
-        // Exact Score
+        // Exact Score (5 points)
         if (pred.homeScore === result.homeScore && pred.awayScore === result.awayScore) {
           pts += 5;
-        } else {
-          // Correct Outcome
-          const actualOutcome = Math.sign(result.homeScore - result.awayScore);
-          const predOutcome = Math.sign(pred.homeScore - pred.awayScore);
-          if (actualOutcome === predOutcome) {
-            pts += 3;
-          }
         }
 
-        // Scorers points
+        // Scorers points (1 point for each correct goal scorer)
         (pred.homeScorers || []).forEach(sc => {
-          if (sc && result.homeScorers.includes(sc)) pts += 2;
+          if (sc && result.homeScorers.includes(sc)) pts += 1;
         });
         (pred.awayScorers || []).forEach(sc => {
-          if (sc && result.awayScorers.includes(sc)) pts += 2;
+          if (sc && result.awayScorers.includes(sc)) pts += 1;
         });
 
         // MVP point
@@ -494,20 +524,32 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     notify('تم حذف وإفراغ كافة الفرق وجميع اللاعبين بنجاح!', 'info');
   };
 
-  const handleSaveSecurity = (e: React.FormEvent) => {
+  const handleSaveSecurity = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFriendPassword.trim()) {
-      alert('الرجاء إدخال كلمة مرور صالحة!');
+      notify('الرجاء إدخال كلمة مرور صالحة!', 'error');
       return;
     }
+    const cleanPass = newFriendPassword.trim();
+    setIsSavingSecurity(true);
     const updated = {
       ...securityConfig,
-      friendPassword: newFriendPassword.trim()
+      friendPassword: cleanPass
     };
     saveSecurityConfig(updated);
     setSecurityConfig(updated);
-    setSecuritySuccess('تم تحديث كلمة مرور الأصدقاء بنجاح!');
-    setTimeout(() => setSecuritySuccess(null), 3500);
+    try {
+      await syncSaveSecurityConfig(cleanPass);
+      notify('تم تحديث وتعميم كلمة مرور الأصدقاء بنجاح عبر السحابة!', 'success');
+      setSecuritySuccess(`تم تحديث كلمة مرور الأصدقاء بنجاح إلى: "${cleanPass}" وتعميمها على كافة الأجهزة`);
+    } catch (err) {
+      console.error(err);
+      notify('تم الحفظ محلياً مع تعذر المزامنة السحابية المؤقتة', 'info');
+      setSecuritySuccess(`تم تحديث كلمة المرور محلياً إلى: "${cleanPass}"`);
+    } finally {
+      setIsSavingSecurity(false);
+      setTimeout(() => setSecuritySuccess(null), 4500);
+    }
   };
 
   const isVerifiedAdmin = currentUser?.role === 'admin' && sessionStorage.getItem('cl_admin_verified') === '05082007';
@@ -600,7 +642,12 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
 
         <form onSubmit={handleSaveSecurity} className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1">كلمة مرور الأصدقاء الحالية</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-slate-300">تعديل كلمة مرور الأصدقاء</label>
+              <span className="text-[10px] text-cyan-400 font-bold bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800">
+                الحالية: {securityConfig.friendPassword}
+              </span>
+            </div>
             <input
               type="text"
               value={newFriendPassword}
@@ -613,9 +660,20 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           <div className="flex items-end">
             <button
               type="submit"
-              className="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-black text-xs py-3 px-4 rounded-xl transition cursor-pointer"
+              disabled={isSavingSecurity}
+              className="w-full bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-slate-950 font-black text-xs py-3 px-4 rounded-xl transition cursor-pointer flex items-center justify-center gap-2"
             >
-              حفظ وتحديث كلمة المرور
+              {isSavingSecurity ? (
+                <>
+                  <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>جاري المزامنة مع السحابة...</span>
+                </>
+              ) : (
+                <>
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>حفظ وتعميم كلمة المرور</span>
+                </>
+              )}
             </button>
           </div>
 
@@ -803,7 +861,201 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
         </div>
       </div>
 
-      {/* 4. Match Creation Card */}
+      {/* 4. Activity Log (سجل النشاطات) Card */}
+      <div className="ucl-card p-6 rounded-3xl border border-cyan-500/30 relative overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-[#00E5FF]">
+              <Activity className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-black text-white">سجل النشاطات (Activity Log)</h3>
+                <span className="text-[10px] bg-cyan-950/80 text-[#00E5FF] border border-cyan-500/30 px-2 py-0.5 rounded-full font-bold">
+                  مراقبة حية
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                يوضح آخر التوقعات التي تم إدخالها من قبل الأعضاء لتسهيل مراقبة سير العمل والتحقق من التوقيتات.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-xs flex items-center gap-2">
+              <span className="text-slate-400">إجمالي التوقعات:</span>
+              <span className="font-black text-[#00E5FF]">{Object.keys(predictions).length}</span>
+            </div>
+            <button
+              onClick={() => setShowActivityLog(prev => !prev)}
+              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition cursor-pointer"
+              title={showActivityLog ? 'طي السجل' : 'توسيع السجل'}
+            >
+              {showActivityLog ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        {showActivityLog && (
+          <div className="mt-4 space-y-4">
+            {/* Filters bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {/* Search input */}
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={activitySearch}
+                  onChange={(e) => setActivitySearch(e.target.value)}
+                  placeholder="ابحث باسم العضو أو الفريق..."
+                  className="w-full bg-slate-900 border border-slate-700/80 rounded-xl pr-9 pl-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400"
+                />
+              </div>
+
+              {/* Match filter */}
+              <select
+                value={activityMatchFilter}
+                onChange={(e) => setActivityMatchFilter(e.target.value)}
+                className="bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400"
+              >
+                <option value="ALL">جميع المباريات ({matches.length})</option>
+                {matches.map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.homeTeam} × {m.awayTeam} {m.status === 'SETTLED' ? '(معتمدة)' : '(مفتوحة)'}
+                  </option>
+                ))}
+              </select>
+
+              {/* Clear Filter button if active */}
+              {(activitySearch || activityMatchFilter !== 'ALL') && (
+                <button
+                  onClick={() => { setActivitySearch(''); setActivityMatchFilter('ALL'); }}
+                  className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>إعادة ضبط التصفية</span>
+                </button>
+              )}
+            </div>
+
+            {/* Logs Table / List */}
+            {activityLogs.length === 0 ? (
+              <div className="p-8 text-center bg-slate-900/40 rounded-2xl border border-slate-800 text-xs text-slate-500">
+                لا توجد نشاطات أو توقعات مسجلة تطابق التصفية الحالية.
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-slate-800">
+                <table className="w-full text-right border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-slate-900/80 border-b border-slate-800 text-slate-400 font-bold">
+                      <th className="p-3">وقت الإدخال</th>
+                      <th className="p-3">المتسابق</th>
+                      <th className="p-3">المباراة</th>
+                      <th className="p-3 text-center">النتيجة المتوقعة</th>
+                      <th className="p-3">الهدافون المتوقعون</th>
+                      <th className="p-3">رجل المباراة (MVP)</th>
+                      <th className="p-3 text-center">حالة المهلة</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {activityLogs.slice(0, 50).map(({ pred, match, isPastDeadline }) => (
+                      <tr key={`${pred.matchId}_${pred.username}`} className="hover:bg-slate-900/50 transition">
+                        {/* Timestamp */}
+                        <td className="p-3 font-mono text-slate-400 whitespace-nowrap">
+                          {pred.updatedAt ? (
+                            <div>
+                              <span className="block text-white font-bold">
+                                {new Date(pred.updatedAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              <span className="text-[10px] text-slate-500">
+                                {new Date(pred.updatedAt).toLocaleDateString('ar-EG', { month: 'numeric', day: 'numeric' })}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-slate-500 text-[10px]">مسجل</span>
+                          )}
+                        </td>
+
+                        {/* User */}
+                        <td className="p-3 font-bold text-white whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-black text-[10px]">
+                              {pred.username.charAt(0).toUpperCase()}
+                            </div>
+                            <span>{pred.username}</span>
+                          </div>
+                        </td>
+
+                        {/* Match */}
+                        <td className="p-3 text-slate-300 whitespace-nowrap">
+                          {match ? (
+                            <div>
+                              <span className="font-bold text-white">{match.homeTeam} × {match.awayTeam}</span>
+                              <span className="block text-[10px] text-slate-500">
+                                {match.status === 'SETTLED' ? 'منتهية ومعتمدة' : 'مفتوحة'}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-slate-500">مباراة #{pred.matchId}</span>
+                          )}
+                        </td>
+
+                        {/* Score */}
+                        <td className="p-3 text-center whitespace-nowrap">
+                          <span className="inline-block bg-[#080C19] border border-cyan-500/40 px-2.5 py-1 rounded-lg font-mono font-black text-cyan-300 text-sm">
+                            {pred.homeScore} - {pred.awayScore}
+                          </span>
+                        </td>
+
+                        {/* Scorers */}
+                        <td className="p-3 text-slate-300 max-w-xs truncate">
+                          {[...(pred.homeScorers || []), ...(pred.awayScorers || [])].filter(Boolean).length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {[...(pred.homeScorers || []), ...(pred.awayScorers || [])].filter(Boolean).map((sc, i) => (
+                                <span key={i} className="text-[10px] bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded border border-slate-700">
+                                  {sc}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-slate-600 text-[10px]">لا يوجد</span>
+                          )}
+                        </td>
+
+                        {/* MVP */}
+                        <td className="p-3 whitespace-nowrap">
+                          {pred.mvp ? (
+                            <span className="text-[11px] font-bold text-purple-300 bg-purple-950/60 border border-purple-800 px-2 py-0.5 rounded">
+                              {pred.mvp}
+                            </span>
+                          ) : (
+                            <span className="text-slate-600 text-[10px]">لم يُحدد</span>
+                          )}
+                        </td>
+
+                        {/* Deadline Status */}
+                        <td className="p-3 text-center whitespace-nowrap">
+                          {isPastDeadline ? (
+                            <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-semibold border border-slate-700">
+                              مغلقة
+                            </span>
+                          ) : (
+                            <span className="text-[10px] bg-emerald-950/60 text-emerald-400 px-2 py-0.5 rounded font-bold border border-emerald-800">
+                              في الموعد
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 5. Match Creation Card */}
       <div className="ucl-card p-6 rounded-3xl border border-amber-500/20">
         <h3 className="text-xl font-black text-amber-400 mb-4 flex items-center gap-2.5 pb-3 border-b border-slate-800">
           <PlusCircle className="w-6 h-6 text-amber-500" />

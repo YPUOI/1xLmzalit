@@ -3,6 +3,7 @@ import { getAuth } from 'firebase/auth';
 import { 
   getFirestore, 
   doc, 
+  getDoc,
   getDocFromServer,
   collection, 
   onSnapshot, 
@@ -236,23 +237,35 @@ export const syncDeleteUser = async (username: string) => {
 
 // 5. Settings / Security Config Synchronization
 export const subscribeSecurityConfig = (onUpdate: (data: { friendPassword?: string }) => void) => {
-  const path = 'settings';
+  const docRef = doc(db, 'settings', 'security');
   return onSnapshot(
-    collection(db, path),
-    (snapshot) => {
-      snapshot.forEach(docSnap => {
-        if (docSnap.id === 'security') {
-          const data = docSnap.data() as { friendPassword?: string };
-          if (data && data.friendPassword) {
-            onUpdate(data);
-          }
+    docRef,
+    (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data() as { friendPassword?: string };
+        if (data && data.friendPassword) {
+          onUpdate(data);
         }
-      });
+      }
     },
     (error) => {
       console.warn("Settings sync notice:", error);
     }
   );
+};
+
+export const getLatestFriendPassword = async (): Promise<string | null> => {
+  try {
+    const docRef = doc(db, 'settings', 'security');
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      const data = snap.data() as { friendPassword?: string };
+      return data?.friendPassword || null;
+    }
+  } catch (err) {
+    console.warn("Could not fetch latest friend password from Firestore:", err);
+  }
+  return null;
 };
 
 export const syncSaveSecurityConfig = async (friendPassword: string) => {
