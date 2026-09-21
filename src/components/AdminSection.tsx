@@ -150,7 +150,48 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   // Activity Log State & Processing
   const [activitySearch, setActivitySearch] = useState<string>('');
   const [activityMatchFilter, setActivityMatchFilter] = useState<string>('ALL');
-  const [showActivityLog, setShowActivityLog] = useState<boolean>(true);
+
+  // Collapsible Accordion Sections for Admin Portal (show titles only with arrow to expand)
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    security: false,
+    users: false,
+    points: false,
+    activityLog: false,
+    addMatch: false,
+    manageMatches: false,
+    teams: false,
+    resetDb: false
+  });
+
+  const toggleSection = (key: string) => {
+    setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const expandAllSections = () => {
+    setExpandedSections({
+      security: true,
+      users: true,
+      points: true,
+      activityLog: true,
+      addMatch: true,
+      manageMatches: true,
+      teams: true,
+      resetDb: true
+    });
+  };
+
+  const collapseAllSections = () => {
+    setExpandedSections({
+      security: false,
+      users: false,
+      points: false,
+      activityLog: false,
+      addMatch: false,
+      manageMatches: false,
+      teams: false,
+      resetDb: false
+    });
+  };
 
   const activityLogs = useMemo(() => {
     const list = Object.values(predictions).map(pred => {
@@ -725,283 +766,418 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   }
 
   return (
-    <div className="space-y-8">
-      {/* 1. Friends Access Password & Biometric Settings Card */}
-      <div className="ucl-card p-6 rounded-3xl border border-yellow-500/30">
-        <h3 className="text-xl font-black text-yellow-400 flex items-center gap-2.5 mb-2">
-          <KeyRound className="w-6 h-6 text-yellow-400" />
-          <span>إعدادات كلمة مرور الأصدقاء والحماية</span>
-        </h3>
-        <p className="text-xs text-slate-400 mb-6 pb-3 border-b border-slate-800">
-          يمكنك تغيير كلمة المرور التي يطلبها النظام من أصدقائك للوصول إلى المنصة أو الاطلاع عليها.
-        </p>
-
-        {securitySuccess && (
-          <div className="mb-4 p-3 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-200 text-xs font-bold">
-            {securitySuccess}
-          </div>
-        )}
-
-        <form onSubmit={handleSaveSecurity} className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-bold text-slate-300">تعديل كلمة مرور الأصدقاء</label>
-              <span className="text-[10px] text-cyan-400 font-bold bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800">
-                الحالية: {securityConfig.friendPassword}
-              </span>
-            </div>
-            <input
-              type="text"
-              value={newFriendPassword}
-              onChange={(e) => setNewFriendPassword(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-yellow-300 font-black outline-none focus:border-yellow-400"
-              placeholder="أدخل كلمة المرور الجديدة..."
-            />
-          </div>
-
-          <div className="flex items-end">
-            <button
-              type="submit"
-              disabled={isSavingSecurity}
-              className="w-full bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-slate-950 font-black text-xs py-3 px-4 rounded-xl transition cursor-pointer flex items-center justify-center gap-2"
-            >
-              {isSavingSecurity ? (
-                <>
-                  <RotateCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>جاري المزامنة مع السحابة...</span>
-                </>
-              ) : (
-                <>
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
-                  <span>حفظ وتعميم كلمة المرور</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
-            <div>
-              <span className="font-bold text-white block">حالة البصمة البيومترية:</span>
-              <span className="text-[11px] text-slate-400">
-                {securityConfig.biometricEnrolled ? 'مفعلة على هذا الجهاز' : 'غير مفعلة بعد'}
-              </span>
-            </div>
-            <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-              securityConfig.biometricEnrolled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
-            }`}>
-              {securityConfig.biometricEnrolled ? 'نشطة' : 'غير مسجلة'}
-            </span>
-          </div>
-        </form>
-      </div>
-
-      {/* 2. User Approval & Membership Control Card */}
-      <div className="ucl-card p-6 rounded-3xl border border-yellow-500/20">
-        <div className="mb-2">
-          <h3 className="text-xl font-black text-yellow-400 flex items-center gap-2.5">
-            <UserCheck className="w-6 h-6 text-yellow-400" />
-            <span>إدارة طلبات الانضمام والمستخدمين</span>
-          </h3>
+    <div className="space-y-6">
+      {/* Top Organization Bar: Expand / Collapse All */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-slate-900/70 rounded-2xl border border-slate-800">
+        <div className="text-xs text-slate-300">
+          <span className="font-black text-white ml-1.5">لوحة تحكم الإدارة:</span>
+          <span className="text-slate-400">انقر على عنوان أي قسم أو السهم لتوسيعه وعرض كامل تفاصيله، أو طيّه للتبسيط والترتيب.</span>
         </div>
-        <p className="text-xs text-slate-400 mb-6 pb-3 border-b border-slate-800">
-          موافقة أو رفض الأعضاء الجدد قبل السماح لهم بالتوقع والظهور في جدول الترتيب.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Pending Users */}
-          <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-            <h4 className="text-sm font-bold text-amber-400 mb-3 flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              <span>طلبات معلقة ({pendingUsers.length})</span>
-            </h4>
-            <div className="space-y-2.5 max-h-60 overflow-y-auto">
-              {pendingUsers.length === 0 ? (
-                <p className="text-xs text-slate-500 text-center py-4">لا توجد طلبات معلقة.</p>
-              ) : (
-                pendingUsers.map(u => (
-                  <div key={u.username} className="p-3 bg-slate-950 rounded-xl border border-amber-500/30 flex items-center justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <span className="font-bold text-xs text-white block truncate">{u.username}</span>
-                      {u.email && (
-                        <span className="text-[10px] text-cyan-400 font-mono block truncate" dir="ltr">
-                          {u.email}
-                        </span>
-                      )}
-                      <span className="text-[10px] text-amber-400 font-semibold">بانتظار الموافقة</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => handleApproveUser(u.username)}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer"
-                        title="قبول"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleRejectUser(u.username)}
-                        className="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer"
-                        title="رفض"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Approved Users */}
-          <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-            <h4 className="text-sm font-bold text-emerald-400 mb-3 flex items-center gap-2">
-              <UserCheck className="w-4 h-4" />
-              <span>الأعضاء المقبولون ({approvedUsers.length})</span>
-            </h4>
-            <div className="space-y-2.5 max-h-60 overflow-y-auto">
-              {approvedUsers.length === 0 ? (
-                <p className="text-xs text-slate-500 text-center py-4">لا يوجد أعضاء مقبولون حالياً.</p>
-              ) : (
-                approvedUsers.map(u => (
-                  <div key={u.username} className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <span className="font-bold text-xs text-white block truncate">{u.username}</span>
-                      {u.email && (
-                        <span className="text-[10px] text-cyan-400 font-mono block truncate" dir="ltr">
-                          {u.email}
-                        </span>
-                      )}
-                      <span className="text-[10px] text-slate-400 font-semibold">{u.points || 0} نقطة</span>
-                    </div>
-                    <button
-                      onClick={() => handleRevokeUser(u.username)}
-                      className="bg-slate-800 hover:bg-rose-900 text-rose-400 border border-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-lg transition cursor-pointer shrink-0"
-                    >
-                      تعليق
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Active Admins */}
-          <div className="bg-slate-900/60 p-4 rounded-2xl border border-rose-500/30">
-            <h4 className="text-sm font-bold text-rose-400 mb-3 flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4" />
-              <span>الآدمنز المتواجدون ({adminUsers.length})</span>
-            </h4>
-            <div className="space-y-2.5 max-h-60 overflow-y-auto">
-              {adminUsers.map(u => (
-                <div key={u.username} className="p-3 bg-slate-950 rounded-xl border border-rose-500/30 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                    <div>
-                      <span className="font-bold text-xs text-white block">{u.username}</span>
-                      <span className="text-[10px] text-rose-400 font-semibold">مدير نظام أساسي</span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] bg-rose-950 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-bold">
-                    نشط
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Points Correction Card */}
-      <div className="ucl-card p-6 rounded-3xl border border-amber-500/30">
-        <h3 className="text-xl font-black text-amber-400 mb-2 flex items-center gap-2.5">
-          <Calculator className="w-6 h-6 text-amber-400" />
-          <span>تعديل نقاط المتوقعين (تصحيح أخطاء)</span>
-        </h3>
-        <p className="text-xs text-slate-400 mb-4 pb-3 border-b border-slate-800">
-          يمكنك إضافة أو خصم أو تعيين نقاط لأي عضو في حال وجود خطأ في الاحتساب.
-        </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          <select
-            value={selectedUserForPoints}
-            onChange={(e) => setSelectedUserForPoints(e.target.value)}
-            className="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white font-bold outline-none focus:border-amber-400"
-          >
-            <option value="">اختر العضو...</option>
-            {users.filter(u => u.role !== 'admin').map(u => (
-              <option key={u.username} value={u.username}>
-                {u.username} ({u.points || 0} نقطة)
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={pointsAction}
-            onChange={(e) => setPointsAction(e.target.value as 'add' | 'sub' | 'set')}
-            className="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white font-bold outline-none focus:border-amber-400"
-          >
-            <option value="add">إضافة نقاط (+)</option>
-            <option value="sub">خصم نقاط (-)</option>
-            <option value="set">تعيين إجمالي النقاط (=)</option>
-          </select>
-
-          <input
-            type="number"
-            min="0"
-            value={pointsValue}
-            onChange={(e) => setPointsValue(parseInt(e.target.value) || 0)}
-            placeholder="عدد النقاط..."
-            className="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-amber-400"
-          />
-
+        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
           <button
-            onClick={handleApplyPointsModification}
-            className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
+            type="button"
+            onClick={expandAllSections}
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer border border-slate-700 hover:border-slate-600 flex items-center gap-1.5 active:scale-95"
           >
-            <PenSquare className="w-3.5 h-3.5" />
-            <span>تنفيذ التعديل</span>
+            <ChevronDown className="w-3.5 h-3.5 text-cyan-400" />
+            <span>توسيع الكل</span>
+          </button>
+          <button
+            type="button"
+            onClick={collapseAllSections}
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer border border-slate-700 hover:border-slate-600 flex items-center gap-1.5 active:scale-95"
+          >
+            <ChevronUp className="w-3.5 h-3.5 text-amber-400" />
+            <span>طي الكل</span>
           </button>
         </div>
       </div>
 
+      {/* 1. Friends Access Password & Biometric Settings Card */}
+      <div className="ucl-card rounded-3xl border border-yellow-500/30 overflow-hidden transition-all duration-200">
+        <button
+          type="button"
+          onClick={() => toggleSection('security')}
+          className="w-full p-5 sm:p-6 text-right flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-400 shrink-0">
+              <KeyRound className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 text-right">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base sm:text-lg font-black text-yellow-400">إعدادات كلمة مرور الأصدقاء والحماية</h3>
+                <span className="text-[10px] text-cyan-300 font-bold bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800">
+                  الحالية: {securityConfig.friendPassword}
+                </span>
+                {securityConfig.biometricEnrolled && (
+                  <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800 hidden sm:inline">
+                    بصمة نشطة
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+                يمكنك تغيير كلمة المرور التي يطلبها النظام من أصدقائك للوصول إلى المنصة أو الاطلاع عليها.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs text-slate-400 font-bold hidden md:inline">
+              {expandedSections.security ? 'إخفاء' : 'عرض التفاصيل'}
+            </span>
+            <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.security ? 'rotate-180 bg-yellow-500/20 text-yellow-300 border-yellow-500/40' : 'hover:border-yellow-400/50'}`}>
+              <ChevronDown className="w-4 h-4" />
+            </div>
+          </div>
+        </button>
+
+        {expandedSections.security && (
+          <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1">
+            <p className="text-xs text-slate-400 my-4 pb-3 border-b border-slate-800 sm:hidden">
+              يمكنك تغيير كلمة المرور التي يطلبها النظام من أصدقائك للوصول إلى المنصة أو الاطلاع عليها.
+            </p>
+
+            {securitySuccess && (
+              <div className="mb-4 p-3 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-200 text-xs font-bold">
+                {securitySuccess}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveSecurity} className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-300">تعديل كلمة مرور الأصدقاء</label>
+                  <span className="text-[10px] text-cyan-400 font-bold bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800">
+                    الحالية: {securityConfig.friendPassword}
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={newFriendPassword}
+                  onChange={(e) => setNewFriendPassword(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-yellow-300 font-black outline-none focus:border-yellow-400"
+                  placeholder="أدخل كلمة المرور الجديدة..."
+                />
+              </div>
+
+              <div className="flex items-end">
+                <button
+                  type="submit"
+                  disabled={isSavingSecurity}
+                  className="w-full bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-slate-950 font-black text-xs py-3 px-4 rounded-xl transition cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {isSavingSecurity ? (
+                    <>
+                      <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>جاري المزامنة مع السحابة...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5 stroke-[3]" />
+                      <span>حفظ وتعميم كلمة المرور</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                <div>
+                  <span className="font-bold text-white block">حالة البصمة البيومترية:</span>
+                  <span className="text-[11px] text-slate-400">
+                    {securityConfig.biometricEnrolled ? 'مفعلة على هذا الجهاز' : 'غير مفعلة بعد'}
+                  </span>
+                </div>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
+                  securityConfig.biometricEnrolled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
+                }`}>
+                  {securityConfig.biometricEnrolled ? 'نشطة' : 'غير مسجلة'}
+                </span>
+              </div>
+            </form>
+          </div>
+        )}
+      </div>
+
+      {/* 2. User Approval & Membership Control Card */}
+      <div className="ucl-card rounded-3xl border border-yellow-500/20 overflow-hidden transition-all duration-200">
+        <button
+          type="button"
+          onClick={() => toggleSection('users')}
+          className="w-full p-5 sm:p-6 text-right flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-400 shrink-0">
+              <UserCheck className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 text-right">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base sm:text-lg font-black text-yellow-400">إدارة طلبات الانضمام والمستخدمين</h3>
+                {pendingUsers.length > 0 ? (
+                  <span className="text-[10px] text-amber-300 font-bold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/40 animate-pulse">
+                    طلبات معلقة ({pendingUsers.length})
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                    لا طلبات معلقة
+                  </span>
+                )}
+                <span className="text-[10px] text-emerald-300 bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-800/60">
+                  المقبولون ({approvedUsers.length})
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+                موافقة أو رفض الأعضاء الجدد قبل السماح لهم بالتوقع والظهور في جدول الترتيب.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs text-slate-400 font-bold hidden md:inline">
+              {expandedSections.users ? 'إخفاء' : 'عرض التفاصيل'}
+            </span>
+            <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.users ? 'rotate-180 bg-yellow-500/20 text-yellow-300 border-yellow-500/40' : 'hover:border-yellow-400/50'}`}>
+              <ChevronDown className="w-4 h-4" />
+            </div>
+          </div>
+        </button>
+
+        {expandedSections.users && (
+          <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1">
+            <p className="text-xs text-slate-400 my-4 pb-3 border-b border-slate-800 sm:hidden">
+              موافقة أو رفض الأعضاء الجدد قبل السماح لهم بالتوقع والظهور في جدول الترتيب.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+              {/* Pending Users */}
+              <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+                <h4 className="text-sm font-bold text-amber-400 mb-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  <span>طلبات معلقة ({pendingUsers.length})</span>
+                </h4>
+                <div className="space-y-2.5 max-h-60 overflow-y-auto">
+                  {pendingUsers.length === 0 ? (
+                    <p className="text-xs text-slate-500 text-center py-4">لا توجد طلبات معلقة.</p>
+                  ) : (
+                    pendingUsers.map(u => (
+                      <div key={u.username} className="p-3 bg-slate-950 rounded-xl border border-amber-500/30 flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <span className="font-bold text-xs text-white block truncate">{u.username}</span>
+                          {u.email && (
+                            <span className="text-[10px] text-cyan-400 font-mono block truncate" dir="ltr">
+                              {u.email}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-amber-400 font-semibold">بانتظار الموافقة</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => handleApproveUser(u.username)}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer"
+                            title="قبول"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleRejectUser(u.username)}
+                            className="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer"
+                            title="رفض"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Approved Users */}
+              <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+                <h4 className="text-sm font-bold text-emerald-400 mb-3 flex items-center gap-2">
+                  <UserCheck className="w-4 h-4" />
+                  <span>الأعضاء المقبولون ({approvedUsers.length})</span>
+                </h4>
+                <div className="space-y-2.5 max-h-60 overflow-y-auto">
+                  {approvedUsers.length === 0 ? (
+                    <p className="text-xs text-slate-500 text-center py-4">لا يوجد أعضاء مقبولون حالياً.</p>
+                  ) : (
+                    approvedUsers.map(u => (
+                      <div key={u.username} className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <span className="font-bold text-xs text-white block truncate">{u.username}</span>
+                          {u.email && (
+                            <span className="text-[10px] text-cyan-400 font-mono block truncate" dir="ltr">
+                              {u.email}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-slate-400 font-semibold">{u.points || 0} نقطة</span>
+                        </div>
+                        <button
+                          onClick={() => handleRevokeUser(u.username)}
+                          className="bg-slate-800 hover:bg-rose-900 text-rose-400 border border-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-lg transition cursor-pointer shrink-0"
+                        >
+                          تعليق
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Active Admins */}
+              <div className="bg-slate-900/60 p-4 rounded-2xl border border-rose-500/30">
+                <h4 className="text-sm font-bold text-rose-400 mb-3 flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4" />
+                  <span>الآدمنز المتواجدون ({adminUsers.length})</span>
+                </h4>
+                <div className="space-y-2.5 max-h-60 overflow-y-auto">
+                  {adminUsers.map(u => (
+                    <div key={u.username} className="p-3 bg-slate-950 rounded-xl border border-rose-500/30 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                        <div>
+                          <span className="font-bold text-xs text-white block">{u.username}</span>
+                          <span className="text-[10px] text-rose-400 font-semibold">مدير نظام أساسي</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] bg-rose-950 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-bold">
+                        نشط
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 3. Points Correction Card */}
+      <div className="ucl-card rounded-3xl border border-amber-500/30 overflow-hidden transition-all duration-200">
+        <button
+          type="button"
+          onClick={() => toggleSection('points')}
+          className="w-full p-5 sm:p-6 text-right flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+              <Calculator className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 text-right">
+              <h3 className="text-base sm:text-lg font-black text-amber-400">تعديل نقاط المتوقعين (تصحيح أخطاء)</h3>
+              <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+                يمكنك إضافة أو خصم أو تعيين نقاط لأي عضو في حال وجود خطأ في الاحتساب.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs text-slate-400 font-bold hidden md:inline">
+              {expandedSections.points ? 'إخفاء' : 'عرض التفاصيل'}
+            </span>
+            <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.points ? 'rotate-180 bg-amber-500/20 text-amber-300 border-amber-500/40' : 'hover:border-amber-400/50'}`}>
+              <ChevronDown className="w-4 h-4" />
+            </div>
+          </div>
+        </button>
+
+        {expandedSections.points && (
+          <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1">
+            <p className="text-xs text-slate-400 my-4 pb-3 border-b border-slate-800 sm:hidden">
+              يمكنك إضافة أو خصم أو تعيين نقاط لأي عضو في حال وجود خطأ في الاحتساب.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+              <select
+                value={selectedUserForPoints}
+                onChange={(e) => setSelectedUserForPoints(e.target.value)}
+                className="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white font-bold outline-none focus:border-amber-400"
+              >
+                <option value="">اختر العضو...</option>
+                {users.filter(u => u.role !== 'admin').map(u => (
+                  <option key={u.username} value={u.username}>
+                    {u.username} ({u.points || 0} نقطة)
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={pointsAction}
+                onChange={(e) => setPointsAction(e.target.value as 'add' | 'sub' | 'set')}
+                className="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white font-bold outline-none focus:border-amber-400"
+              >
+                <option value="add">إضافة نقاط (+)</option>
+                <option value="sub">خصم نقاط (-)</option>
+                <option value="set">تعيين إجمالي النقاط (=)</option>
+              </select>
+
+              <input
+                type="number"
+                min="0"
+                value={pointsValue}
+                onChange={(e) => setPointsValue(parseInt(e.target.value) || 0)}
+                placeholder="عدد النقاط..."
+                className="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-amber-400"
+              />
+
+              <button
+                onClick={handleApplyPointsModification}
+                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <PenSquare className="w-3.5 h-3.5" />
+                <span>تنفيذ التعديل</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* 4. Activity Log (سجل النشاطات) Card */}
-      <div className="ucl-card p-6 rounded-3xl border border-cyan-500/30 relative overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-[#00E5FF]">
+      <div className="ucl-card rounded-3xl border border-cyan-500/30 overflow-hidden transition-all duration-200">
+        <button
+          type="button"
+          onClick={() => toggleSection('activityLog')}
+          className="w-full p-5 sm:p-6 text-right flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-[#00E5FF] shrink-0">
               <Activity className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-xl font-black text-white">سجل النشاطات (Activity Log)</h3>
+            <div className="min-w-0 text-right">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base sm:text-lg font-black text-white">سجل النشاطات (Activity Log)</h3>
                 <span className="text-[10px] bg-cyan-950/80 text-[#00E5FF] border border-cyan-500/30 px-2 py-0.5 rounded-full font-bold">
                   مراقبة حية
                 </span>
+                <span className="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                  إجمالي التوقعات: {Object.keys(predictions).length}
+                </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
                 يوضح آخر التوقعات التي تم إدخالها من قبل الأعضاء لتسهيل مراقبة سير العمل والتحقق من التوقيتات.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-xs flex items-center gap-2">
-              <span className="text-slate-400">إجمالي التوقعات:</span>
-              <span className="font-black text-[#00E5FF]">{Object.keys(predictions).length}</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs text-slate-400 font-bold hidden md:inline">
+              {expandedSections.activityLog ? 'إخفاء' : 'عرض التفاصيل'}
+            </span>
+            <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.activityLog ? 'rotate-180 bg-cyan-500/20 text-cyan-300 border-cyan-500/40' : 'hover:border-cyan-400/50'}`}>
+              <ChevronDown className="w-4 h-4" />
             </div>
-            <button
-              onClick={() => setShowActivityLog(prev => !prev)}
-              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 transition cursor-pointer"
-              title={showActivityLog ? 'طي السجل' : 'توسيع السجل'}
-            >
-              {showActivityLog ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
           </div>
-        </div>
+        </button>
 
-        {showActivityLog && (
-          <div className="mt-4 space-y-4">
+        {expandedSections.activityLog && (
+          <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1 space-y-4">
+            <p className="text-xs text-slate-400 my-4 pb-3 border-b border-slate-800 sm:hidden">
+              يوضح آخر التوقعات التي تم إدخالها من قبل الأعضاء لتسهيل مراقبة سير العمل والتحقق من التوقيتات.
+            </p>
+
             {/* Filters bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
               {/* Search input */}
               <div className="relative">
                 <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -1158,81 +1334,141 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       </div>
 
       {/* 5. Match Creation Card */}
-      <div className="ucl-card p-6 rounded-3xl border border-amber-500/20">
-        <h3 className="text-xl font-black text-amber-400 mb-4 flex items-center gap-2.5 pb-3 border-b border-slate-800">
-          <PlusCircle className="w-6 h-6 text-amber-500" />
-          <span>إضافة مباراة جديدة للتوقع</span>
-        </h3>
-
-        {teamKeys.length < 2 ? (
-          <div className="p-4 bg-amber-950/40 border border-amber-500/30 rounded-2xl text-xs text-amber-300 leading-relaxed">
-            تنبيه: يلزم تسجيل فريقين على الأقل لإنشاء مباراة. يرجى إضافة الفرق وتشكيلاتها من قسم <span className="text-purple-300 font-bold">"التحكم في الفرق واللاعبين"</span> أدناه أولاً.
+      <div className="ucl-card rounded-3xl border border-amber-500/20 overflow-hidden transition-all duration-200">
+        <button
+          type="button"
+          onClick={() => toggleSection('addMatch')}
+          className="w-full p-5 sm:p-6 text-right flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0">
+              <PlusCircle className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 text-right">
+              <h3 className="text-base sm:text-lg font-black text-amber-400">إضافة مباراة جديدة للتوقع</h3>
+              <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+                تحديد الفريق المستضيف والضيف وموعد إغلاق التوقع (Deadline)
+              </p>
+            </div>
           </div>
-        ) : (
-          <form onSubmit={handleCreateMatch} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">الفريق المستضيف (Home)</label>
-                <select
-                  value={newHomeTeam}
-                  onChange={(e) => setNewHomeTeam(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold focus:border-amber-400 outline-none text-xs"
-                  required
-                >
-                  {teamKeys.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">الفريق الضيف (Away)</label>
-                <select
-                  value={newAwayTeam}
-                  onChange={(e) => setNewAwayTeam(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold focus:border-amber-400 outline-none text-xs"
-                  required
-                >
-                  {teamKeys.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs text-slate-400 font-bold hidden md:inline">
+              {expandedSections.addMatch ? 'إخفاء' : 'عرض التفاصيل'}
+            </span>
+            <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.addMatch ? 'rotate-180 bg-amber-500/20 text-amber-300 border-amber-500/40' : 'hover:border-amber-400/50'}`}>
+              <ChevronDown className="w-4 h-4" />
             </div>
+          </div>
+        </button>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                موعد المباراة ووقت إغلاق التوقع (Deadline)
-              </label>
-              <input
-                type="datetime-local"
-                value={newDeadline}
-                onChange={(e) => setNewDeadline(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold focus:border-amber-400 outline-none text-xs"
-                required
-              />
-            </div>
+        {expandedSections.addMatch && (
+          <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1">
+            <p className="text-xs text-slate-400 my-4 pb-3 border-b border-slate-800 sm:hidden">
+              تحديد الفريق المستضيف والضيف وموعد إغلاق التوقع (Deadline)
+            </p>
 
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-3.5 rounded-xl transition shadow-lg text-xs cursor-pointer"
-            >
-              نشر المباراة وإتاحة التوقع للمستخدمين
-            </button>
-          </form>
+            {teamKeys.length < 2 ? (
+              <div className="p-4 my-3 bg-amber-950/40 border border-amber-500/30 rounded-2xl text-xs text-amber-300 leading-relaxed">
+                تنبيه: يلزم تسجيل فريقين على الأقل لإنشاء مباراة. يرجى إضافة الفرق وتشكيلاتها من قسم <span className="text-purple-300 font-bold">"التحكم في الفرق واللاعبين"</span> أدناه أولاً.
+              </div>
+            ) : (
+              <form onSubmit={handleCreateMatch} className="space-y-4 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1.5">الفريق المستضيف (Home)</label>
+                    <select
+                      value={newHomeTeam}
+                      onChange={(e) => setNewHomeTeam(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold focus:border-amber-400 outline-none text-xs"
+                      required
+                    >
+                      {teamKeys.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1.5">الفريق الضيف (Away)</label>
+                    <select
+                      value={newAwayTeam}
+                      onChange={(e) => setNewAwayTeam(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold focus:border-amber-400 outline-none text-xs"
+                      required
+                    >
+                      {teamKeys.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    موعد المباراة ووقت إغلاق التوقع (Deadline)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={newDeadline}
+                    onChange={(e) => setNewDeadline(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold focus:border-amber-400 outline-none text-xs"
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-3.5 rounded-xl transition shadow-lg text-xs cursor-pointer active:scale-95"
+                >
+                  نشر المباراة وإتاحة التوقع للمستخدمين
+                </button>
+              </form>
+            )}
+          </div>
         )}
       </div>
 
-      {/* 5. Match Score Settlement & Management */}
-      <div className="ucl-card p-6 rounded-3xl border border-blue-500/20 space-y-6">
-        <div className="flex justify-between items-center pb-3 border-b border-slate-800">
-          <h3 className="text-xl font-black text-blue-400 flex items-center gap-2.5">
-            <ListCheck className="w-6 h-6 text-blue-500" />
-            <span>إدارة المباريات واعتماد النتائج</span>
-          </h3>
-          <span className="text-xs text-slate-400">تعديل التوقيت، النتيجة، وحذف المباريات</span>
-        </div>
+      {/* 6. Match Score Settlement & Management */}
+      <div className="ucl-card rounded-3xl border border-blue-500/20 overflow-hidden transition-all duration-200">
+        <button
+          type="button"
+          onClick={() => toggleSection('settleMatches')}
+          className="w-full p-5 sm:p-6 text-right flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-500 shrink-0">
+              <ListCheck className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 text-right">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base sm:text-lg font-black text-blue-400">إدارة المباريات واعتماد النتائج</h3>
+                <span className="text-[10px] bg-blue-950/80 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full font-bold">
+                  المباريات ({matches.length})
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+                تعديل التوقيت، النتيجة، وحذف المباريات
+              </p>
+            </div>
+          </div>
 
-        {matches.length === 0 ? (
-          <p className="text-xs text-slate-500 text-center py-4">لا توجد مباريات مسجلة بعد.</p>
-        ) : (
-          <div className="space-y-4">
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs text-slate-400 font-bold hidden md:inline">
+              {expandedSections.settleMatches ? 'إخفاء' : 'عرض التفاصيل'}
+            </span>
+            <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.settleMatches ? 'rotate-180 bg-blue-500/20 text-blue-300 border-blue-500/40' : 'hover:border-blue-400/50'}`}>
+              <ChevronDown className="w-4 h-4" />
+            </div>
+          </div>
+        </button>
+
+        {expandedSections.settleMatches && (
+          <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1 space-y-4">
+            <p className="text-xs text-slate-400 my-4 pb-3 border-b border-slate-800 sm:hidden">
+              تعديل التوقيت، النتيجة، وحذف المباريات
+            </p>
+
+            {matches.length === 0 ? (
+              <p className="text-xs text-slate-500 text-center py-4">لا توجد مباريات مسجلة بعد.</p>
+            ) : (
+              <div className="space-y-4 pt-2">
             {matches.map(match => {
               const home = teams[match.homeTeam] || { squad: [] };
               const away = teams[match.awayTeam] || { squad: [] };
@@ -1378,34 +1614,64 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 </div>
               );
             })}
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* 6. Teams & Squads Full Control */}
-      <div className="ucl-card p-6 rounded-3xl border border-purple-500/20 space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-slate-800">
-          <div>
-            <h3 className="text-xl font-black text-purple-400 flex items-center gap-2.5">
-              <Users className="w-6 h-6 text-purple-400" />
-              <span>التحكم في الفرق واللاعبين ({teamKeys.length} فرق مسجلة)</span>
-            </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              إضافة وتعديل الفرق، قوائم اللاعبين، وحذف الفرق كلياً
-            </p>
+      {/* 7. Teams & Squads Full Control */}
+      <div className="ucl-card rounded-3xl border border-purple-500/20 overflow-hidden transition-all duration-200">
+        <button
+          type="button"
+          onClick={() => toggleSection('teams')}
+          className="w-full p-5 sm:p-6 text-right flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 text-right">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base sm:text-lg font-black text-purple-400">التحكم في الفرق واللاعبين</h3>
+                <span className="text-[10px] bg-purple-950/80 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-bold">
+                  {teamKeys.length} فرق مسجلة
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+                إضافة وتعديل الفرق، رفع وقص الشعارات، إدخال قوائم اللاعبين دفعة واحدة
+              </p>
+            </div>
           </div>
 
-          {teamKeys.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setDeleteAllTeamsConfirm(true)}
-              className="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/40 text-xs px-3.5 py-2.5 rounded-xl transition flex items-center gap-1.5 font-bold cursor-pointer active:scale-95 shrink-0"
-            >
-              <Trash2 className="w-4 h-4 text-rose-400" />
-              <span>حذف جميع الفرق واللاعبين</span>
-            </button>
-          )}
-        </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-xs text-slate-400 font-bold hidden md:inline">
+              {expandedSections.teams ? 'إخفاء' : 'عرض التفاصيل'}
+            </span>
+            <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.teams ? 'rotate-180 bg-purple-500/20 text-purple-300 border-purple-500/40' : 'hover:border-purple-400/50'}`}>
+              <ChevronDown className="w-4 h-4" />
+            </div>
+          </div>
+        </button>
+
+        {expandedSections.teams && (
+          <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1 space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-3">
+              <p className="text-xs text-slate-400">
+                إضافة وتعديل الفرق، قوائم اللاعبين، وحذف الفرق كلياً
+              </p>
+
+              {teamKeys.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setDeleteAllTeamsConfirm(true)}
+                  className="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/40 text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 font-bold cursor-pointer active:scale-95 shrink-0"
+                >
+                  <Trash2 className="w-4 h-4 text-rose-400" />
+                  <span>حذف جميع الفرق واللاعبين</span>
+                </button>
+              )}
+            </div>
 
         {/* Add Team */}
         <div className="p-5 bg-slate-900/70 rounded-2xl border border-slate-800 space-y-4">
@@ -1884,32 +2150,66 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
             </>
           )}
         </div>
+          </div>
+        )}
       </div>
 
-      {/* Database Maintenance & Complete Reset (Admin Only) */}
+      {/* 8. Database Maintenance & Complete Reset (Admin Only) */}
       {onResetDatabase && (
-        <div className="ucl-card p-6 rounded-3xl border border-rose-500/40 shadow-xl space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-black text-rose-400 flex items-center gap-2">
-                <Trash2 className="w-5 h-5 text-rose-400" />
-                <span>إعادة ضبط وصيانة قاعدة البيانات (خاص بالآدمن فقط)</span>
-              </h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
-                يتيح هذا الخيار للمدير إعادة ضبط قاعدة البيانات وحذف كافة الفرق الافتراضية والمباريات المسجلة لبدء موسم جديد أو تنظيم جديد للبطولة.
-              </p>
+        <div className="ucl-card rounded-3xl border border-rose-500/40 shadow-xl overflow-hidden transition-all duration-200">
+          <button
+            type="button"
+            onClick={() => toggleSection('resetDb')}
+            className="w-full p-5 sm:p-6 text-right flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 text-right">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base sm:text-lg font-black text-rose-400">إعادة ضبط وصيانة قاعدة البيانات</h3>
+                  <span className="text-[10px] bg-rose-950 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full font-bold">
+                    إجراء حساس (خاص بالآدمن)
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+                  إعادة ضبط وتصفير قاعدة البيانات وحذف الفرق والمباريات لبدء موسم جديد
+                </p>
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={onResetDatabase}
-              className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black px-5 py-3 rounded-2xl transition shadow-lg text-xs sm:text-sm cursor-pointer flex items-center gap-2 active:scale-95 shrink-0"
-              title="إعادة ضبط قاعدة البيانات"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>إعادة ضبط قاعدة البيانات</span>
-            </button>
-          </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-xs text-slate-400 font-bold hidden md:inline">
+                {expandedSections.resetDb ? 'إخفاء' : 'عرض التفاصيل'}
+              </span>
+              <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.resetDb ? 'rotate-180 bg-rose-500/20 text-rose-300 border-rose-500/40' : 'hover:border-rose-400/50'}`}>
+                <ChevronDown className="w-4 h-4" />
+              </div>
+            </div>
+          </button>
+
+          {expandedSections.resetDb && (
+            <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
+                <div>
+                  <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                    يتيح هذا الخيار للمدير إعادة ضبط قاعدة البيانات وحذف كافة الفرق الافتراضية والمباريات المسجلة لبدء موسم جديد أو تنظيم جديد للبطولة.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={onResetDatabase}
+                  className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black px-5 py-3 rounded-2xl transition shadow-lg text-xs sm:text-sm cursor-pointer flex items-center gap-2 active:scale-95 shrink-0"
+                  title="إعادة ضبط قاعدة البيانات"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>إعادة ضبط قاعدة البيانات</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

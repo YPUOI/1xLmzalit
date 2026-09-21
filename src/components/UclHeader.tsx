@@ -9,7 +9,7 @@ import {
   Sliders, 
   Star,
   Sparkles,
-  Wrench
+  Fingerprint
 } from 'lucide-react';
 import { AppUser } from '../types';
 import { XlmzalitLogo } from './XlmzalitLogo';
@@ -34,101 +34,197 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
 }) => {
   return (
     <header className="ucl-header-bg border-b border-slate-800/80 sticky top-0 z-40 backdrop-blur-2xl shadow-2xl shadow-black/80">
-      <div className="max-w-7xl mx-auto px-4 py-3 sm:py-3.5 flex flex-wrap justify-between items-center gap-4" dir="ltr">
-        
-        {/* Brand Group at Top Left: First photo on the left, Second photo next to it from the right */}
+      
+      {/* ========================================================================= */}
+      {/* MOBILE LAYOUT (< md): Compact, single-row layout tailored for smartphones */}
+      {/* ========================================================================= */}
+      <div className="flex md:hidden justify-between items-center w-full px-2.5 sm:px-3 py-2 gap-2" dir="ltr">
+        {/* Brand Group at Left: 1xlmzalit Logo + v1.0 badge + دوري أبطال أوروبا */}
         <div 
-          className="flex items-center gap-3 sm:gap-4 cursor-pointer select-none group" 
+          className="flex items-center gap-1.5 cursor-pointer select-none shrink-0 min-w-0" 
           onClick={() => onSelectTab('matches')}
-          title="1xlmzalit - بطولة دوري أبطال أوروبا"
+          title="1xlmzalit - دوري أبطال أوروبا"
         >
-          {/* First Photo: Exact 1xlmzalit Brand Vector Logo on Top Left */}
-          <XlmzalitLogo variant="light" size="lg" className="shrink-0 hover:scale-105 transition-transform" />
+          <XlmzalitLogo variant="light" size="md" className="shrink-0" />
+          <div className="bg-[#041E34] border border-[#00E5FF]/60 px-1.5 py-0.5 rounded-md flex items-center justify-center shrink-0 shadow-sm">
+            <span className="text-[10px] font-black text-[#00E5FF] tracking-wider font-mono">
+              v1.0
+            </span>
+          </div>
+          <span className="hidden xs:inline text-[#E2E8F0] text-xs font-bold font-['Cairo',sans-serif] whitespace-nowrap">
+            دوري أبطال أوروبا
+          </span>
+        </div>
 
-          {/* Second Photo: Next to it from the right ([v1.0] badge on left + بطولة دوري أبطال أوروبا on right) */}
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 bg-slate-900/40 px-2.5 py-1.5 rounded-xl border border-slate-800/50">
-            {/* v1.0 Badge matching photo */}
-            <div className="bg-[#041E34] border border-[#00E5FF]/60 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-lg flex items-center justify-center shadow-[0_0_12px_rgba(0,229,255,0.25)]">
-              <span className="text-[11px] sm:text-xs font-black text-[#00E5FF] tracking-wider font-mono">
+        {/* Action Controls & Badges on Right in single line */}
+        <div className="flex items-center gap-1 sm:gap-1.5 flex-nowrap shrink-0 overflow-x-auto no-scrollbar py-0.5" dir="rtl">
+          {currentUser ? (
+            <div className="flex items-center gap-1 bg-[#071324] border border-slate-800 px-2 py-1 rounded-xl text-xs font-bold shrink-0">
+              {currentUser.role === 'admin' ? (
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              ) : (
+                <User className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              )}
+              <span className="max-w-[70px] truncate text-[#E2E8F0]">{currentUser.username}</span>
+              <button onClick={onLogout} className="text-[#94A3B8] hover:text-rose-400 p-0.5" title="تسجيل الخروج">
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 flex-nowrap shrink-0">
+              <button 
+                onClick={() => onOpenAuth('login')}
+                className="bg-[#00E5FF] hover:bg-[#38bdf8] text-[#04101e] font-black text-[11px] px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0 whitespace-nowrap shadow-sm"
+              >
+                <span>دخول</span>
+                <User className="w-3 h-3 text-[#04101e] shrink-0" />
+              </button>
+              <button 
+                onClick={() => onOpenAuth('signup')}
+                title="حساب جديد"
+                className="bg-[#071324] hover:bg-[#0c1f38] text-amber-400 border border-amber-500/70 p-1 rounded-xl flex items-center justify-center shrink-0"
+              >
+                <UserPlus className="w-3.5 h-3.5 text-amber-400" />
+              </button>
+              <button 
+                onClick={() => onOpenAuth('admin')}
+                title="الآدمن"
+                className="bg-[#071324] hover:bg-[#0c1f38] text-slate-300 border border-slate-800 p-1 rounded-xl flex items-center justify-center shrink-0"
+              >
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+              </button>
+            </div>
+          )}
+
+          {/* Fingerprint Security button on mobile */}
+          <button
+            onClick={onOpenSecurityModal}
+            title="إعدادات الحماية والبصمة"
+            aria-label="إعدادات الحماية والبصمة"
+            className="bg-[#0b1424] hover:bg-[#12203a] text-amber-400 p-1 rounded-xl border border-amber-500/70 shrink-0"
+          >
+            <Fingerprint className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          </button>
+
+          {/* UCL badge on mobile */}
+          <div className="bg-[#06192d] px-2 py-0.5 rounded-full shrink-0 border border-[#00E5FF]/60 select-none">
+            <span className="text-[10px] font-black tracking-wider text-[#00E5FF] uppercase whitespace-nowrap font-mono">
+              UCL
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* PC / DESKTOP LAYOUT (md:flex): Exact 2-row aligned layout requested by user */}
+      {/* ========================================================================= */}
+      <div className="hidden md:flex flex-col gap-2 max-w-7xl mx-auto px-4 py-2.5" dir="ltr">
+        
+        {/* Row 1: Top Row (1xlmzalit + v1.0 on Left, بطولة دوري أبطال أوروبا on Right) */}
+        <div className="flex justify-between items-center w-full" dir="ltr">
+          {/* Top Left: 1xlmzalit Brand Vector Logo + v1.0 App Version Tag */}
+          <div 
+            className="flex items-center gap-2.5 cursor-pointer select-none group min-w-0 shrink-0" 
+            onClick={() => onSelectTab('matches')}
+            title="1xlmzalit - الإصدار v1.0"
+          >
+            <XlmzalitLogo variant="light" size="lg" className="shrink-0 hover:scale-105 transition-transform" />
+
+            <div className="bg-[#041E34] border border-[#00E5FF]/60 px-2 py-0.5 rounded-md flex items-center justify-center shadow-[0_0_10px_rgba(0,229,255,0.25)] shrink-0 select-none">
+              <span className="text-xs font-black text-[#00E5FF] tracking-wider font-mono">
                 v1.0
               </span>
             </div>
+          </div>
 
-            {/* بطولة دوري أبطال أوروبا text matching photo */}
-            <span className="text-[#E2E8F0] text-xs sm:text-sm md:text-[15px] font-bold tracking-normal font-['Cairo',sans-serif] whitespace-nowrap">
+          {/* Top Right: بطولة دوري أبطال أوروبا */}
+          <div 
+            onClick={() => onSelectTab('matches')}
+            className="bg-[#061527]/90 hover:bg-[#0c1f36] border border-slate-800/90 hover:border-[#00E5FF]/40 px-4 py-1 rounded-2xl transition shadow-sm cursor-pointer flex items-center justify-center shrink-0 select-none"
+            title="بطولة دوري أبطال أوروبا"
+          >
+            <span className="text-white text-sm font-bold tracking-wide font-['Cairo',sans-serif] whitespace-nowrap">
               بطولة دوري أبطال أوروبا
             </span>
           </div>
         </div>
 
-        {/* Action Controls & User Account on the Right */}
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap" dir="rtl">
+        {/* Row 2: In the EXACT same line with the EXACT same height without changing places */}
+        <div className="flex justify-between items-center w-full gap-2" dir="ltr">
           
-          {/* UCL 2026/2027 Frosted Glass Badge at the Top Left */}
-          <div className="ucl-badge-glass px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full flex items-center justify-center shrink-0 border border-[#00E5FF]/50 shadow-[0_0_18px_rgba(0,229,255,0.35)] select-none">
-            <span className="text-[11px] sm:text-xs font-black tracking-widest text-[#00E5FF] uppercase">
-              UCL 2026/2027
-            </span>
-          </div>
-          
-          {/* Security & Biometric Settings Button - تحت الصيانة */}
-          <button
-            onClick={onOpenSecurityModal}
-            title="إعدادات الحماية والبصمة (تحت الصيانة)"
-            className="bg-[#10172A] hover:bg-[#16213B] text-[#94A3B8] hover:text-amber-300 text-xs font-bold px-3 py-2 rounded-xl border border-amber-500/35 hover:border-amber-400/60 transition flex items-center gap-2 cursor-pointer shadow-sm relative group"
-          >
-            <Wrench className="w-3.5 h-3.5 text-amber-400 shrink-0 animate-pulse" />
-            <span className="hidden md:inline text-[#E2E8F0]">الحماية والبصمة</span>
-            <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-md font-black shadow-sm">
-              تحت الصيانة
-            </span>
-          </button>
-
-          {/* User Status / Login Buttons */}
+          {/* Left Side: Auth Controls / User Status */}
           {currentUser ? (
-            <div className="flex items-center gap-2 bg-[#10172A] border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm">
+            <div className="h-[34px] flex items-center gap-2 bg-[#071324] border border-slate-800 px-3 rounded-full text-xs font-bold shadow-sm shrink-0 whitespace-nowrap" dir="rtl">
               {currentUser.role === 'admin' ? (
-                <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0" />
               ) : (
-                <User className="w-3.5 h-3.5 text-emerald-400" />
+                <User className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               )}
-              <span className="max-w-[110px] truncate text-[#E2E8F0]">
+              <span className="max-w-[130px] truncate text-[#E2E8F0]">
                 {currentUser.username} ({currentUser.role === 'admin' ? 'مدير' : 'عضو'})
               </span>
               <button 
                 onClick={onLogout}
-                className="text-[#94A3B8] hover:text-rose-400 mr-1 p-0.5 transition" 
+                className="text-[#94A3B8] hover:text-rose-400 mr-1 p-0.5 transition shrink-0" 
                 title="تسجيل الخروج"
               >
                 <LogOut className="w-3.5 h-3.5" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-nowrap shrink-0" dir="rtl">
+              {/* Button 1 (Rightmost in RTL): دخول الأعضاء */}
               <button 
                 onClick={() => onOpenAuth('login')}
-                className="ucl-btn-primary font-black text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                className="h-[34px] bg-[#00E5FF] hover:bg-[#38bdf8] text-[#04101e] font-black text-xs px-4 rounded-full transition-all shadow-[0_0_14px_rgba(0,229,255,0.35)] flex items-center gap-2 cursor-pointer shrink-0 whitespace-nowrap active:scale-95"
               >
-                <User className="w-3.5 h-3.5" />
                 <span>دخول الأعضاء</span>
+                <User className="w-4 h-4 text-[#04101e] shrink-0" />
               </button>
+
+              {/* Button 2 (Middle): حساب جديد */}
               <button 
                 onClick={() => onOpenAuth('signup')}
-                className="bg-[#10172A] hover:bg-[#16213B] text-amber-400 hover:text-amber-300 border border-amber-500/30 hover:border-amber-400/60 font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                title="حساب جديد"
+                className="h-[34px] bg-[#071324] hover:bg-[#0c1f38] text-amber-400 hover:text-amber-300 border border-amber-500 hover:border-amber-400 font-bold text-xs px-3.5 rounded-full transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap active:scale-95 shadow-sm"
               >
-                <UserPlus className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">حساب جديد</span>
+                <span>حساب جديد</span>
+                <UserPlus className="w-4 h-4 text-amber-400 shrink-0" />
               </button>
+
+              {/* Button 3 (Leftmost in RTL): الآدمن */}
               <button 
                 onClick={() => onOpenAuth('admin')}
-                className="bg-[#10172A] hover:bg-[#16213B] text-[#94A3B8] hover:text-rose-400 border border-slate-800 font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                className="h-[34px] bg-[#071324] hover:bg-[#0c1f38] text-[#CBD5E1] hover:text-rose-400 border border-slate-800 hover:border-rose-500/50 font-bold text-xs px-3.5 rounded-full transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap active:scale-95 shadow-sm"
               >
-                <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
                 <span>الآدمن</span>
+                <ShieldAlert className="w-4 h-4 text-rose-500 shrink-0" />
               </button>
             </div>
           )}
+
+          {/* Right Side: [Fingerprint Button] [UCL 2026/2027 Badge] */}
+          <div className="flex items-center gap-2 shrink-0 select-none" dir="ltr">
+            {/* Fingerprint Button - exactly same height h-[34px] */}
+            <button
+              onClick={onOpenSecurityModal}
+              title="إعدادات الحماية والبصمة"
+              aria-label="إعدادات الحماية والبصمة"
+              className="h-[34px] px-3 bg-[#0b1424] hover:bg-[#12203a] text-amber-400 hover:text-amber-300 rounded-full border border-amber-500 hover:border-amber-400 transition flex items-center justify-center shrink-0 cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.2)]"
+            >
+              <Fingerprint className="w-4.5 h-4.5 text-amber-400 shrink-0" />
+            </button>
+
+            {/* UCL 2026/2027 Pill - exactly same height h-[34px] */}
+            <div className="h-[34px] px-4 bg-[#06192d] rounded-full flex items-center justify-center shrink-0 border border-[#00E5FF] shadow-[0_0_12px_rgba(0,229,255,0.25)] select-none">
+              <span className="text-xs font-black tracking-wider text-[#00E5FF] uppercase whitespace-nowrap font-mono">
+                UCL 2026/2027
+              </span>
+            </div>
+          </div>
+
         </div>
+
       </div>
 
       {/* Role Portal Banner */}

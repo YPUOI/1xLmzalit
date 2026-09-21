@@ -11,12 +11,12 @@ export const XlmzalitLogo: React.FC<XlmzalitLogoProps> = ({
   variant = 'light',
   size = 'md',
 }) => {
-  // Height sizing
+  // Height sizing with responsive fluid breakpoints
   const sizeClasses = {
-    sm: 'h-7 sm:h-8',
-    md: 'h-9 sm:h-11',
-    lg: 'h-12 sm:h-14',
-    xl: 'h-16 sm:h-20',
+    sm: 'h-6 sm:h-7 md:h-8',
+    md: 'h-7 sm:h-8 md:h-10',
+    lg: 'h-8 sm:h-10 md:h-12 lg:h-14',
+    xl: 'h-12 sm:h-16 md:h-20',
   }[size];
 
   // Palette:
