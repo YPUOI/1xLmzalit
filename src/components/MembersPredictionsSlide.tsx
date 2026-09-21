@@ -11,9 +11,11 @@ import {
   Trophy, 
   ChevronDown,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  Download
 } from 'lucide-react';
 import { Match, Team, Prediction, AppUser } from '../types';
+import { PredictionCardModal } from './PredictionCardModal';
 
 interface MembersPredictionsSlideProps {
   matches: Match[];
@@ -30,6 +32,25 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
 }) => {
   const [selectedMatchId, setSelectedMatchId] = useState<string>('ALL');
   const [searchMember, setSearchMember] = useState<string>('');
+  const [activeCardModal, setActiveCardModal] = useState<{
+    match: Match;
+    homeTeam: Team;
+    awayTeam: Team;
+    prediction: Prediction;
+    memberName: string;
+  } | null>(null);
+
+  const openPredictionCard = (match: Match, pred: Prediction) => {
+    const home = teams[match.homeTeam] || { name: match.homeTeam, logo: '', squad: [] };
+    const away = teams[match.awayTeam] || { name: match.awayTeam, logo: '', squad: [] };
+    setActiveCardModal({
+      match,
+      homeTeam: home,
+      awayTeam: away,
+      prediction: pred,
+      memberName: pred.username
+    });
+  };
 
   const now = new Date();
 
@@ -350,6 +371,23 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
                           </div>
                         </div>
                       )}
+
+                      {/* Download Prediction Card Button: only available before real score is launched */}
+                      {!match.result && match.status !== 'SETTLED' ? (
+                        <button
+                          type="button"
+                          onClick={() => openPredictionCard(match, pred)}
+                          className="mt-2.5 w-full py-1.5 px-2 bg-slate-900/90 hover:bg-slate-850 border border-cyan-500/30 text-cyan-300 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition cursor-pointer hover:border-cyan-400 select-none"
+                          title="تحميل بطاقة التوقع الرسمية كصورة"
+                        >
+                          <Download className="w-3 h-3 text-cyan-400" />
+                          <span>تحميل بطاقة التوقع (صورة)</span>
+                        </button>
+                      ) : (
+                        <div className="mt-2 text-center text-[10px] text-slate-500 font-medium">
+                          انتهت إمكانية تحميل البطاقة بإعلان النتيجة
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -358,6 +396,19 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
           </div>
         );
       })}
+
+      {/* Prediction Card Download Modal */}
+      {activeCardModal && (
+        <PredictionCardModal
+          isOpen={Boolean(activeCardModal)}
+          onClose={() => setActiveCardModal(null)}
+          match={activeCardModal.match}
+          homeTeam={activeCardModal.homeTeam}
+          awayTeam={activeCardModal.awayTeam}
+          prediction={activeCardModal.prediction}
+          memberName={activeCardModal.memberName}
+        />
+      )}
     </div>
   );
 };

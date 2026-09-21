@@ -12,9 +12,12 @@ import {
   Minus,
   AlertCircle,
   Timer,
-  Flame
+  Flame,
+  Download,
+  Sparkles
 } from 'lucide-react';
 import { Match, Team, Prediction, AppUser } from '../types';
+import { PredictionCardModal } from './PredictionCardModal';
 
 interface MatchesSectionProps {
   matches: Match[];
@@ -130,6 +133,27 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
 
   // Specific missing scorer indices per match to visually highlight unchosen fields
   const [missingScorers, setMissingScorers] = useState<Record<string, { home: number[]; away: number[] }>>({});
+
+  // Active prediction card modal for downloading photo
+  const [activeCardModal, setActiveCardModal] = useState<{
+    match: Match;
+    homeTeam: Team;
+    awayTeam: Team;
+    prediction: Prediction;
+    memberName: string;
+  } | null>(null);
+
+  const openPredictionCard = (match: Match, pred: Prediction) => {
+    const home = teams[match.homeTeam] || { name: match.homeTeam, logo: '', squad: [] };
+    const away = teams[match.awayTeam] || { name: match.awayTeam, logo: '', squad: [] };
+    setActiveCardModal({
+      match,
+      homeTeam: home,
+      awayTeam: away,
+      prediction: pred,
+      memberName: currentUser?.username || pred.username
+    });
+  };
 
   const getDraft = (match: Match) => {
     if (draftPreds[match.id]) {
@@ -281,6 +305,9 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
     };
 
     onSavePrediction(newPred);
+
+    // Automatically prompt member to download their official prediction card photo
+    openPredictionCard(match, newPred);
   };
 
   return (
@@ -364,11 +391,11 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                 <div className="grid grid-cols-3 items-center text-center gap-2 py-2">
                   {/* Home Team */}
                   <div className="flex flex-col items-center gap-2">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center p-1 bg-slate-900/60 rounded-2xl border border-slate-800">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center p-2 bg-slate-900/80 rounded-2xl border border-slate-800 shrink-0">
                       <img 
                         src={home.logo} 
                         alt={home.name} 
-                        className="max-h-14 max-w-14 sm:max-h-16 sm:max-w-16 object-contain" 
+                        className="w-full h-full object-contain aspect-square" 
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/1e293b/ffffff?text=Logo'; }}
                       />
                     </div>
@@ -389,11 +416,11 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
 
                   {/* Away Team */}
                   <div className="flex flex-col items-center gap-2">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center p-1 bg-slate-900/60 rounded-2xl border border-slate-800">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center p-2 bg-slate-900/80 rounded-2xl border border-slate-800 shrink-0">
                       <img 
                         src={away.logo} 
                         alt={away.name} 
-                        className="max-h-14 max-w-14 sm:max-h-16 sm:max-w-16 object-contain"
+                        className="w-full h-full object-contain aspect-square"
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/1e293b/ffffff?text=Logo'; }}
                       />
                     </div>
@@ -424,6 +451,23 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                           {userPred.mvp && (
                             <div className="text-[11px] text-slate-400 mt-1">
                               رجل المباراة المتوقع: <strong className="text-cyan-300">{userPred.mvp}</strong>
+                            </div>
+                          )}
+                          {/* Only allow downloading prediction card BEFORE the real score is launched */}
+                          {!match.result && match.status !== 'SETTLED' ? (
+                            <div className="pt-2 flex justify-center">
+                              <button
+                                type="button"
+                                onClick={() => openPredictionCard(match, userPred)}
+                                className="px-3.5 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:border-cyan-400"
+                              >
+                                <Download className="w-3.5 h-3.5 text-cyan-400" />
+                                <span>تحميل بطاقة التوقع (صورة) • Download</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="pt-1.5 text-[11px] text-slate-500">
+                              تم إعلان النتيجة الرسمية للمباراة وانتهت فترة تحميل بطاقة التوقع.
                             </div>
                           )}
                         </div>
@@ -698,14 +742,25 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                       </button>
 
                       {userPred && (
-                        <div className="p-3 bg-slate-950/80 border border-emerald-500/30 rounded-2xl text-center space-y-1">
-                          <p className="text-xs text-emerald-400 font-bold flex items-center justify-center gap-1.5">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>أحدث توقع معتمد ومحفوظ: ({userPred.homeScore} - {userPred.awayScore})</span>
-                          </p>
-                          <p className="text-[11px] text-slate-400">
-                            يتم اعتماد آخر توقع ترسله فقط قبل موعد إغلاق المباراة.
-                          </p>
+                        <div className="space-y-2.5">
+                          <button
+                            type="button"
+                            onClick={() => openPredictionCard(match, userPred)}
+                            className="w-full bg-gradient-to-r from-cyan-950/80 via-blue-950/95 to-cyan-950/80 hover:from-cyan-900/90 hover:to-blue-900/90 border border-cyan-400/50 text-cyan-300 font-black py-3 rounded-2xl transition text-xs sm:text-sm cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-cyan-950/50 group select-none"
+                          >
+                            <Download className="w-4 h-4 text-cyan-400 group-hover:translate-y-0.5 transition-transform" />
+                            <span>تحميل بطاقة التوقع (صورة رسمية) • Download Card</span>
+                          </button>
+
+                          <div className="p-3 bg-slate-950/80 border border-emerald-500/30 rounded-2xl text-center space-y-1">
+                            <p className="text-xs text-emerald-400 font-bold flex items-center justify-center gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                              <span>أحدث توقع معتمد ومحفوظ: ({userPred.homeScore} - {userPred.awayScore})</span>
+                            </p>
+                            <p className="text-[11px] text-slate-400">
+                              يتم اعتماد آخر توقع ترسله فقط قبل موعد إغلاق المباراة. يمكنك تحميل بطاقة التوقع كصورة في أي وقت.
+                            </p>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -715,6 +770,19 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
             );
           })}
         </div>
+      )}
+
+      {/* Prediction Card Download Modal */}
+      {activeCardModal && (
+        <PredictionCardModal
+          isOpen={Boolean(activeCardModal)}
+          onClose={() => setActiveCardModal(null)}
+          match={activeCardModal.match}
+          homeTeam={activeCardModal.homeTeam}
+          awayTeam={activeCardModal.awayTeam}
+          prediction={activeCardModal.prediction}
+          memberName={activeCardModal.memberName}
+        />
       )}
     </div>
   );
