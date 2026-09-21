@@ -8,6 +8,8 @@ import { DEFAULT_SECURITY_CONFIG } from '../data/defaultData';
 const STORAGE_KEY_CONFIG = 'ucl_security_config';
 const STORAGE_KEY_AUTH_STATUS = 'ucl_friend_authenticated';
 const STORAGE_KEY_AUTH_TIMESTAMP = 'ucl_friend_auth_time';
+const STORAGE_KEY_REMEMBER_FRIEND = 'ucl_remember_friend_password';
+const STORAGE_KEY_SAVED_FRIEND_PASS = 'ucl_saved_friend_password';
 
 export function getSecurityConfig(): SecurityConfig {
   try {
@@ -38,25 +40,64 @@ export function applySyncedFriendPassword(friendPassword: string): void {
 }
 
 export function isFriendAuthenticated(): boolean {
-  // Always require password on page load / refresh per strict security requirement
   try {
-    sessionStorage.removeItem(STORAGE_KEY_AUTH_STATUS);
-    localStorage.removeItem(STORAGE_KEY_AUTH_STATUS);
-    localStorage.removeItem(STORAGE_KEY_AUTH_TIMESTAMP);
+    const isRemembered = localStorage.getItem(STORAGE_KEY_REMEMBER_FRIEND) === 'true';
+    if (isRemembered) {
+      const isAuth = localStorage.getItem(STORAGE_KEY_AUTH_STATUS) === 'true';
+      const savedPass = localStorage.getItem(STORAGE_KEY_SAVED_FRIEND_PASS);
+      const config = getSecurityConfig();
+      if (isAuth && savedPass && savedPass.trim().toLowerCase() === config.friendPassword.trim().toLowerCase()) {
+        return true;
+      }
+      if (isAuth && !savedPass) {
+        return true;
+      }
+    }
+    if (sessionStorage.getItem(STORAGE_KEY_AUTH_STATUS) === 'true') {
+      return true;
+    }
   } catch {
     // Ignore storage access errors
   }
   return false;
 }
 
-export function setFriendAuthenticated(authenticated: boolean, _remember: boolean = false): void {
-  // Never persist across page refreshes; clean up any persistent tokens
+export function setFriendAuthenticated(authenticated: boolean, remember: boolean = false, enteredPassword?: string): void {
   try {
-    sessionStorage.removeItem(STORAGE_KEY_AUTH_STATUS);
-    localStorage.removeItem(STORAGE_KEY_AUTH_STATUS);
-    localStorage.removeItem(STORAGE_KEY_AUTH_TIMESTAMP);
+    if (authenticated) {
+      sessionStorage.setItem(STORAGE_KEY_AUTH_STATUS, 'true');
+      sessionStorage.setItem(STORAGE_KEY_AUTH_TIMESTAMP, Date.now().toString());
+      if (remember) {
+        localStorage.setItem(STORAGE_KEY_AUTH_STATUS, 'true');
+        localStorage.setItem(STORAGE_KEY_REMEMBER_FRIEND, 'true');
+        localStorage.setItem(STORAGE_KEY_AUTH_TIMESTAMP, Date.now().toString());
+        if (enteredPassword) {
+          localStorage.setItem(STORAGE_KEY_SAVED_FRIEND_PASS, enteredPassword.trim());
+        }
+      } else {
+        localStorage.removeItem(STORAGE_KEY_AUTH_STATUS);
+        localStorage.removeItem(STORAGE_KEY_REMEMBER_FRIEND);
+        localStorage.removeItem(STORAGE_KEY_SAVED_FRIEND_PASS);
+        localStorage.removeItem(STORAGE_KEY_AUTH_TIMESTAMP);
+      }
+    } else {
+      sessionStorage.removeItem(STORAGE_KEY_AUTH_STATUS);
+      sessionStorage.removeItem(STORAGE_KEY_AUTH_TIMESTAMP);
+      localStorage.removeItem(STORAGE_KEY_AUTH_STATUS);
+      localStorage.removeItem(STORAGE_KEY_AUTH_TIMESTAMP);
+    }
   } catch {
     // Ignore storage access errors
+  }
+}
+
+export function getRememberedFriendPassword(): { remember: boolean; password: string } {
+  try {
+    const remember = localStorage.getItem(STORAGE_KEY_REMEMBER_FRIEND) === 'true';
+    const password = localStorage.getItem(STORAGE_KEY_SAVED_FRIEND_PASS) || '';
+    return { remember, password };
+  } catch {
+    return { remember: false, password: '' };
   }
 }
 

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { Team, Match, Prediction, AppUser } from './types';
 import { DEFAULT_TEAMS, INITIAL_MATCHES } from './data/defaultData';
-import { setFriendAuthenticated, applySyncedFriendPassword } from './utils/security';
+import { setFriendAuthenticated, applySyncedFriendPassword, isFriendAuthenticated } from './utils/security';
 import { 
   subscribeTeams, 
   syncSaveTeam, 
@@ -43,7 +43,7 @@ import { ConfirmDialog } from './components/ConfirmDialog';
 const DB_VERSION = "2026.12_TEAMS_CLEARED";
 
 export default function App() {
-  const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(() => isFriendAuthenticated());
   const [activeTab, setActiveTab] = useState<'matches' | 'members_predictions' | 'leaderboard' | 'rules' | 'admin'>('matches');
 
   // Application Data States
@@ -78,9 +78,9 @@ export default function App() {
 
   // Initialization
   useEffect(() => {
-    // 1. Secret friend password must be asked every time someone enters, even after page refresh
-    setFriendAuthenticated(false);
-    setIsUnlocked(false);
+    // 1. Check friend password authentication status (respected if user selected Remember Me)
+    const friendAuth = isFriendAuthenticated();
+    setIsUnlocked(friendAuth);
 
     // 2. Initialize Database and LocalStorage
     const storedVersion = localStorage.getItem('cl_db_version');
@@ -115,7 +115,7 @@ export default function App() {
     setUsers(loadedUsers);
 
     // Load Logged User
-    const loggedUser = localStorage.getItem('cl_logged_user');
+    const loggedUser = localStorage.getItem('cl_logged_user') || sessionStorage.getItem('cl_session_logged_user');
     if (loggedUser) {
       try {
         const parsed = JSON.parse(loggedUser);
@@ -125,6 +125,7 @@ export default function App() {
           if (!verified) {
             // Do not allow automatic admin login without entering admin secret code!
             localStorage.removeItem('cl_logged_user');
+            sessionStorage.removeItem('cl_session_logged_user');
             setCurrentUser(null);
           } else {
             const found = loadedUsers.find(u => u.username.toLowerCase() === parsed.username.toLowerCase());
@@ -203,7 +204,10 @@ export default function App() {
       const updatedCurrent = nextUsers.find(u => u.username.toLowerCase() === currentUser.username.toLowerCase());
       if (updatedCurrent) {
         setCurrentUser(updatedCurrent);
-        localStorage.setItem('cl_logged_user', JSON.stringify(updatedCurrent));
+        if (localStorage.getItem('cl_logged_user')) {
+          localStorage.setItem('cl_logged_user', JSON.stringify(updatedCurrent));
+        }
+        sessionStorage.setItem('cl_session_logged_user', JSON.stringify(updatedCurrent));
       }
     }
   };
@@ -327,9 +331,15 @@ export default function App() {
     setAuthModalOpen(true);
   };
 
-  const handleLoginSuccess = (user: AppUser) => {
+  const handleLoginSuccess = (user: AppUser, remember: boolean = true) => {
     setCurrentUser(user);
-    localStorage.setItem('cl_logged_user', JSON.stringify(user));
+    if (remember) {
+      localStorage.setItem('cl_logged_user', JSON.stringify(user));
+      sessionStorage.setItem('cl_session_logged_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('cl_logged_user');
+      sessionStorage.setItem('cl_session_logged_user', JSON.stringify(user));
+    }
     if (user.role === 'admin') {
       sessionStorage.setItem('cl_admin_verified', '05082007');
       setActiveTab('admin');
@@ -347,6 +357,7 @@ export default function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('cl_logged_user');
+    sessionStorage.removeItem('cl_session_logged_user');
     sessionStorage.removeItem('cl_admin_verified');
     setActiveTab('matches');
   };
@@ -459,10 +470,10 @@ export default function App() {
       const tabs = getAvailableTabs();
       const currentIdx = tabs.indexOf(activeTab);
 
-      // In RTL (Right-to-Left Arabic layout):
-      // Swiping finger towards Left (deltaX < 0) advances to the next tab (index + 1)
-      // Swiping finger towards Right (deltaX > 0) goes back to previous tab (index - 1)
-      if (deltaX < 0) {
+      // Solved: Reversed sliding direction on phone
+      // Swiping finger towards Right (deltaX > 0) advances to the next tab
+      // Swiping finger towards Left (deltaX < 0) goes back to the previous tab
+      if (deltaX > 0) {
         if (currentIdx < tabs.length - 1) {
           navigateToTab(tabs[currentIdx + 1], 1);
         }

@@ -14,7 +14,8 @@ import {
   Mail,
   UserPlus,
   LogIn,
-  Info
+  Info,
+  BookmarkCheck
 } from 'lucide-react';
 import { AppUser } from '../types';
 
@@ -26,7 +27,7 @@ interface AuthModalProps {
   initialTab?: AuthSlide;
   users: AppUser[];
   onClose: () => void;
-  onLoginSuccess: (user: AppUser) => void;
+  onLoginSuccess: (user: AppUser, remember?: boolean) => void;
   onRegisterUser: (newUser: AppUser) => void;
 }
 
@@ -48,6 +49,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [rememberLogin, setRememberLogin] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('cl_remember_login') === 'true';
+    } catch {
+      return true;
+    }
+  });
+
+  // Prepopulate saved credentials if user previously checked "Remember Me"
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        const isRemembered = localStorage.getItem('cl_remember_login') === 'true';
+        if (isRemembered) {
+          const savedUser = localStorage.getItem('cl_remembered_username') || '';
+          const savedPass = localStorage.getItem('cl_remembered_password') || '';
+          if (savedUser) setLoginUsername(savedUser);
+          if (savedPass) setLoginPassword(savedPass);
+          setRememberLogin(true);
+        }
+      } catch {
+        // Ignore storage access errors
+      }
+    }
+  }, [isOpen]);
 
   // Sign Up form states
   const [signupUsername, setSignupUsername] = useState('');
@@ -154,8 +180,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
+    // Save or clear remembered credentials based on user's choice
+    try {
+      if (rememberLogin) {
+        localStorage.setItem('cl_remember_login', 'true');
+        localStorage.setItem('cl_remembered_username', cleanUsername);
+        localStorage.setItem('cl_remembered_password', cleanPassword);
+      } else {
+        localStorage.removeItem('cl_remember_login');
+        localStorage.removeItem('cl_remembered_username');
+        localStorage.removeItem('cl_remembered_password');
+      }
+    } catch {
+      // Ignore storage access errors
+    }
+
     // Successful login
-    onLoginSuccess(existingUser);
+    onLoginSuccess(existingUser, rememberLogin);
     onClose();
   };
 
@@ -464,6 +505,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+            </div>
+
+            {/* Remember Login Credentials Toggle Button */}
+            <div 
+              onClick={() => setRememberLogin(!rememberLogin)}
+              className={`flex items-center justify-between p-3 rounded-2xl border transition cursor-pointer select-none ${
+                rememberLogin 
+                  ? 'bg-cyan-500/10 border-cyan-500/50 text-cyan-200 shadow-[0_0_12px_rgba(0,229,255,0.15)]' 
+                  : 'bg-[#080C19] border-slate-800 text-slate-400 hover:border-slate-700'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <input
+                  type="checkbox"
+                  id="remember_login_cb"
+                  checked={rememberLogin}
+                  onChange={(e) => setRememberLogin(e.target.checked)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-4 h-4 rounded accent-[#00E5FF] cursor-pointer bg-slate-950 border-slate-700 focus:ring-0"
+                />
+                <div className="flex flex-col text-right">
+                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <BookmarkCheck className={`w-3.5 h-3.5 ${rememberLogin ? 'text-[#00E5FF]' : 'text-slate-500'}`} />
+                    تذكر تسجيل الدخول (Remember Me)
+                  </span>
+                  <span className="text-[10px] text-slate-400 mt-0.5">
+                    حفظ الحساب على هذا الجهاز لتسجيل الدخول التلقائي
+                  </span>
+                </div>
+              </div>
+              <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+                rememberLogin 
+                  ? 'bg-cyan-500/25 text-cyan-300 border-cyan-500/50' 
+                  : 'bg-slate-800 text-slate-400 border-slate-700'
+              }`}>
+                {rememberLogin ? 'حفظ الحساب' : 'تذكرني'}
+              </span>
             </div>
 
             <button

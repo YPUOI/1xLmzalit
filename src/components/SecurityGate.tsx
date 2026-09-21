@@ -8,13 +8,15 @@ import {
   Sparkles, 
   CheckCircle2, 
   ShieldAlert,
-  ArrowLeft
+  ArrowLeft,
+  BookmarkCheck
 } from 'lucide-react';
 import { 
   getSecurityConfig, 
   verifyFriendPassword, 
   setFriendAuthenticated,
-  applySyncedFriendPassword
+  applySyncedFriendPassword,
+  getRememberedFriendPassword
 } from '../utils/security';
 import { subscribeSecurityConfig, getLatestFriendPassword } from '../lib/firebase';
 import { SecurityConfig } from '../types';
@@ -26,7 +28,12 @@ interface SecurityGateProps {
 }
 
 export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
-  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState<boolean>(() => {
+    return getRememberedFriendPassword().remember;
+  });
+  const [password, setPassword] = useState<string>(() => {
+    return getRememberedFriendPassword().password || '';
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -91,7 +98,7 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
     if (isValid) {
       setSuccessMsg('تم التحقق بنجاح! جاري فتح المنصة...');
       setTimeout(() => {
-        setFriendAuthenticated(true);
+        setFriendAuthenticated(true, rememberMe, input);
         onUnlock();
       }, 400);
     } else {
@@ -179,9 +186,41 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-900/70 p-3 rounded-2xl border border-slate-800">
-            <Lock className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
-            <span className="leading-tight">حماية فورية: يُطلب الرمز دائماً عند كل دخول أو تحديث للصفحة.</span>
+          {/* Remember Friend Password Toggle Button */}
+          <div 
+            onClick={() => setRememberMe(!rememberMe)}
+            className={`flex items-center justify-between p-3 rounded-2xl border transition cursor-pointer select-none ${
+              rememberMe 
+                ? 'bg-amber-500/10 border-amber-500/50 text-amber-200 shadow-[0_0_12px_rgba(245,158,11,0.15)]' 
+                : 'bg-slate-900/70 border-slate-800 text-slate-400 hover:border-slate-700'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <input
+                type="checkbox"
+                id="remember_friend_pwd"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                onClick={(e) => e.stopPropagation()}
+                className="w-4 h-4 rounded accent-amber-400 cursor-pointer bg-slate-950 border-slate-700 focus:ring-0"
+              />
+              <div className="flex flex-col text-right">
+                <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <BookmarkCheck className={`w-3.5 h-3.5 ${rememberMe ? 'text-amber-400' : 'text-slate-500'}`} />
+                  تذكر كلمة المرور (Remember Me)
+                </span>
+                <span className="text-[10px] text-slate-400 mt-0.5">
+                  حفظ كلمة مرور الأصدقاء على هذا الجهاز لتفادي طلبها عند كل دخول
+                </span>
+              </div>
+            </div>
+            <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+              rememberMe 
+                ? 'bg-amber-500/25 text-amber-300 border-amber-500/50' 
+                : 'bg-slate-800 text-slate-400 border-slate-700'
+            }`}>
+              {rememberMe ? 'حفظ دائم' : 'حفظ'}
+            </span>
           </div>
 
           <button
