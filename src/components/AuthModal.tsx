@@ -18,6 +18,8 @@ import {
   BookmarkCheck
 } from 'lucide-react';
 import { AppUser } from '../types';
+import { useLanguage } from '../i18n/LanguageContext';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 export type AuthSlide = 'login' | 'signup' | 'admin';
 
@@ -40,6 +42,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onLoginSuccess,
   onRegisterUser
 }) => {
+  const { t, isRtl, language } = useLanguage();
   // Current active slide: 'login' | 'signup' | 'admin'
   const [activeSlide, setActiveSlide] = useState<AuthSlide>(
     initialTab || (initialRole === 'admin' ? 'admin' : 'login')
@@ -349,23 +352,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto" dir="rtl">
-      <div className="ucl-card p-5 sm:p-7 rounded-3xl max-w-md w-full border border-slate-800 relative text-right shadow-2xl my-auto max-h-[95vh] flex flex-col justify-between">
+    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto" dir={isRtl ? 'rtl' : 'ltr'}>
+      <div className={`ucl-card p-5 sm:p-7 rounded-3xl max-w-md w-full border border-slate-800 relative shadow-2xl my-auto max-h-[95vh] flex flex-col justify-between ${isRtl ? 'text-right' : 'text-left'}`}>
         
-        {/* Top bar with Close Button */}
+        {/* Top bar with LanguageSwitcher and Close Button */}
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-[#00E5FF]" />
-            <span className="text-xs font-black text-slate-300">منظومة الحسابات والأمان</span>
+            <span className="text-xs font-black text-slate-300">1xlmzalit Auth</span>
           </div>
-          <button 
-            onClick={onClose} 
-            className="text-[#94A3B8] hover:text-white p-2 rounded-xl hover:bg-slate-800/80 transition cursor-pointer"
-            title="إغلاق"
-            aria-label="Close modal"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher variant="header-desktop" />
+            <button 
+              onClick={onClose} 
+              className="text-[#94A3B8] hover:text-white p-2 rounded-xl hover:bg-slate-800/80 transition cursor-pointer"
+              title={t('close')}
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* 3 Slides Tabs Navigation */}
@@ -381,7 +387,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             }`}
           >
             <LogIn className="w-3.5 h-3.5 shrink-0" />
-            <span>تسجيل الدخول</span>
+            <span>{t('tabLogin')}</span>
           </button>
 
           {/* Slide 2: Sign Up */}
@@ -395,7 +401,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             }`}
           >
             <UserPlus className="w-3.5 h-3.5 shrink-0" />
-            <span>إنشاء حساب</span>
+            <span>{t('tabSignup')}</span>
           </button>
 
           {/* Slide 3: Admin */}
@@ -409,7 +415,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             }`}
           >
             <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-            <span>الآدمن</span>
+            <span>{t('tabAdminPortal')}</span>
           </button>
         </div>
 
@@ -419,27 +425,45 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {activeSlide === 'login' && (
               <>
                 <UserCheck className="w-5 h-5 text-[#00E5FF] shrink-0" />
-                <span className="text-[#00E5FF]">تسجيل دخول الأعضاء</span>
+                <span className="text-[#00E5FF]">
+                  {language === 'ar' ? 'تسجيل دخول الأعضاء' : language === 'fr' ? 'Connexion des Membres' : 'Member Login'}
+                </span>
               </>
             )}
             {activeSlide === 'signup' && (
               <>
                 <UserPlus className="w-5 h-5 text-amber-400 shrink-0" />
-                <span className="text-amber-400">إنشاء حساب عضو جديد</span>
+                <span className="text-amber-400">
+                  {language === 'ar' ? 'إنشاء حساب عضو جديد' : language === 'fr' ? 'Créer un Compte Membre' : 'Create Member Account'}
+                </span>
               </>
             )}
             {activeSlide === 'admin' && (
               <>
                 <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0" />
-                <span className="text-rose-400">بوابة الإدارة والتحكم (Admin)</span>
+                <span className="text-rose-400">
+                  {language === 'ar' ? 'بوابة الإدارة والتحكم (Admin)' : language === 'fr' ? 'Portail Administration (Admin)' : 'Admin Management Portal'}
+                </span>
               </>
             )}
           </h3>
 
           <p className="text-xs text-[#94A3B8] leading-relaxed">
-            {activeSlide === 'login' && 'أدخل اسم المستخدم وكلمة المرور الخاصة بحسابك لمتابعة وتعديل توقعاتك.'}
-            {activeSlide === 'signup' && 'قم بإنشاء حسابك وتعيين بريد Gmail الرسمي لحفظ وتوثيق نتائجك في البطولة.'}
-            {activeSlide === 'admin' && 'أدخل رمز سر الآدمن المعتمد حصراً للوصول المباشر إلى لوحة التحكم.'}
+            {activeSlide === 'login' && (
+              language === 'ar' ? 'أدخل اسم المستخدم وكلمة المرور الخاصة بحسابك لمتابعة وتعديل توقعاتك.' :
+              language === 'fr' ? 'Entrez vos identifiants pour soumettre et modifier vos pronostics.' :
+              'Enter your username and password to make or edit your predictions.'
+            )}
+            {activeSlide === 'signup' && (
+              language === 'ar' ? 'قم بإنشاء حسابك وتعيين بريد Gmail الرسمي لحفظ وتوثيق نتائجك في البطولة.' :
+              language === 'fr' ? 'Créez votre compte et enregistrez votre Gmail pour sauvegarder vos points.' :
+              'Register your account and official Gmail to record your tournament points.'
+            )}
+            {activeSlide === 'admin' && (
+              language === 'ar' ? 'أدخل رمز سر الآدمن المعتمد حصراً للوصول المباشر إلى لوحة التحكم.' :
+              language === 'fr' ? 'Saisissez le code secret administrateur pour accéder au panneau.' :
+              'Enter the admin passcode to access tournament settings and match controls.'
+            )}
           </p>
         </div>
 
@@ -469,14 +493,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5 text-[#00E5FF]" />
-                <span>اسم المستخدم</span>
+                <span>{t('username')}</span>
               </label>
               <input
                 type="text"
                 required
                 value={loginUsername}
                 onChange={(e) => setLoginUsername(e.target.value)}
-                placeholder="أدخل اسم المستخدم..."
+                placeholder={t('username')}
                 autoFocus
                 className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3.5 text-white text-base sm:text-sm outline-none focus:border-[#00E5FF] transition placeholder:text-slate-600 min-h-[48px]"
               />
@@ -485,7 +509,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5 text-[#00E5FF]" />
-                <span>كلمة المرور</span>
+                <span>{t('password')}</span>
               </label>
               <div className="relative">
                 <input
@@ -493,14 +517,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   required
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="أدخل كلمة المرور..."
-                  className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3.5 pl-12 text-white text-base sm:text-sm outline-none focus:border-[#00E5FF] transition placeholder:text-slate-600 min-h-[48px]"
+                  placeholder={t('password')}
+                  className={`w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3.5 text-white text-base sm:text-sm outline-none focus:border-[#00E5FF] transition placeholder:text-slate-600 min-h-[48px] ${
+                    isRtl ? 'pl-12 pr-4' : 'pr-12 pl-4'
+                  }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowLoginPassword(!showLoginPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-2 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
-                  title={showLoginPassword ? 'إخفاء' : 'إظهار'}
+                  className={`absolute top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-2 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer ${
+                    isRtl ? 'left-3' : 'right-3'
+                  }`}
+                  title={showLoginPassword ? 'Hide' : 'Show'}
                 >
                   {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -525,13 +553,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   onClick={(e) => e.stopPropagation()}
                   className="w-4 h-4 rounded accent-[#00E5FF] cursor-pointer bg-slate-950 border-slate-700 focus:ring-0"
                 />
-                <div className="flex flex-col text-right">
+                <div className={`flex flex-col ${isRtl ? 'text-right' : 'text-left'}`}>
                   <span className="text-xs font-bold text-white flex items-center gap-1.5">
                     <BookmarkCheck className={`w-3.5 h-3.5 ${rememberLogin ? 'text-[#00E5FF]' : 'text-slate-500'}`} />
-                    تذكر تسجيل الدخول (Remember Me)
+                    {t('rememberLogin')}
                   </span>
                   <span className="text-[10px] text-slate-400 mt-0.5">
-                    حفظ الحساب على هذا الجهاز لتسجيل الدخول التلقائي
+                    {t('rememberLoginDesc')}
                   </span>
                 </div>
               </div>
@@ -540,7 +568,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   ? 'bg-cyan-500/25 text-cyan-300 border-cyan-500/50' 
                   : 'bg-slate-800 text-slate-400 border-slate-700'
               }`}>
-                {rememberLogin ? 'حفظ الحساب' : 'تذكرني'}
+                {t('permanentSave')}
               </span>
             </div>
 
@@ -548,16 +576,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               type="submit"
               className="w-full font-black py-3.5 rounded-2xl transition shadow-lg mt-2 text-sm cursor-pointer active:scale-[0.99] min-h-[48px] flex items-center justify-center bg-gradient-to-r from-cyan-500 to-[#00E5FF] hover:from-cyan-400 hover:to-cyan-300 text-slate-950 shadow-cyan-500/20"
             >
-              تسجيل الدخول
+              {t('submitLogin')}
             </button>
 
-            <div className="text-center pt-2">
+            <div className="text-center pt-2 flex flex-col items-center gap-2">
               <button
                 type="button"
                 onClick={() => { setActiveSlide('signup'); setStatusAlert(null); }}
                 className="text-xs text-[#00E5FF] hover:underline cursor-pointer font-bold inline-flex items-center gap-1"
               >
-                <span>ليس لديك حساب؟ اضغط هنا لإنشاء حساب جديد</span>
+                <span>{t('tabSignup')}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setActiveSlide('admin'); setStatusAlert(null); }}
+                className="text-xs text-rose-400 hover:text-rose-300 hover:underline cursor-pointer font-bold inline-flex items-center gap-1.5 py-1 px-3 rounded-xl bg-rose-950/30 hover:bg-rose-950/60 border border-rose-500/30 transition mt-1"
+              >
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+                <span>{t('adminLoginQuickPrompt')}</span>
               </button>
             </div>
           </form>

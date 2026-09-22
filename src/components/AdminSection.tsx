@@ -38,8 +38,10 @@ import { Match, Team, AppUser, Prediction, SecurityConfig } from '../types';
 import { getSecurityConfig, saveSecurityConfig } from '../utils/security';
 import { subscribeSecurityConfig, syncSaveSecurityConfig } from '../lib/firebase';
 import { ConfirmDialog } from './ConfirmDialog';
+import { getTeamEnglishName } from '../data/clubPresets';
 import { POPULAR_CLUB_PRESETS, parsePlayersText, generateFallbackLogo, ClubPreset } from '../data/clubPresets';
 import { removeImageBackground } from '../utils/removeBackground';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface AdminSectionProps {
   matches: Match[];
@@ -72,6 +74,8 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   onShowToast,
   onRequestDeleteMatch
 }) => {
+  const { t, isRtl, language } = useLanguage();
+
   // Admin passcode challenge state if accessed directly
   const [adminGatePasscode, setAdminGatePasscode] = useState('');
   const [adminGateError, setAdminGateError] = useState<string | null>(null);
@@ -722,13 +726,22 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
 
   if (!isVerifiedAdmin) {
     return (
-      <div className="max-w-md mx-auto my-6 sm:my-10 ucl-card p-6 sm:p-8 rounded-3xl border border-rose-500/40 ucl-gold-glow text-center shadow-2xl">
+      <div 
+        className="max-w-md mx-auto my-6 sm:my-10 ucl-card p-6 sm:p-8 rounded-3xl border border-rose-500/40 ucl-gold-glow text-center shadow-2xl"
+        dir={isRtl ? 'rtl' : 'ltr'}
+      >
         <div className="w-16 h-16 rounded-2xl bg-rose-950/80 border border-rose-500/40 text-rose-400 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-rose-950/50">
           <ShieldAlert className="w-8 h-8" />
         </div>
-        <h2 className="text-xl sm:text-2xl font-black text-white mb-2">لوحة الإدارة محمية</h2>
+        <h2 className="text-xl sm:text-2xl font-black text-white mb-2">
+          {language === 'fr' ? 'Accès Administrateur Sécurisé' : language === 'en' ? 'Protected Admin Portal' : 'لوحة الإدارة محمية'}
+        </h2>
         <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-          لا يمكن الدخول أو استعراض لوحة تحكم الآدمن بدون إدخال الرمز السري للإدارة المعتمد.
+          {language === 'fr'
+            ? 'L\'accès aux paramètres et à la gestion du système requiert la saisie du code secret administrateur.'
+            : language === 'en'
+            ? 'Access to system controls requires entering the verified master administrator secret code.'
+            : 'لا يمكن الدخول أو استعراض لوحة تحكم الآدمن بدون إدخال الرمز السري للإدارة المعتمد.'}
         </p>
 
         {adminGateError && (
@@ -739,15 +752,21 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
 
         <form onSubmit={handleAdminGateSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-rose-400 mb-2 text-right flex items-center gap-1.5">
+            <label className="block text-xs font-bold text-rose-400 mb-2 flex items-center gap-1.5">
               <KeyRound className="w-3.5 h-3.5" />
-              <span>الرمز السري للآدمن (Admin Secret Code)</span>
+              <span>
+                {language === 'fr' 
+                  ? 'Code secret administrateur (Admin Code)' 
+                  : language === 'en' 
+                  ? 'Admin Secret Passcode' 
+                  : 'الرمز السري للآدمن (Admin Secret Code)'}
+              </span>
             </label>
             <input
               type="password"
               value={adminGatePasscode}
               onChange={(e) => setAdminGatePasscode(e.target.value)}
-              placeholder="أدخل الرمز السري للإدارة..."
+              placeholder={language === 'fr' ? 'Entrez le code secret admin...' : language === 'en' ? 'Enter admin secret code...' : 'أدخل الرمز السري للإدارة...'}
               autoFocus
               className="w-full bg-slate-900 border border-rose-500/60 rounded-2xl p-3.5 text-center text-white text-base tracking-widest outline-none focus:border-rose-400 min-h-[48px] placeholder:text-slate-600 placeholder:tracking-normal"
             />
@@ -758,7 +777,9 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
             className="w-full bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-black py-3.5 rounded-2xl transition shadow-lg text-sm cursor-pointer min-h-[48px] flex items-center justify-center gap-2 active:scale-[0.99]"
           >
             <Lock className="w-4 h-4" />
-            <span>التحقق والدخول إلى لوحة التحكم</span>
+            <span>
+              {language === 'fr' ? 'Vérifier et Accéder' : language === 'en' ? 'Verify & Access Dashboard' : 'التحقق والدخول إلى لوحة التحكم'}
+            </span>
           </button>
         </form>
       </div>
@@ -766,12 +787,20 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Top Organization Bar: Expand / Collapse All */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-slate-900/70 rounded-2xl border border-slate-800">
         <div className="text-xs text-slate-300">
-          <span className="font-black text-white ml-1.5">لوحة تحكم الإدارة:</span>
-          <span className="text-slate-400">انقر على عنوان أي قسم أو السهم لتوسيعه وعرض كامل تفاصيله، أو طيّه للتبسيط والترتيب.</span>
+          <span className="font-black text-white ml-1.5 mr-1.5">
+            {language === 'fr' ? 'Panneau de Contrôle :' : language === 'en' ? 'Admin Control Center:' : 'لوحة تحكم الإدارة:'}
+          </span>
+          <span className="text-slate-400">
+            {language === 'fr' 
+              ? 'Cliquez sur une section pour la déplier et modifier son contenu.' 
+              : language === 'en' 
+              ? 'Click any section header or chevron to expand or collapse details.' 
+              : 'انقر على عنوان أي قسم أو السهم لتوسيعه وعرض كامل تفاصيله، أو طيّه للتبسيط والترتيب.'}
+          </span>
         </div>
         <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
           <button
@@ -780,7 +809,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
             className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer border border-slate-700 hover:border-slate-600 flex items-center gap-1.5 active:scale-95"
           >
             <ChevronDown className="w-3.5 h-3.5 text-cyan-400" />
-            <span>توسيع الكل</span>
+            <span>{t('expandAll')}</span>
           </button>
           <button
             type="button"
@@ -788,7 +817,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
             className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer border border-slate-700 hover:border-slate-600 flex items-center gap-1.5 active:scale-95"
           >
             <ChevronUp className="w-3.5 h-3.5 text-amber-400" />
-            <span>طي الكل</span>
+            <span>{t('collapseAll')}</span>
           </button>
         </div>
       </div>
@@ -1199,7 +1228,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 <option value="ALL">جميع المباريات ({matches.length})</option>
                 {matches.map(m => (
                   <option key={m.id} value={m.id}>
-                    {m.homeTeam} × {m.awayTeam} {m.status === 'SETTLED' ? '(معتمدة)' : '(مفتوحة)'}
+                    {getTeamEnglishName(m.homeTeam)} × {getTeamEnglishName(m.awayTeam)} {m.status === 'SETTLED' ? '(معتمدة)' : '(مفتوحة)'}
                   </option>
                 ))}
               </select>
@@ -1268,7 +1297,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                         <td className="p-3 text-slate-300 whitespace-nowrap">
                           {match ? (
                             <div>
-                              <span className="font-bold text-white">{match.homeTeam} × {match.awayTeam}</span>
+                              <span className="font-bold text-white">{getTeamEnglishName(match.homeTeam)} × {getTeamEnglishName(match.awayTeam)}</span>
                               <span className="block text-[10px] text-slate-500">
                                 {match.status === 'SETTLED' ? 'منتهية ومعتمدة' : 'مفتوحة'}
                               </span>
@@ -1478,7 +1507,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 <div key={match.id} className="p-4 bg-slate-900/80 rounded-2xl border border-slate-800 space-y-4">
                   {/* Title & Delete */}
                   <div className="flex justify-between items-center text-xs font-bold text-slate-300">
-                    <span className="text-sm text-white font-black">{match.homeTeam} VS {match.awayTeam}</span>
+                    <span className="text-sm text-white font-black">{getTeamEnglishName(match.homeTeam)} VS {getTeamEnglishName(match.awayTeam)}</span>
                     <div className="flex items-center gap-3">
                       <span className={match.status === 'SETTLED' ? 'text-emerald-400' : 'text-amber-400'}>
                         {match.status === 'SETTLED' ? 'تم تنزيل النتيجة' : 'مفتوحة'}
@@ -1519,7 +1548,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     <div className="space-y-3 pt-2 border-t border-slate-800">
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-[10px] text-slate-400">أهداف {match.homeTeam}</label>
+                          <label className="block text-[10px] text-slate-400">أهداف {getTeamEnglishName(match.homeTeam)}</label>
                           <input
                             type="number"
                             min="0"
@@ -1529,7 +1558,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] text-slate-400">أهداف {match.awayTeam}</label>
+                          <label className="block text-[10px] text-slate-400">أهداف {getTeamEnglishName(match.awayTeam)}</label>
                           <input
                             type="number"
                             min="0"
@@ -1543,7 +1572,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       {/* Scorer picks for home */}
                       {draft.homeScore > 0 && (
                         <div className="space-y-1.5">
-                          <label className="block text-[10px] font-bold text-blue-400">مسجلو أهداف {match.homeTeam}:</label>
+                          <label className="block text-[10px] font-bold text-blue-400">مسجلو أهداف {getTeamEnglishName(match.homeTeam)}:</label>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {Array.from({ length: draft.homeScore }).map((_, idx) => (
                               <select
@@ -1567,7 +1596,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       {/* Scorer picks for away */}
                       {draft.awayScore > 0 && (
                         <div className="space-y-1.5">
-                          <label className="block text-[10px] font-bold text-rose-400">مسجلو أهداف {match.awayTeam}:</label>
+                          <label className="block text-[10px] font-bold text-rose-400">مسجلو أهداف {getTeamEnglishName(match.awayTeam)}:</label>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {Array.from({ length: draft.awayScore }).map((_, idx) => (
                               <select
@@ -2219,7 +2248,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
         title="اعتماد النتيجة واحتساب النقاط"
         message={
           settleConfirmMatch
-            ? `هل أنت متأكد من اعتماد نتيجة مباراة (${settleConfirmMatch.homeTeam} ${getSettleDraft(settleConfirmMatch.id).homeScore} - ${getSettleDraft(settleConfirmMatch.id).awayScore} ${settleConfirmMatch.awayTeam}) وتوزيع النقاط على جميع المتوقعين؟`
+            ? `هل أنت متأكد من اعتماد نتيجة مباراة (${getTeamEnglishName(settleConfirmMatch.homeTeam)} ${getSettleDraft(settleConfirmMatch.id).homeScore} - ${getSettleDraft(settleConfirmMatch.id).awayScore} ${getTeamEnglishName(settleConfirmMatch.awayTeam)}) وتوزيع النقاط على جميع المتوقعين؟`
             : ''
         }
         confirmText="نعم، اعتمد واحتسب النقاط"

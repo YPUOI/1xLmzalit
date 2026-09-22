@@ -9,6 +9,7 @@ import {
   CheckCircle2, 
   ShieldAlert,
   ArrowLeft,
+  ArrowRight,
   BookmarkCheck
 } from 'lucide-react';
 import { 
@@ -22,12 +23,15 @@ import { subscribeSecurityConfig, getLatestFriendPassword } from '../lib/firebas
 import { SecurityConfig } from '../types';
 import { UclStarsBackground } from './UclStarsBackground';
 import { XlmzalitLogo } from './XlmzalitLogo';
+import { useLanguage } from '../i18n/LanguageContext';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
 interface SecurityGateProps {
   onUnlock: () => void;
 }
 
 export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
+  const { t, isRtl } = useLanguage();
   const [rememberMe, setRememberMe] = useState<boolean>(() => {
     return getRememberedFriendPassword().remember;
   });
@@ -71,7 +75,7 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
 
     const input = password.trim();
     if (!input) {
-      setErrorMsg('الرجاء إدخال كلمة مرور الأصدقاء للدخول.');
+      setErrorMsg(t('errorEmptyPass'));
       return;
     }
 
@@ -96,18 +100,18 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
     setIsVerifying(false);
 
     if (isValid) {
-      setSuccessMsg('تم التحقق بنجاح! جاري فتح المنصة...');
+      setSuccessMsg(t('verifySuccess'));
       setTimeout(() => {
         setFriendAuthenticated(true, rememberMe, input);
         onUnlock();
       }, 400);
     } else {
-      setErrorMsg('كلمة المرور غير صحيحة! هذه المنصة مخصصة للأصدقاء فقط.');
+      setErrorMsg(t('errorWrongPass'));
     }
   };
 
   return (
-    <div className="min-h-screen ucl-theme-bg flex flex-col items-center justify-center p-4 relative overflow-hidden text-slate-100">
+    <div className="min-h-screen ucl-theme-bg flex flex-col items-center justify-center p-4 relative overflow-hidden text-slate-100" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Eye-Friendly Glowing UEFA Champions League Stars & Atmosphere Background */}
       <UclStarsBackground />
 
@@ -115,6 +119,11 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-blue-600/25 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-80 h-80 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-10 right-1/4 w-72 h-72 bg-pink-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Language Switcher at Top of Card */}
+      <div className="mb-4 z-20">
+        <LanguageSwitcher variant="gate" />
+      </div>
 
       {/* Main Security Card */}
       <div className="w-full max-w-md ucl-card rounded-3xl p-6 sm:p-8 ucl-card-glow relative z-10 border border-blue-500/30 shadow-2xl">
@@ -135,10 +144,10 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
             1xLmzalit v1.0
           </span>
           <h1 className="text-2xl sm:text-3xl font-black mt-1 text-white tracking-wide">
-            بوابة دخول الأصدقاء
+            {t('gateTitle')}
           </h1>
           <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
-            المنصة محمية ومخصصة للأصدقاء فقط. يرجى إدخال كلمة المرور المعتمدة للمتابعة.
+            {t('gateSubtitle')}
           </p>
         </div>
 
@@ -163,7 +172,7 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
             <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <KeyRound className="w-3.5 h-3.5 text-yellow-400" />
-                كلمة مرور الأصدقاء (Friends Password)
+                {t('gatePassLabel')}
               </span>
             </label>
             <div className="relative">
@@ -171,15 +180,19 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="أدخل كلمة مرور الأصدقاء..."
+                placeholder={t('gatePassPlaceholder')}
                 autoFocus
-                className="w-full bg-slate-950/80 border border-slate-700/80 focus:border-yellow-400 rounded-2xl py-3.5 pr-4 pl-12 text-sm text-white font-medium outline-none transition shadow-inner placeholder:text-slate-600"
+                className={`w-full bg-slate-950/80 border border-slate-700/80 focus:border-yellow-400 rounded-2xl py-3.5 text-sm text-white font-medium outline-none transition shadow-inner placeholder:text-slate-600 ${
+                  isRtl ? 'pr-4 pl-12' : 'pl-4 pr-12'
+                }`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-1 cursor-pointer"
-                title={showPassword ? 'إخفاء' : 'إظهار'}
+                className={`absolute top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-1 cursor-pointer ${
+                  isRtl ? 'left-3' : 'right-3'
+                }`}
+                title={showPassword ? 'Hide' : 'Show'}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -204,13 +217,13 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
                 onClick={(e) => e.stopPropagation()}
                 className="w-4 h-4 rounded accent-amber-400 cursor-pointer bg-slate-950 border-slate-700 focus:ring-0"
               />
-              <div className="flex flex-col text-right">
+              <div className={`flex flex-col ${isRtl ? 'text-right' : 'text-left'}`}>
                 <span className="text-xs font-bold text-white flex items-center gap-1.5">
                   <BookmarkCheck className={`w-3.5 h-3.5 ${rememberMe ? 'text-amber-400' : 'text-slate-500'}`} />
-                  تذكر كلمة المرور (Remember Me)
+                  {t('rememberPassword')}
                 </span>
                 <span className="text-[10px] text-slate-400 mt-0.5">
-                  حفظ كلمة مرور الأصدقاء على هذا الجهاز لتفادي طلبها عند كل دخول
+                  {t('rememberPasswordDesc')}
                 </span>
               </div>
             </div>
@@ -219,16 +232,17 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
                 ? 'bg-amber-500/25 text-amber-300 border-amber-500/50' 
                 : 'bg-slate-800 text-slate-400 border-slate-700'
             }`}>
-              {rememberMe ? 'حفظ دائم' : 'حفظ'}
+              {t('permanentSave')}
             </span>
           </div>
 
           <button
             type="submit"
+            disabled={isVerifying}
             className="w-full bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-500 hover:from-yellow-400 hover:to-amber-300 text-slate-950 font-black py-3.5 rounded-2xl transition shadow-lg shadow-yellow-500/20 flex items-center justify-center gap-2 text-sm cursor-pointer active:scale-[0.99]"
           >
-            <span>فتح المنصة والدخول</span>
-            <ArrowLeft className="w-4 h-4" />
+            <span>{isVerifying ? t('verifying') : t('unlockPlatform')}</span>
+            {isRtl ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
           </button>
         </form>
 
@@ -236,11 +250,11 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
         <div className="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
           <span className="flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
-            نظام حماية المزاليط
+            1xlmzalit Security
           </span>
           <span className="text-emerald-400 font-semibold flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            مشفّر ومؤمن
+            SSL Protected
           </span>
         </div>
       </div>

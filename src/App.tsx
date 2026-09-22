@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
+  Home,
   Trophy, 
   Users, 
   ShieldCheck, 
@@ -29,6 +30,7 @@ import {
 import { SecurityGate } from './components/SecurityGate';
 import { UclHeader } from './components/UclHeader';
 import { UclStarsBackground } from './components/UclStarsBackground';
+import { HomeSection } from './components/HomeSection';
 import { MatchesSection } from './components/MatchesSection';
 import { SquadsSection } from './components/SquadsSection';
 import { LeaderboardSection } from './components/LeaderboardSection';
@@ -39,12 +41,16 @@ import { AuthModal } from './components/AuthModal';
 import { SecuritySettingsModal } from './components/SecuritySettingsModal';
 import { ToastContainer, ToastMessage } from './components/ToastContainer';
 import { ConfirmDialog } from './components/ConfirmDialog';
+import { useLanguage } from './i18n/LanguageContext';
 
 const DB_VERSION = "2026.12_TEAMS_CLEARED";
 
+export type TabType = 'home' | 'matches' | 'members_predictions' | 'leaderboard' | 'rules' | 'admin';
+
 export default function App() {
+  const { t, isRtl, language } = useLanguage();
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => isFriendAuthenticated());
-  const [activeTab, setActiveTab] = useState<'matches' | 'members_predictions' | 'leaderboard' | 'rules' | 'admin'>('matches');
+  const [activeTab, setActiveTab] = useState<TabType>('home');
 
   // Application Data States
   const [teams, setTeams] = useState<Record<string, Team>>({});
@@ -345,7 +351,7 @@ export default function App() {
       setActiveTab('admin');
     } else {
       sessionStorage.removeItem('cl_admin_verified');
-      setActiveTab('matches');
+      setActiveTab('home');
     }
   };
 
@@ -359,15 +365,16 @@ export default function App() {
     localStorage.removeItem('cl_logged_user');
     sessionStorage.removeItem('cl_session_logged_user');
     sessionStorage.removeItem('cl_admin_verified');
-    setActiveTab('matches');
+    setActiveTab('home');
   };
 
   // Mobile Tab Swipe Navigation State & Logic
   const [slideDirection, setSlideDirection] = useState<number>(0);
   const touchStartRef = useRef<{ x: number; y: number; time: number; isValid: boolean } | null>(null);
 
-  const getAvailableTabs = useCallback((): Array<'matches' | 'members_predictions' | 'leaderboard' | 'rules' | 'admin'> => {
-    const tabs: Array<'matches' | 'members_predictions' | 'leaderboard' | 'rules' | 'admin'> = [
+  const getAvailableTabs = useCallback((): TabType[] => {
+    const tabs: TabType[] = [
+      'home',
       'matches',
       'members_predictions',
       'leaderboard',
@@ -379,7 +386,7 @@ export default function App() {
     return tabs;
   }, [currentUser?.role]);
 
-  const navigateToTab = useCallback((targetTab: 'matches' | 'members_predictions' | 'leaderboard' | 'rules' | 'admin', direction?: number) => {
+  const navigateToTab = useCallback((targetTab: TabType, direction?: number) => {
     if (targetTab === 'admin') {
       if (sessionStorage.getItem('cl_admin_verified') === '05082007') {
         if (direction !== undefined) setSlideDirection(direction);
@@ -491,7 +498,10 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen ucl-theme-bg relative text-slate-100 flex flex-col justify-between selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div 
+      className="min-h-screen ucl-theme-bg relative text-slate-100 flex flex-col justify-between selection:bg-cyan-500/30 selection:text-cyan-200"
+      dir={isRtl ? 'rtl' : 'ltr'}
+    >
       {/* Eye-Friendly Glowing UEFA Champions League Stars & Atmosphere Background */}
       <UclStarsBackground />
 
@@ -511,73 +521,22 @@ export default function App() {
         {/* Main Content Area */}
         <div className="max-w-7xl mx-auto px-3 sm:px-4 mt-3 sm:mt-5 pb-28 md:pb-8">
           
-          {/* Grand UEFA Champions League Welcoming Banner: The Stage is Set */}
-          <div className="relative mb-6 rounded-3xl overflow-hidden bg-[#10172A] p-5 sm:p-8 border border-slate-800 shadow-2xl">
-            {/* Soft cyan & starball ambient glow */}
-            <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#00E5FF]/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2" />
-            <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none translate-y-1/2" />
-            <div className="absolute -top-10 left-10 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-
-            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div className="space-y-2.5 max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00E5FF]/15 border border-[#00E5FF]/35 text-[#00E5FF] text-[11px] sm:text-xs font-black tracking-widest uppercase">
-                  <span className="w-2 h-2 rounded-full bg-[#00E5FF] animate-ping" />
-                  <span>UEFA CHAMPIONS LEAGUE 2026/2027</span>
-                </div>
-
-                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white uppercase font-sans drop-shadow-sm">
-                  THE STAGE IS SET.
-                </h1>
-
-                <p className="text-[#E2E8F0] text-xs sm:text-sm md:text-base font-semibold leading-relaxed">
-                  المسرح جاهز لليالي الأبطال التاريخية. سجّل توقعاتك الدقيقة لنتائج المواجهات، اختر هدّافي المباريات ورجل اللقاء، واعتلِ صدارة جدول المتوقعين!
-                </p>
-
-                {/* Quick Tournament Highlights */}
-                <div className="flex flex-wrap items-center gap-2 pt-1.5 text-xs">
-                  <span className="bg-[#080C19] text-[#E2E8F0] border border-slate-800 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5">
-                    <Trophy className="w-3.5 h-3.5 text-yellow-400" />
-                    <span>توقعات إقصائيات دوري الابطال</span>
-                  </span>
-                  <span className="bg-[#080C19] text-[#E2E8F0] border border-slate-800 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5">
-                    <Award className="w-3.5 h-3.5 text-[#00E5FF]" />
-                    <span>نقاط فورية للنتائج الصحيحة و للهدافين ونجم اللقاء</span>
-                  </span>
-                  <span className="bg-[#080C19] text-[#E2E8F0] border border-slate-800 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>حساب دقيق للنقاط دون اي هامش خطأ</span>
-                  </span>
-                  <span className="bg-[#00E5FF]/15 text-[#00E5FF] border border-[#00E5FF]/35 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#00E5FF]" />
-                    <span>تحديث فوري لجدول المتوقعين</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Quick Action Navigation */}
-              <div className="shrink-0 w-full md:w-auto flex flex-col sm:flex-row md:flex-col gap-2.5">
-                <button
-                  onClick={() => navigateToTab('matches')}
-                  className="ucl-btn-primary px-6 py-3.5 rounded-2xl font-black text-xs sm:text-sm text-center cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Trophy className="w-4 h-4" />
-                  <span>ابدأ تسجيل توقعاتك</span>
-                </button>
-
-                <button
-                  onClick={() => navigateToTab('leaderboard')}
-                  className="bg-[#080C19] hover:bg-slate-800 text-[#E2E8F0] border border-slate-800 px-5 py-3 rounded-2xl font-bold text-xs text-center transition cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Award className="w-4 h-4 text-amber-400" />
-                  <span>عرض لوحة الشرف والترتيب</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* Desktop & Tablet Tabs Navigation (hidden on mobile) */}
           <div className="hidden md:flex border-b border-slate-800/80 mb-6 gap-2 overflow-x-auto pb-1 select-none">
-            {/* 1. المباريات والتوقعات */}
+            {/* 0. Home / الرئيسية (Main Page) */}
+            <button
+              onClick={() => navigateToTab('home')}
+              className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
+                activeTab === 'home'
+                  ? 'border-[#00E5FF] text-[#00E5FF] bg-[#00E5FF]/15 shadow-[0_0_15px_rgba(0,229,255,0.2)]'
+                  : 'border-transparent text-[#94A3B8] hover:text-[#E2E8F0]'
+              }`}
+            >
+              <Home className="w-4 h-4 text-[#00E5FF]" />
+              <span>{t('tabHome')}</span>
+            </button>
+
+            {/* 1. Matches and Predictions */}
             <button
               onClick={() => navigateToTab('matches')}
               className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
@@ -587,10 +546,10 @@ export default function App() {
               }`}
             >
               <Trophy className="w-4 h-4 text-yellow-400" />
-              <span>المباريات والتوقعات</span>
+              <span>{t('tabMatches')}</span>
             </button>
 
-            {/* 2. سلايد توقعات الأعضاء (بجانب المباريات والتوقعات) */}
+            {/* 2. Members Predictions */}
             <button
               onClick={() => navigateToTab('members_predictions')}
               className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
@@ -600,10 +559,10 @@ export default function App() {
               }`}
             >
               <Users className="w-4 h-4 text-[#00E5FF]" />
-              <span>توقعات الأعضاء</span>
+              <span>{t('tabMembersPredictions')}</span>
             </button>
 
-            {/* 3. جدول الترتيب */}
+            {/* 3. Leaderboard */}
             <button
               onClick={() => navigateToTab('leaderboard')}
               className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
@@ -613,10 +572,10 @@ export default function App() {
               }`}
             >
               <Award className="w-4 h-4 text-amber-400" />
-              <span>جدول الترتيب</span>
+              <span>{t('tabLeaderboard')}</span>
             </button>
 
-            {/* 4. القواعد (بجانب جدول الترتيب) */}
+            {/* 4. Rules */}
             <button
               onClick={() => navigateToTab('rules')}
               className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
@@ -626,7 +585,7 @@ export default function App() {
               }`}
             >
               <Sparkles className="w-4 h-4 text-[#00E5FF]" />
-              <span>القواعد</span>
+              <span>{t('tabRules')}</span>
             </button>
 
             {currentUser?.role === 'admin' && (
@@ -639,7 +598,7 @@ export default function App() {
                 }`}
               >
                 <ShieldAlert className="w-4 h-4 text-rose-400" />
-                <span>لوحة التحكم (الآدمن)</span>
+                <span>{t('tabAdmin')}</span>
               </button>
             )}
           </div>
@@ -651,8 +610,8 @@ export default function App() {
                 <Sparkles className="w-4 h-4 animate-pulse" />
               </div>
               <div className="text-[11px] leading-tight truncate">
-                <span className="font-bold text-white block">إيماءة السحب (Swipe) مفعلة</span>
-                <span className="text-slate-400 text-[10px]">اسحب لليمين واليسار للتنقل بين التبويبات</span>
+                <span className="font-bold text-white block">{t('swipeHint')}</span>
+                <span className="text-slate-400 text-[10px]">{t('swipeSubhint')}</span>
               </div>
             </div>
             <div className="flex items-center gap-1.5 pl-1 shrink-0">
@@ -686,6 +645,17 @@ export default function App() {
                 exit={{ opacity: 0, x: slideDirection > 0 ? 16 : slideDirection < 0 ? -16 : 0 }}
                 transition={{ duration: 0.22, ease: "easeOut" }}
               >
+                {activeTab === 'home' && (
+                  <HomeSection
+                    currentUser={currentUser}
+                    matches={matches}
+                    users={users}
+                    predictions={predictions}
+                    onNavigate={(tab) => navigateToTab(tab)}
+                    onOpenAuth={handleOpenAuth}
+                  />
+                )}
+
                 {activeTab === 'matches' && (
                   <MatchesSection
                     matches={matches}
@@ -743,17 +713,29 @@ export default function App() {
       </div>
 
         {/* Mobile Bottom Navigation Bar (Visible only on phone/mobile screens) */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#080C19]/95 border-t border-slate-800/80 backdrop-blur-2xl px-2 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#080C19]/95 border-t border-slate-800/80 backdrop-blur-2xl px-1.5 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom">
+          <button
+            onClick={() => navigateToTab('home')}
+            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-2 rounded-2xl transition cursor-pointer min-w-[50px] min-h-[48px] ${
+              activeTab === 'home'
+                ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
+                : 'text-[#94A3B8] font-bold hover:text-white'
+            }`}
+          >
+            <Home className="w-5 h-5 text-[#00E5FF]" />
+            <span className="text-[10px]">{t('tabHomeShort')}</span>
+          </button>
+
           <button
             onClick={() => navigateToTab('matches')}
-            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition cursor-pointer min-w-[56px] min-h-[48px] ${
+            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-2 rounded-2xl transition cursor-pointer min-w-[50px] min-h-[48px] ${
               activeTab === 'matches'
                 ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
                 : 'text-[#94A3B8] font-bold hover:text-white'
             }`}
           >
             <Trophy className="w-5 h-5 text-yellow-400" />
-            <span className="text-[10px]">المباريات</span>
+            <span className="text-[10px]">{t('tabMatchesShort')}</span>
           </button>
 
           <button
@@ -765,7 +747,7 @@ export default function App() {
             }`}
           >
             <Users className="w-5 h-5 text-[#00E5FF]" />
-            <span className="text-[10px]">التوقعات</span>
+            <span className="text-[10px]">{t('tabMembersPredictionsShort')}</span>
           </button>
 
           <button
@@ -777,7 +759,7 @@ export default function App() {
             }`}
           >
             <Award className="w-5 h-5 text-amber-400" />
-            <span className="text-[10px]">الترتيب</span>
+            <span className="text-[10px]">{t('tabLeaderboardShort')}</span>
           </button>
 
           <button
@@ -789,7 +771,7 @@ export default function App() {
             }`}
           >
             <Sparkles className="w-5 h-5 text-[#00E5FF]" />
-            <span className="text-[10px]">القواعد</span>
+            <span className="text-[10px]">{t('tabRulesShort')}</span>
           </button>
 
           {currentUser?.role === 'admin' && (
@@ -802,7 +784,7 @@ export default function App() {
               }`}
             >
               <ShieldAlert className="w-5 h-5 text-rose-400" />
-              <span className="text-[10px]">الآدمن</span>
+              <span className="text-[10px]">{t('tabAdminShort')}</span>
             </button>
           )}
         </nav>
@@ -813,14 +795,18 @@ export default function App() {
       {/* Match Delete Custom Confirmation Modal */}
       <ConfirmDialog
         isOpen={Boolean(matchToDelete)}
-        title="تأكيد حذف المباراة"
+        title={language === 'fr' ? 'Confirmer la suppression' : language === 'en' ? 'Confirm Match Deletion' : 'تأكيد حذف المباراة'}
         message={
           matchToDelete
-            ? `هل أنت متأكد من حذف مباراة (${matchToDelete.homeTeam} ضد ${matchToDelete.awayTeam}) نهائياً؟ سيتم حذف جميع التوقعات المرتبطة بها.`
+            ? language === 'fr'
+              ? `Êtes-vous sûr de vouloir supprimer définitivement le match (${matchToDelete.homeTeam} contre ${matchToDelete.awayTeam}) ? Tous les pronostics associés seront supprimés.`
+              : language === 'en'
+              ? `Are you sure you want to permanently delete (${matchToDelete.homeTeam} vs ${matchToDelete.awayTeam})? All associated predictions will be removed.`
+              : `هل أنت متأكد من حذف مباراة (${matchToDelete.homeTeam} ضد ${matchToDelete.awayTeam}) نهائياً؟ سيتم حذف جميع التوقعات المرتبطة بها.`
             : ''
         }
-        confirmText="نعم، احذف المباراة"
-        cancelText="إلغاء التراجع"
+        confirmText={language === 'fr' ? 'Oui, supprimer le match' : language === 'en' ? 'Yes, Delete Match' : 'نعم، احذف المباراة'}
+        cancelText={language === 'fr' ? 'Annuler' : language === 'en' ? 'Cancel' : 'إلغاء التراجع'}
         isDestructive={true}
         onConfirm={handleConfirmDeleteMatch}
         onCancel={() => setMatchToDelete(null)}
@@ -829,10 +815,16 @@ export default function App() {
       {/* Reset DB Custom Confirmation Modal */}
       <ConfirmDialog
         isOpen={resetDbConfirmOpen}
-        title="إعادة ضبط قاعدة البيانات"
-        message="هل أنت متأكد من رغبتك في إعادة ضبط بيانات الفرق الافتراضية والـ 36 فريق والمباريات؟"
-        confirmText="نعم، إعادة ضبط"
-        cancelText="إلغاء"
+        title={language === 'fr' ? 'Réinitialiser la base de données' : language === 'en' ? 'Reset Database' : 'إعادة ضبط قاعدة البيانات'}
+        message={
+          language === 'fr'
+            ? 'Êtes-vous sûr de vouloir réinitialiser toutes les données des clubs, joueurs et matchs ?'
+            : language === 'en'
+            ? 'Are you sure you want to reset all clubs, players, and match data?'
+            : 'هل أنت متأكد من رغبتك في إعادة ضبط بيانات الفرق الافتراضية والـ 36 فريق والمباريات؟'
+        }
+        confirmText={language === 'fr' ? 'Oui, réinitialiser' : language === 'en' ? 'Yes, Reset Database' : 'نعم، إعادة ضبط'}
+        cancelText={language === 'fr' ? 'Annuler' : language === 'en' ? 'Cancel' : 'إلغاء'}
         isDestructive={true}
         onConfirm={handleResetDatabaseConfirmed}
         onCancel={() => setResetDbConfirmOpen(false)}
@@ -858,7 +850,7 @@ export default function App() {
 
         {/* Footer */}
         <footer className="mt-12 py-6 border-t border-slate-800/80 text-center text-xs text-slate-500">
-          <p>1XLMZALIT UCL 2026/2027 Prediction Platform &copy; جميع الحقوق محفوظة</p>
+          <p>{t('footerCopyright')}</p>
         </footer>
       </div>
     </div>

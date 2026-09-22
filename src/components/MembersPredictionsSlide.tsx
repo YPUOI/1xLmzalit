@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { Match, Team, Prediction, AppUser } from '../types';
 import { PredictionCardModal } from './PredictionCardModal';
+import { useLanguage } from '../i18n/LanguageContext';
+import { getTeamEnglishName } from '../data/clubPresets';
 
 interface MembersPredictionsSlideProps {
   matches: Match[];
@@ -30,6 +32,7 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
   predictions,
   users
 }) => {
+  const { t, isRtl, language } = useLanguage();
   const [selectedMatchId, setSelectedMatchId] = useState<string>('ALL');
   const [searchMember, setSearchMember] = useState<string>('');
   const [activeCardModal, setActiveCardModal] = useState<{
@@ -39,6 +42,8 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
     prediction: Prediction;
     memberName: string;
   } | null>(null);
+
+  const dateLocale = language === 'ar' ? 'ar-EG' : language === 'fr' ? 'fr-FR' : 'en-US';
 
   const openPredictionCard = (match: Match, pred: Prediction) => {
     const home = teams[match.homeTeam] || { name: match.homeTeam, logo: '', squad: [] };
@@ -78,7 +83,7 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
     return lockedMatches.filter(m => m.id === selectedMatchId);
   }, [lockedMatches, selectedMatchId]);
 
-  // Helper to calculate points for a settled prediction
+  // Helper to calculate points for a settled prediction (5 pts exact, 3 pts MVP, 1 pt per goalscorer)
   const getPredictionPoints = (pred: Prediction, match: Match) => {
     if (match.status !== 'SETTLED' || !match.result) return null;
     const res = match.result;
@@ -87,11 +92,13 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
     let scorersCount = 0;
     let correctMvp = false;
 
+    // Rule 1: Exact Score (+5)
     if (pred.homeScore === res.homeScore && pred.awayScore === res.awayScore) {
       total += 5;
       exactScore = true;
     }
 
+    // Rule 2: Goal Scorers (+1 per scorer)
     (pred.homeScorers || []).forEach(sc => {
       if (sc && res.homeScorers.includes(sc)) {
         total += 1;
@@ -105,6 +112,7 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
       }
     });
 
+    // Rule 3: Man of the Match MVP (+3)
     if (pred.mvp && res.mvp && pred.mvp.trim().toLowerCase() === res.mvp.trim().toLowerCase()) {
       total += 3;
       correctMvp = true;
@@ -114,7 +122,7 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Slide Header */}
       <div className="ucl-card p-5 sm:p-6 rounded-3xl border border-cyan-500/30 ucl-card-glow relative overflow-hidden">
         <div className="absolute top-0 left-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -123,24 +131,24 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#080C19] border border-[#00E5FF]/40 text-xs font-black text-[#00E5FF] mb-2">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>الشفافية الرسمية لمجتمع الأصدقاء</span>
+              <span>{t('brandName')}</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5">
               <Users className="w-6 h-6 text-[#00E5FF]" />
-              <span>توقعات الأعضاء المعتمدة</span>
+              <span>{t('membersPredTitle')}</span>
             </h2>
             <p className="text-xs sm:text-sm text-[#94A3B8] mt-1.5 max-w-2xl leading-relaxed">
-              تُعرض هنا كافة التوقعات الأخيرة المعتمدة للأعضاء التي تم تسجيلها قبل انتهاء المهلة (Deadline). تظهر التوقعات فور إغلاق باب التوقع للمباراة لضمان العدالة والنزاهة الكاملة.
+              {t('membersPredDesc')}
             </p>
           </div>
 
           <div className="flex items-center gap-2 bg-[#080C19] p-2.5 rounded-2xl border border-slate-800 self-start md:self-auto">
-            <div className="text-center px-3 border-l border-slate-800">
-              <span className="block text-[10px] text-slate-400 font-bold">مباريات مغلقة</span>
+            <div className={`text-center px-3 ${isRtl ? 'border-l' : 'border-r'} border-slate-800`}>
+              <span className="block text-[10px] text-slate-400 font-bold">{t('settledMatches')}</span>
               <span className="text-base font-black text-[#00E5FF]">{lockedMatches.length}</span>
             </div>
             <div className="text-center px-3">
-              <span className="block text-[10px] text-slate-400 font-bold">مباريات جارية</span>
+              <span className="block text-[10px] text-slate-400 font-bold">{t('upcomingMatches')}</span>
               <span className="text-base font-black text-yellow-400">{upcomingMatches.length}</span>
             </div>
           </div>
@@ -150,32 +158,32 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
         <div className="mt-5 pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 relative z-10">
           {/* Search by member name */}
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className={`w-4 h-4 text-slate-400 absolute ${isRtl ? 'right-3.5' : 'left-3.5'} top-1/2 -translate-y-1/2 pointer-events-none`} />
             <input
               type="text"
               value={searchMember}
               onChange={(e) => setSearchMember(e.target.value)}
-              placeholder="ابحث باسم المتسابق أو الصديق..."
-              className="w-full bg-[#080C19] border border-slate-700/80 rounded-xl pr-10 pl-4 py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-[#00E5FF] transition"
+              placeholder={t('filterByUser')}
+              className={`w-full bg-[#080C19] border border-slate-700/80 rounded-xl ${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-[#00E5FF] transition`}
             />
           </div>
 
           {/* Filter by Match Dropdown */}
           {lockedMatches.length > 0 && (
-            <div className="sm:w-72 relative">
+            <div className="sm:w-80 relative">
               <select
                 value={selectedMatchId}
                 onChange={(e) => setSelectedMatchId(e.target.value)}
                 className="w-full bg-[#080C19] border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[#00E5FF] appearance-none cursor-pointer"
               >
-                <option value="ALL">جميع المباريات المغلقة ({lockedMatches.length})</option>
+                <option value="ALL">{t('allMatches')} ({lockedMatches.length})</option>
                 {lockedMatches.map(m => (
                   <option key={m.id} value={m.id}>
-                    {m.homeTeam} ضد {m.awayTeam} {m.status === 'SETTLED' ? '(منتهية)' : '(مغلقة)'}
+                    {getTeamEnglishName(m.homeTeam)} × {getTeamEnglishName(m.awayTeam)} {m.status === 'SETTLED' ? `(${t('settledStatus')})` : `(${t('predictionLocked')})`}
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <ChevronDown className={`w-4 h-4 text-slate-400 absolute ${isRtl ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 pointer-events-none`} />
             </div>
           )}
         </div>
@@ -188,24 +196,24 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
             <Lock className="w-8 h-8" />
           </div>
           <div className="max-w-md mx-auto">
-            <h3 className="text-base font-black text-white">باب التوقعات ما زال مفتوحاً</h3>
+            <h3 className="text-base font-black text-white">{t('predictionsStillOpenTitle')}</h3>
             <p className="text-xs text-[#94A3B8] mt-1.5 leading-relaxed">
-              لم تنتهِ مهلة التوقع (Deadline) لأي مباراة بعد. ستظهر توقعات جميع الأصدقاء هنا تلقائياً في هذه الصفحة فور إغلاق باب التوقع وبدء المباريات.
+              {t('predictionsStillOpenDesc')}
             </p>
           </div>
 
           {upcomingMatches.length > 0 && (
-            <div className="pt-4 border-t border-slate-800/80 max-w-xl mx-auto text-right">
+            <div className="pt-4 border-t border-slate-800/80 max-w-xl mx-auto text-left">
               <h4 className="text-xs font-bold text-slate-300 mb-2.5 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-[#00E5FF]" />
-                <span>المباريات القادمة ومواعيد الإغلاق (Deadlines):</span>
+                <span>{t('upcomingDeadlinesTitle')}</span>
               </h4>
               <div className="space-y-2">
                 {upcomingMatches.map(m => (
                   <div key={m.id} className="p-3 bg-[#080C19] border border-slate-800/80 rounded-xl flex items-center justify-between text-xs">
-                    <span className="font-black text-white">{m.homeTeam} × {m.awayTeam}</span>
+                    <span className="font-black text-white">{getTeamEnglishName(m.homeTeam)} × {getTeamEnglishName(m.awayTeam)}</span>
                     <span className="text-cyan-400 font-mono text-[11px]">
-                      إغلاق: {new Date(m.deadline).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })}
+                      {t('deadlinePrefix')} {new Date(m.deadline).toLocaleString(dateLocale, { dateStyle: 'short', timeStyle: 'short' })}
                     </span>
                   </div>
                 ))}
@@ -217,6 +225,8 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
 
       {/* Display Locked Matches and Their Predictions */}
       {displayedMatches.map(match => {
+        const homeEnglishName = getTeamEnglishName(match.homeTeam);
+        const awayEnglishName = getTeamEnglishName(match.awayTeam);
         const home = teams[match.homeTeam] || { name: match.homeTeam, logo: '', squad: [] };
         const away = teams[match.awayTeam] || { name: match.awayTeam, logo: '', squad: [] };
 
@@ -236,18 +246,18 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-base sm:text-lg font-black text-white">
-                      {match.homeTeam} × {match.awayTeam}
+                      {homeEnglishName} × {awayEnglishName}
                     </h3>
                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
                       match.status === 'SETTLED'
                         ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                         : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                     }`}>
-                      {match.status === 'SETTLED' ? 'تم اعتماد النتيجة' : 'انتهت المهلة ومغلقة'}
+                      {match.status === 'SETTLED' ? t('matchStatusSettled') : t('matchStatusClosed')}
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-400 mt-0.5">
-                    موعد الإغلاق: {new Date(match.deadline).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' })}
+                    {t('deadlineTimeLabel')} {new Date(match.deadline).toLocaleString(dateLocale, { dateStyle: 'medium', timeStyle: 'short' })}
                   </p>
                 </div>
               </div>
@@ -255,7 +265,7 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
               {/* Match Result if settled */}
               {match.status === 'SETTLED' && match.result && (
                 <div className="bg-[#080C19] border border-yellow-500/30 px-4 py-2 rounded-2xl flex items-center gap-3">
-                  <span className="text-xs font-bold text-slate-400">النتيجة النهائية:</span>
+                  <span className="text-xs font-bold text-slate-400">{t('finalResultLabel')}</span>
                   <span className="text-lg font-black text-yellow-400 font-mono">
                     {match.result.homeScore} - {match.result.awayScore}
                   </span>
@@ -272,8 +282,8 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
             {matchPreds.length === 0 ? (
               <div className="p-6 text-center text-xs text-slate-500 bg-[#080C19]/50 rounded-2xl border border-slate-800/60">
                 {searchMember.trim() 
-                  ? `لا توجد توقعات مسجلة تطابق البحث "${searchMember}".` 
-                  : 'لم يقم أي عضو بتسجيل توقع لهذه المباراة قبل انتهاء المهلة.'}
+                  ? `${t('noPredsFoundSearch')} "${searchMember}".` 
+                  : t('noPredsSubmitted')}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -295,8 +305,8 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
                               {pred.username}
                             </span>
                             {pred.updatedAt && (
-                              <span className="text-[9px] text-slate-500 block">
-                                {new Date(pred.updatedAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                              <span className="text-[9px] text-slate-500 block font-mono">
+                                {new Date(pred.updatedAt).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             )}
                           </div>
@@ -304,7 +314,7 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
 
                         {/* Predicted Score Badge */}
                         <div className="bg-[#10172A] border border-[#00E5FF]/40 px-3 py-1.5 rounded-xl text-center shrink-0">
-                          <span className="text-[10px] text-slate-400 block font-bold leading-none mb-0.5">توقعه</span>
+                          <span className="text-[10px] text-slate-400 block font-bold leading-none mb-0.5">{t('predictedScoreLabel')}</span>
                           <span className="text-sm font-black text-[#00E5FF] font-mono leading-none">
                             {pred.homeScore} - {pred.awayScore}
                           </span>
@@ -317,9 +327,9 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
                         {pred.homeScore > 0 && (
                           <div className="flex items-start gap-1.5 text-slate-300">
                             <Flame className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
-                            <span className="text-slate-400 text-[10px] shrink-0">أهداف {home.name}:</span>
+                            <span className="text-slate-400 text-[10px] shrink-0">{t('goalsOf')} {homeEnglishName}:</span>
                             <span className="font-semibold text-white truncate">
-                              {(pred.homeScorers || []).join('، ') || 'لم يُحدد'}
+                              {(pred.homeScorers || []).join(', ') || t('notSpecified')}
                             </span>
                           </div>
                         )}
@@ -328,9 +338,9 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
                         {pred.awayScore > 0 && (
                           <div className="flex items-start gap-1.5 text-slate-300">
                             <Flame className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
-                            <span className="text-slate-400 text-[10px] shrink-0">أهداف {away.name}:</span>
+                            <span className="text-slate-400 text-[10px] shrink-0">{t('goalsOf')} {awayEnglishName}:</span>
                             <span className="font-semibold text-white truncate">
-                              {(pred.awayScorers || []).join('، ') || 'لم يُحدد'}
+                              {(pred.awayScorers || []).join(', ') || t('notSpecified')}
                             </span>
                           </div>
                         )}
@@ -339,7 +349,7 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
                         {pred.mvp && (
                           <div className="flex items-center gap-1.5 text-slate-300">
                             <Award className="w-3 h-3 text-purple-400 shrink-0" />
-                            <span className="text-slate-400 text-[10px] shrink-0">رجل اللقاء:</span>
+                            <span className="text-slate-400 text-[10px] shrink-0">{t('motmShort')}</span>
                             <span className="font-bold text-purple-300 truncate">{pred.mvp}</span>
                           </div>
                         )}
@@ -348,25 +358,25 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
                       {/* Settled Points Breakdown if Match is Settled */}
                       {ptsInfo && (
                         <div className="pt-2.5 border-t border-slate-800 flex items-center justify-between">
-                          <span className="text-[10px] text-slate-400 font-bold">النقاط المحصودة:</span>
+                          <span className="text-[10px] text-slate-400 font-bold">{t('pointsEarnedColon')}</span>
                           <div className="flex items-center gap-1.5">
                             {ptsInfo.exactScore && (
                               <span className="text-[9px] bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 px-1.5 py-0.5 rounded font-bold">
-                                دقيقة (+5)
+                                {t('exactScoreBadge')}
                               </span>
                             )}
                             {ptsInfo.correctMvp && (
                               <span className="text-[9px] bg-purple-500/20 border border-purple-500/40 text-purple-200 px-1.5 py-0.5 rounded font-bold">
-                                MVP (+3)
+                                {t('mvpBadge')}
                               </span>
                             )}
                             {ptsInfo.scorersCount > 0 && (
                               <span className="text-[9px] bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 px-1.5 py-0.5 rounded font-bold">
-                                هدافين (+{ptsInfo.scorersCount})
+                                {t('scorersBadge')} (+{ptsInfo.scorersCount})
                               </span>
                             )}
                             <span className="text-xs font-black text-yellow-400 bg-yellow-950/60 border border-yellow-800/80 px-2 py-0.5 rounded-lg">
-                              +{ptsInfo.total} نقطة
+                              +{ptsInfo.total} {language === 'fr' ? 'pts' : language === 'en' ? 'pts' : 'نقطة'}
                             </span>
                           </div>
                         </div>
@@ -378,14 +388,14 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
                           type="button"
                           onClick={() => openPredictionCard(match, pred)}
                           className="mt-2.5 w-full py-1.5 px-2 bg-slate-900/90 hover:bg-slate-850 border border-cyan-500/30 text-cyan-300 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition cursor-pointer hover:border-cyan-400 select-none"
-                          title="تحميل بطاقة التوقع الرسمية كصورة"
+                          title={t('downloadPredCard')}
                         >
                           <Download className="w-3 h-3 text-cyan-400" />
-                          <span>تحميل بطاقة التوقع (صورة)</span>
+                          <span>{t('downloadPredCard')}</span>
                         </button>
                       ) : (
                         <div className="mt-2 text-center text-[10px] text-slate-500 font-medium">
-                          انتهت إمكانية تحميل البطاقة بإعلان النتيجة
+                          {t('cardDownloadExpired')}
                         </div>
                       )}
                     </div>

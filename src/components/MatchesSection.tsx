@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { Match, Team, Prediction, AppUser } from '../types';
 import { PredictionCardModal } from './PredictionCardModal';
+import { useLanguage } from '../i18n/LanguageContext';
+import { getTeamEnglishName } from '../data/clubPresets';
 
 interface MatchesSectionProps {
   matches: Match[];
@@ -48,6 +50,7 @@ export const MatchCountdown: React.FC<{
   deadline: string;
   status: 'OPEN' | 'SETTLED';
 }> = ({ deadline, status }) => {
+  const { t } = useLanguage();
   const [now, setNow] = useState<number>(() => Date.now());
 
   useEffect(() => {
@@ -66,7 +69,7 @@ export const MatchCountdown: React.FC<{
     return (
       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900/90 border border-slate-700/60 text-slate-400 text-[11px] font-bold shrink-0">
         <Clock className="w-3 h-3 text-slate-500" />
-        <span>انتهى الوقت</span>
+        <span>{t('timeExpired')}</span>
       </div>
     );
   }
@@ -84,14 +87,14 @@ export const MatchCountdown: React.FC<{
     return (
       <div 
         className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-rose-950/90 to-red-950/90 border border-rose-500 text-rose-300 text-xs font-black shadow-[0_0_16px_rgba(244,63,94,0.45)] animate-pulse shrink-0"
-        title="أقل من ساعة متبقية على إغلاق التوقعات!"
+        title="< 1h!"
       >
         <Flame className="w-4 h-4 text-rose-400 shrink-0" />
-        <span className="text-[11px] text-rose-200 hidden xs:inline">متبقي:</span>
+        <span className="text-[11px] text-rose-200 hidden xs:inline">{t('timeLeft')}:</span>
         <span className="font-mono text-white text-xs font-black tracking-wider bg-rose-900/80 px-2 py-0.5 rounded-md border border-rose-500/60" dir="ltr">
           {pad(minutes)}:{pad(seconds)}
         </span>
-        <span className="text-[10px] text-rose-300 font-bold hidden sm:inline">(أقل من ساعة!)</span>
+        <span className="text-[10px] text-rose-300 font-bold hidden sm:inline">(&lt; 1h)</span>
       </div>
     );
   }
@@ -99,10 +102,10 @@ export const MatchCountdown: React.FC<{
   return (
     <div 
       className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900/90 border border-blue-500/40 text-blue-300 text-xs font-bold shadow-sm shrink-0"
-      title="الوقت المتبقي لإغلاق التوقع"
+      title={t('timeLeft')}
     >
       <Timer className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-      <span className="text-[11px] text-slate-400 hidden xs:inline">متبقي:</span>
+      <span className="text-[11px] text-slate-400 hidden xs:inline">{t('timeLeft')}:</span>
       <span className="font-mono text-white text-xs font-black tracking-wider bg-slate-950 px-2 py-0.5 rounded-md border border-slate-700/60" dir="ltr">
         {days > 0 ? `${days}d ` : ''}{pad(hours)}:{pad(minutes)}:{pad(seconds)}
       </span>
@@ -119,6 +122,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   onDeleteMatch,
   onOpenAuth
 }) => {
+  const { t, isRtl, language } = useLanguage();
   // Local state for predictions being edited per match
   const [draftPreds, setDraftPreds] = useState<Record<string, {
     homeScore: number;
@@ -313,16 +317,16 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   return (
     <div className="space-y-6">
       {/* Section Header */}
-      <div className="flex flex-wrap justify-between items-center ucl-card p-4 rounded-2xl border border-slate-700/60 gap-4">
+      <div className="flex flex-wrap justify-between items-center ucl-card p-4 rounded-2xl border border-slate-700/60 gap-4" dir={isRtl ? 'rtl' : 'ltr'}>
         <h2 className="text-xl font-black text-white flex items-center gap-2.5">
           <Clock className="w-5 h-5 text-blue-400" />
-          <span>المباريات المتاحة للتوقع</span>
+          <span>{t('tabMatches')}</span>
         </h2>
 
         {currentUser && (
           <div className="ucl-gold-badge px-4 py-1.5 rounded-xl font-black text-xs sm:text-sm flex items-center gap-2 shadow-sm">
             <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-            <span>نقاطك الحالية: <strong className="text-white text-base">{currentUser.points || 0}</strong></span>
+            <span><strong className="text-white text-base">{currentUser.points || 0}</strong> {t('pointsCount')}</span>
           </div>
         )}
       </div>
@@ -331,8 +335,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
       {matches.length === 0 ? (
         <div className="ucl-card p-10 text-center rounded-3xl text-slate-400 border border-slate-800">
           <CalendarX className="w-12 h-12 mx-auto mb-3 text-slate-600" />
-          <p className="font-bold text-sm">لا توجد مباريات متاحة للتوقع حالياً.</p>
-          <p className="text-xs text-slate-500 mt-1">يمكن لمدير النظام إضافة مباريات جديدة من لوحة التحكم.</p>
+          <p className="font-bold text-sm">{t('noMatchesFound')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6">
@@ -349,13 +352,14 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
               <div 
                 key={match.id} 
                 className="ucl-card p-5 sm:p-6 rounded-3xl border border-slate-800/90 space-y-6 relative overflow-hidden transition hover:border-blue-500/40"
+                dir={isRtl ? 'rtl' : 'ltr'}
               >
                 {/* Match Status Bar */}
                 <div className="flex flex-wrap justify-between items-center border-b border-slate-800/80 pb-3 gap-2.5">
                   <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-xs font-bold text-slate-300">
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span>آخر موعد: <span className="font-mono text-slate-200 tracking-wide font-semibold" dir="ltr">{formatEnglishDeadline(match.deadline)}</span></span>
+                      <span className="font-mono text-slate-200 tracking-wide font-semibold" dir="ltr">{formatEnglishDeadline(match.deadline)}</span>
                     </div>
 
                     {/* Live Countdown Timer */}
@@ -368,10 +372,10 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         type="button"
                         onClick={() => onDeleteMatch(match)}
                         className="bg-rose-950/80 hover:bg-rose-900 text-rose-400 border border-rose-500/40 text-[11px] px-2.5 py-1 rounded-xl transition flex items-center gap-1 font-bold cursor-pointer active:scale-95"
-                        title="حذف المباراة"
+                        title="Delete Match"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
-                        <span>حذف</span>
+                        <span>Delete</span>
                       </button>
                     )}
 
@@ -382,13 +386,13 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
                         : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                     }`}>
-                      {match.status === 'SETTLED' ? 'منتهية (تم حساب النقاط)' : isLocked ? 'مغلقة' : 'متاحة الآن'}
+                      {match.status === 'SETTLED' ? t('settledStatus') : isLocked ? t('predictionLocked') : t('openForPrediction')}
                     </span>
                   </div>
                 </div>
 
                 {/* Match Teams Faceoff */}
-                <div className="grid grid-cols-3 items-center text-center gap-2 py-2">
+                <div className="grid grid-cols-3 items-center text-center gap-2 py-2" dir="ltr">
                   {/* Home Team */}
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center p-2 bg-slate-900/80 rounded-2xl border border-slate-800 shrink-0">
@@ -399,7 +403,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/1e293b/ffffff?text=Logo'; }}
                       />
                     </div>
-                    <span className="font-black text-xs sm:text-sm text-white">{home.name}</span>
+                    <span className="font-black text-xs sm:text-sm text-white">{getTeamEnglishName(home.name)}</span>
                   </div>
 
                   {/* VS / Score Result */}
@@ -410,7 +414,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         {match.result.homeScore} - {match.result.awayScore}
                       </div>
                     ) : (
-                      <span className="text-[10px] text-slate-500 mt-1">دوري الأبطال 2026</span>
+                      <span className="text-[10px] text-slate-500 mt-1 font-mono font-bold">UCL 2026/2027</span>
                     )}
                   </div>
 
@@ -424,7 +428,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/1e293b/ffffff?text=Logo'; }}
                       />
                     </div>
-                    <span className="font-black text-xs sm:text-sm text-white">{away.name}</span>
+                    <span className="font-black text-xs sm:text-sm text-white">{getTeamEnglishName(away.name)}</span>
                   </div>
                 </div>
 
@@ -433,24 +437,24 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                   {!currentUser ? (
                     <div className="text-center py-2">
                       <p className="text-xs text-amber-400 font-bold mb-2">
-                        يرجى تسجيل الدخول أو انتظار موافقة الآدمن لتتمكن من إرسال توقعك.
+                        {t('memberLogin')}
                       </p>
                       <button
                         onClick={onOpenAuth}
                         className="bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition cursor-pointer"
                       >
-                        تسجيل الدخول كعضو
+                        {t('memberLogin')}
                       </button>
                     </div>
                   ) : isLocked ? (
                     <div className="text-center text-xs space-y-1 py-1">
                       {userPred ? (
                         <div>
-                          <span className="text-slate-400">توقعك المسجل: </span>
+                          <span className="text-slate-400">{t('exactScore')}: </span>
                           <span className="text-yellow-400 font-black text-sm">{userPred.homeScore} - {userPred.awayScore}</span>
                           {userPred.mvp && (
                             <div className="text-[11px] text-slate-400 mt-1">
-                              رجل المباراة المتوقع: <strong className="text-cyan-300">{userPred.mvp}</strong>
+                              {t('manOfTheMatch')}: <strong className="text-cyan-300">{userPred.mvp}</strong>
                             </div>
                           )}
                           {/* Only allow downloading prediction card BEFORE the real score is launched */}
@@ -491,7 +495,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                       <div className="grid grid-cols-2 gap-3 sm:gap-4">
                         <div className="bg-slate-950/80 p-2 sm:p-3 rounded-2xl border border-slate-800 text-center">
                           <label className="block text-[11px] sm:text-xs font-bold text-slate-300 mb-2 truncate">
-                            أهداف {home.name}
+                            {language === 'fr' ? `Buts ${getTeamEnglishName(home.name)}` : language === 'en' ? `${getTeamEnglishName(home.name)} Goals` : `أهداف ${getTeamEnglishName(home.name)}`}
                           </label>
                           <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                             <button
@@ -526,7 +530,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
 
                         <div className="bg-slate-950/80 p-2 sm:p-3 rounded-2xl border border-slate-800 text-center">
                           <label className="block text-[11px] sm:text-xs font-bold text-slate-300 mb-2 truncate">
-                            أهداف {away.name}
+                            {language === 'fr' ? `Buts ${getTeamEnglishName(away.name)}` : language === 'en' ? `${getTeamEnglishName(away.name)} Goals` : `أهداف ${getTeamEnglishName(away.name)}`}
                           </label>
                           <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                             <button
@@ -565,7 +569,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         <div className="p-3 sm:p-4 bg-slate-950/60 rounded-2xl border border-blue-900/40 space-y-2.5">
                           <div className="flex items-center justify-between">
                             <label className="block text-xs font-bold text-blue-400">
-                              مسجلو أهداف {home.name} ({draft.homeScore} {draft.homeScore === 1 ? 'هدف' : 'أهداف'}):
+                              {language === 'fr' ? `Buteurs ${getTeamEnglishName(home.name)} (${draft.homeScore} ${draft.homeScore === 1 ? 'but' : 'buts'}):` : language === 'en' ? `${getTeamEnglishName(home.name)} Scorers (${draft.homeScore} ${draft.homeScore === 1 ? 'goal' : 'goals'}):` : `مسجلو أهداف ${getTeamEnglishName(home.name)} (${draft.homeScore} ${draft.homeScore === 1 ? 'هدف' : 'أهداف'}):`}
                             </label>
                             <span className="text-[10px] text-slate-400 font-semibold">
                               (مطلوب تحديد المسجل لكل هدف)
@@ -630,7 +634,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         <div className="p-3 sm:p-4 bg-slate-950/60 rounded-2xl border border-rose-900/40 space-y-2.5">
                           <div className="flex items-center justify-between">
                             <label className="block text-xs font-bold text-rose-400">
-                              مسجلو أهداف {away.name} ({draft.awayScore} {draft.awayScore === 1 ? 'هدف' : 'أهداف'}):
+                              {language === 'fr' ? `Buteurs ${getTeamEnglishName(away.name)} (${draft.awayScore} ${draft.awayScore === 1 ? 'but' : 'buts'}):` : language === 'en' ? `${getTeamEnglishName(away.name)} Scorers (${draft.awayScore} ${draft.awayScore === 1 ? 'goal' : 'goals'}):` : `مسجلو أهداف ${getTeamEnglishName(away.name)} (${draft.awayScore} ${draft.awayScore === 1 ? 'هدف' : 'أهداف'}):`}
                             </label>
                             <span className="text-[10px] text-slate-400 font-semibold">
                               (مطلوب تحديد المسجل لكل هدف)
@@ -694,7 +698,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                       <div>
                         <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
                           <Award className="w-3.5 h-3.5 text-yellow-400" />
-                          <span>رجل المباراة (MVP)</span>
+                          <span>{t('manOfTheMatch')}</span>
                         </label>
                         {[...(home.squad || []), ...(away.squad || [])].length > 0 ? (
                           <select
@@ -702,7 +706,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                             onChange={(e) => updateDraft(match.id, { mvp: e.target.value })}
                             className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs sm:text-sm text-white font-bold outline-none focus:border-yellow-400 min-h-[44px] cursor-pointer"
                           >
-                            <option value="">اختر أفضل لاعب في المواجهة...</option>
+                            <option value="">{t('chooseMvp')}</option>
                             {[...(home.squad || []), ...(away.squad || [])].map((player, idx) => (
                               <option key={`${player}_${idx}`} value={player}>{player}</option>
                             ))}
@@ -712,7 +716,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                             type="text"
                             value={draft.mvp}
                             onChange={(e) => updateDraft(match.id, { mvp: e.target.value })}
-                            placeholder="اسم رجل المباراة (MVP)..."
+                            placeholder={t('chooseMvp')}
                             className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs sm:text-sm text-white font-bold outline-none focus:border-yellow-400 min-h-[44px]"
                           />
                         )}
@@ -738,7 +742,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         className="w-full ucl-btn-primary font-black py-3.5 rounded-2xl transition text-sm cursor-pointer flex items-center justify-center gap-2 min-h-[48px]"
                       >
                         <Save className="w-4 h-4" />
-                        <span>{userPred ? 'تحديث وحفظ أحدث توقع' : 'حفظ التوقع'}</span>
+                        <span>{userPred ? t('editPrediction') : t('savePredictionBtn')}</span>
                       </button>
 
                       {userPred && (
@@ -749,16 +753,13 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                             className="w-full bg-gradient-to-r from-cyan-950/80 via-blue-950/95 to-cyan-950/80 hover:from-cyan-900/90 hover:to-blue-900/90 border border-cyan-400/50 text-cyan-300 font-black py-3 rounded-2xl transition text-xs sm:text-sm cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-cyan-950/50 group select-none"
                           >
                             <Download className="w-4 h-4 text-cyan-400 group-hover:translate-y-0.5 transition-transform" />
-                            <span>تحميل بطاقة التوقع (صورة رسمية) • Download Card</span>
+                            <span>{t('downloadCard')}</span>
                           </button>
 
                           <div className="p-3 bg-slate-950/80 border border-emerald-500/30 rounded-2xl text-center space-y-1">
                             <p className="text-xs text-emerald-400 font-bold flex items-center justify-center gap-1.5">
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                              <span>أحدث توقع معتمد ومحفوظ: ({userPred.homeScore} - {userPred.awayScore})</span>
-                            </p>
-                            <p className="text-[11px] text-slate-400">
-                              يتم اعتماد آخر توقع ترسله فقط قبل موعد إغلاق المباراة. يمكنك تحميل بطاقة التوقع كصورة في أي وقت.
+                              <span>{t('predictionSaved')}: ({userPred.homeScore} - {userPred.awayScore})</span>
                             </p>
                           </div>
                         </div>

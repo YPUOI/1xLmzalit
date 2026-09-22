@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Match, Team, Prediction } from '../types';
 import { generatePredictionCardImage, downloadDataUrlAsPng, formatDateTimeEn } from '../utils/generatePredictionCard';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface PredictionCardModalProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
   prediction,
   memberName,
 }) => {
+  const { t, isRtl, language } = useLanguage();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState<boolean>(true);
   const [hasCopied, setHasCopied] = useState<boolean>(false);
@@ -115,7 +117,7 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-in fade-in duration-200" dir={isRtl ? 'rtl' : 'ltr'}>
       <div 
         className="ucl-card w-full max-w-2xl max-h-[92vh] flex flex-col rounded-3xl border border-blue-500/40 shadow-2xl shadow-blue-950/60 overflow-hidden relative"
         onClick={(e) => e.stopPropagation()}
@@ -128,13 +130,13 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                <span>بطاقة التوقع الرسمية</span>
+                <span>{language === 'fr' ? 'Carte Officielle de Pronostic' : language === 'en' ? 'Official Prediction Ticket' : 'بطاقة التوقع الرسمية'}</span>
                 <span className="text-[10px] font-mono font-black text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded-full">
                   HD PHOTO
                 </span>
               </h3>
               <p className="text-xs text-slate-400">
-                جاهزة للمشاركة والتحميل بجودة وتصميم دوري أبطال أوروبا الرسمي
+                {language === 'fr' ? 'Prêt à être téléchargé et partagé au design officiel UEFA Champions League' : language === 'en' ? 'Ready to share and download in official UEFA Champions League design' : 'جاهزة للمشاركة والتحميل بجودة وتصميم دوري أبطال أوروبا الرسمي'}
               </p>
             </div>
           </div>
@@ -142,7 +144,7 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
           <button
             onClick={onClose}
             className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-            aria-label="إغلاق"
+            aria-label={t('close')}
           >
             <X className="w-5 h-5" />
           </button>
@@ -154,9 +156,9 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
             <div className="py-16 sm:py-24 text-center space-y-4">
               <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mx-auto" />
               <div className="space-y-1">
-                <p className="font-bold text-white text-base">جارٍ توليد بطاقة التوقع عالية الدقة...</p>
+                <p className="font-bold text-white text-base">{t('loading')}</p>
                 <p className="text-xs text-slate-400">
-                  تضمين التوقيت بالإنجليزية، الهدافين، رجل المباراة، وشعار 1xlmzalit الرسمي
+                  {language === 'fr' ? 'Génération de la carte HD avec 1xlmzalit et UEFA Champions League...' : language === 'en' ? 'Generating HD ticket with 1xlmzalit and UEFA Champions League...' : 'تضمين التوقيت، الهدافين، رجل المباراة، وشعار 1xlmzalit الرسمي'}
                 </p>
               </div>
             </div>
@@ -181,14 +183,11 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
                   1080 × 1350 px
                 </span>
                 <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
-                  تاريخ التوقع + تاريخ التحميل
-                </span>
-                <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-amber-300 font-medium">
-                  شعارات بأبعادها الحقيقية
+                  1xlmzalit Verified
                 </span>
                 <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-emerald-300 flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" />
-                  <span>معتمدة بالكامل</span>
+                  <span>{t('brandName')}</span>
                 </span>
               </div>
             </div>
@@ -199,7 +198,7 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
         <div className="p-4 sm:p-5 border-t border-slate-800/80 bg-slate-900/90 flex flex-wrap items-center justify-between gap-3">
           <div className="text-xs text-slate-400">
             {memberName && (
-              <span>المشارك: <strong className="text-white">@{memberName}</strong></span>
+              <span>{t('member')}: <strong className="text-white">@{memberName}</strong></span>
             )}
           </div>
 
@@ -213,12 +212,12 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
               {hasCopied ? (
                 <>
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span className="text-emerald-400">تم النسخ!</span>
+                  <span className="text-emerald-400">{language === 'fr' ? 'Copié !' : language === 'en' ? 'Copied!' : 'تم النسخ!'}</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-4 h-4 text-cyan-400" />
-                  <span>نسخ / مشاركة</span>
+                  <span>{language === 'fr' ? 'Partager' : language === 'en' ? 'Share' : 'نسخ / مشاركة'}</span>
                 </>
               )}
             </button>
@@ -230,7 +229,7 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
               className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-cyan-500 hover:opacity-95 text-white font-black text-xs sm:text-sm transition shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               <Download className="w-4 h-4" />
-              <span>تحميل الصورة (Download PNG)</span>
+              <span>{language === 'fr' ? 'Télécharger PNG' : language === 'en' ? 'Download PNG' : 'تحميل الصورة (Download PNG)'}</span>
             </button>
           </div>
         </div>

@@ -4,6 +4,7 @@
  */
 
 import { Match, Team, Prediction } from '../types';
+import { getTeamEnglishName } from '../data/clubPresets';
 
 export interface CardGenerationOptions {
   match: Match;
@@ -517,7 +518,7 @@ export async function generatePredictionCardImage(options: CardGenerationOptions
   ctx.fillStyle = '#FFFFFF';
   ctx.font = '900 24px "Cairo", "Segoe UI", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(homeTeam.name, homeX, homeY + 90);
+  ctx.fillText(getTeamEnglishName(homeTeam.name), homeX, homeY + 90);
 
   // "HOME" pill
   roundRect(ctx, homeX - 40, homeY + 104, 80, 22, 6);
@@ -561,7 +562,7 @@ export async function generatePredictionCardImage(options: CardGenerationOptions
   ctx.fillStyle = '#FFFFFF';
   ctx.font = '900 24px "Cairo", "Segoe UI", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(awayTeam.name, awayX, awayY + 90);
+  ctx.fillText(getTeamEnglishName(awayTeam.name), awayX, awayY + 90);
 
   // "AWAY" pill
   roundRect(ctx, awayX - 40, awayY + 104, 80, 22, 6);
@@ -639,7 +640,7 @@ export async function generatePredictionCardImage(options: CardGenerationOptions
   ctx.textAlign = 'left';
   ctx.fillStyle = '#38BDF8';
   ctx.font = '900 16px "Cairo", "Segoe UI", sans-serif';
-  ctx.fillText(`${homeTeam.name} (${prediction.homeScore})`, homeColX, scorersY + 68);
+  ctx.fillText(`${getTeamEnglishName(homeTeam.name)} (${prediction.homeScore})`, homeColX, scorersY + 68);
 
   if (prediction.homeScorers && prediction.homeScorers.length > 0) {
     prediction.homeScorers.slice(0, 5).forEach((scorer, idx) => {
@@ -663,7 +664,7 @@ export async function generatePredictionCardImage(options: CardGenerationOptions
   ctx.textAlign = 'left';
   ctx.fillStyle = '#C084FC';
   ctx.font = '900 16px "Cairo", "Segoe UI", sans-serif';
-  ctx.fillText(`${awayTeam.name} (${prediction.awayScore})`, awayColX, scorersY + 68);
+  ctx.fillText(`${getTeamEnglishName(awayTeam.name)} (${prediction.awayScore})`, awayColX, scorersY + 68);
 
   if (prediction.awayScorers && prediction.awayScorers.length > 0) {
     prediction.awayScorers.slice(0, 5).forEach((scorer, idx) => {

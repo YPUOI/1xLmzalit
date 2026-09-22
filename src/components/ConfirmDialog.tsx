@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, Trash2, X } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -16,16 +17,21 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isOpen,
   title,
   message,
-  confirmText = 'تأكيد الحذف',
-  cancelText = 'إلغاء',
+  confirmText,
+  cancelText,
   isDestructive = true,
   onConfirm,
   onCancel
 }) => {
+  const { t, isRtl } = useLanguage();
+
   if (!isOpen) return null;
 
+  const resolvedConfirmText = confirmText || t('confirm');
+  const resolvedCancelText = cancelText || t('cancel');
+
   return (
-    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
+    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150" dir={isRtl ? 'rtl' : 'ltr'}>
       <div 
         className="ucl-card p-5 sm:p-6 rounded-3xl max-w-sm w-full border border-rose-500/40 shadow-2xl text-center space-y-4 my-auto relative"
         role="dialog"
@@ -34,8 +40,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         <button
           type="button"
           onClick={onCancel}
-          className="absolute top-4 left-4 text-slate-400 hover:text-white p-1 rounded-xl hover:bg-slate-800 transition cursor-pointer"
-          aria-label="إغلاق"
+          className={`absolute top-4 ${isRtl ? 'left-4' : 'right-4'} text-slate-400 hover:text-white p-1 rounded-xl hover:bg-slate-800 transition cursor-pointer`}
+          aria-label={t('close')}
         >
           <X className="w-5 h-5" />
         </button>
@@ -65,7 +71,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             onClick={onCancel}
             className="flex-1 py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs sm:text-sm transition cursor-pointer min-h-[44px] active:scale-95 border border-slate-700"
           >
-            {cancelText}
+            {resolvedCancelText}
           </button>
           <button
             type="button"
@@ -77,7 +83,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             }`}
           >
             {isDestructive && <Trash2 className="w-4 h-4 shrink-0" />}
-            <span>{confirmText}</span>
+            <span>{resolvedConfirmText}</span>
           </button>
         </div>
       </div>

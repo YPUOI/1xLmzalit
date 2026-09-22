@@ -96,16 +96,113 @@ export const POPULAR_CLUB_PRESETS: ClubPreset[] = [
     logo: 'https://upload.wikimedia.org/wikipedia/en/6/66/AtalantaBC.svg'
   },
   {
-    name: 'موناكو',
+    name: 'Monaco',
     enName: 'Monaco',
     logo: 'https://upload.wikimedia.org/wikipedia/en/b/ba/AS_Monaco_FC.svg'
   },
   {
-    name: 'نابولي',
+    name: 'Napoli',
     enName: 'Napoli',
     logo: 'https://upload.wikimedia.org/wikipedia/commons/b/ba/SSC_Napoli_2024_%28deep_blue_navy%29.svg'
   }
 ];
+
+// Comprehensive English Name Mapping Dictionary for all UCL Teams & Arabic variations
+export const ARABIC_TO_ENGLISH_TEAMS: Record<string, string> = {
+  'ريال مدريد': 'Real Madrid',
+  'الريال': 'Real Madrid',
+  'برشلونة': 'FC Barcelona',
+  'البارسا': 'FC Barcelona',
+  'مانشستر سيتي': 'Manchester City',
+  'السيتي': 'Manchester City',
+  'ليفربول': 'Liverpool',
+  'أرسنال': 'Arsenal',
+  'ارسنال': 'Arsenal',
+  'بايرن ميونخ': 'Bayern Munich',
+  'البايرن': 'Bayern Munich',
+  'باريس سان جيرمان': 'Paris Saint-Germain',
+  'باريس': 'Paris Saint-Germain',
+  'إنتر ميلان': 'Inter Milan',
+  'الانتر': 'Inter Milan',
+  'ميلان': 'AC Milan',
+  'إيه سي ميلان': 'AC Milan',
+  'أتلتيكو مدريد': 'Atletico Madrid',
+  'اتلتيكو مدريد': 'Atletico Madrid',
+  'أتليتكو مدريد': 'Atletico Madrid',
+  'بوروسيا دورتموند': 'Borussia Dortmund',
+  'دورتموند': 'Borussia Dortmund',
+  'يوفنتوس': 'Juventus',
+  'اليوفي': 'Juventus',
+  'باير ليفركوزن': 'Bayer Leverkusen',
+  'ليفركوزن': 'Bayer Leverkusen',
+  'تشيلسي': 'Chelsea',
+  'أستون فيلا': 'Aston Villa',
+  'استون فيلا': 'Aston Villa',
+  'سبورتينغ لشبونة': 'Sporting CP',
+  'سبورتنج لشبونة': 'Sporting CP',
+  'بنفيكا': 'Benfica',
+  'أتالانتا': 'Atalanta',
+  'اتالانتا': 'Atalanta',
+  'موناكو': 'AS Monaco',
+  'نابولي': 'Napoli',
+  'فاينورد': 'Feyenoord',
+  'بي إس في آيندهوفن': 'PSV Eindhoven',
+  'آيندهوفن': 'PSV Eindhoven',
+  'ايندهوفن': 'PSV Eindhoven',
+  'لايبزيغ': 'RB Leipzig',
+  'لايبتزغ': 'RB Leipzig',
+  'ريد بول لايبزيغ': 'RB Leipzig',
+  'جيرونا': 'Girona',
+  'شتوتغارت': 'VfB Stuttgart',
+  'بولونيا': 'Bologna',
+  'شاختار دونيتسك': 'Shakhtar Donetsk',
+  'شاختار': 'Shakhtar Donetsk',
+  'سلتيك': 'Celtic',
+  'دينامو زغرب': 'Dinamo Zagreb',
+  'النجم الأحمر': 'Red Star Belgrade',
+  'كلوب بروج': 'Club Brugge',
+  'سالزبورغ': 'RB Salzburg',
+  'ليل': 'Lille',
+  'يونغ بويز': 'Young Boys',
+  'سبارتا براغ': 'Sparta Prague',
+  'ستورم غراتس': 'Sturm Graz',
+  'سلوفان براتيسلافا': 'Slovan Bratislava',
+  'مانشستر يونايتد': 'Manchester United',
+  'اليونايتد': 'Manchester United',
+  'توتنهام': 'Tottenham Hotspur',
+  'روما': 'AS Roma',
+  'بورتو': 'FC Porto',
+  'أياكس': 'Ajax',
+  'اياكس': 'Ajax',
+  'إشبيلية': 'Sevilla',
+  'اشبيلية': 'Sevilla'
+};
+
+/**
+ * Returns the standardized English name for any team,
+ * whether it was provided in Arabic, English, or mixed.
+ */
+export const getTeamEnglishName = (rawName: string | undefined | null): string => {
+  if (!rawName) return '';
+  const trimmed = rawName.trim();
+  if (!trimmed) return '';
+
+  // 1. Direct dictionary match
+  if (ARABIC_TO_ENGLISH_TEAMS[trimmed]) {
+    return ARABIC_TO_ENGLISH_TEAMS[trimmed];
+  }
+
+  // 2. Check in POPULAR_CLUB_PRESETS
+  const presetMatch = POPULAR_CLUB_PRESETS.find(
+    p => p.name.toLowerCase() === trimmed.toLowerCase() || p.enName.toLowerCase() === trimmed.toLowerCase()
+  );
+  if (presetMatch) {
+    return presetMatch.enName;
+  }
+
+  // 3. Fallback: return original name
+  return trimmed;
+};
 
 /**
  * Parses raw text containing player names into a clean, unique list of player names.

@@ -3,7 +3,7 @@
 @layer base {
   body {
     font-family: 'Outfit', 'Cairo', 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: #080C19;
+    background-color: #070B19;
     color: #E2E8F0;
     line-height: 1.65;
   }
@@ -17,7 +17,7 @@
 /* =========================================================================
    MIDNIGHT STAR THEME (UEFA Champions League)
    Palette:
-   - Deep Navy Background: #080C19
+   - Deep Navy Background: #070B19
    - Dark Slate Cards: #10172A (eliminates screen glare)
    - Electric Cyan Key Actions & Glow: #00E5FF
    - Starball Silver Secondary & Icons: #94A3B8
@@ -27,7 +27,7 @@
 
 /* High-Performance Theme Background Base */
 .ucl-theme-bg {
-  background-color: #050814;
+  background-color: #070B19;
 }
 
 /* Dark Slate Floating Cards (#10172A) with Subtle Dark Borders */

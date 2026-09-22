@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Crown, Medal, UserCheck, Star, Trophy, Award, Flame, Target, Sparkles } from 'lucide-react';
 import { AppUser, Match, Prediction } from '../types';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface LeaderboardSectionProps {
   users: AppUser[];
@@ -13,6 +14,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
   matches = [], 
   predictions = {} 
 }) => {
+  const { t, isRtl } = useLanguage();
   // Calculate statistics per user (exact score count, correct MVP count, and correct Scorers count)
   const userStats = useMemo(() => {
     const stats: Record<string, { exactScoreCount: number; correctMvpCount: number; correctScorersCount: number }> = {};
@@ -85,29 +87,29 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
   }, [users, userStats]);
 
   return (
-    <div className="ucl-card p-4 sm:p-6 rounded-3xl ucl-gold-glow border border-yellow-500/20 space-y-6">
+    <div className="ucl-card p-4 sm:p-6 rounded-3xl ucl-gold-glow border border-yellow-500/20 space-y-6" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className="flex flex-wrap justify-between items-center pb-4 border-b border-slate-800 gap-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-yellow-400 flex items-center gap-2.5">
             <Crown className="w-6 h-6 sm:w-7 sm:h-7 text-amber-400 fill-amber-400 shrink-0" />
-            <span>جدول ترتيب المتوقعين</span>
+            <span>{t('leaderboardTitle')}</span>
           </h2>
           <p className="text-xs text-[#94A3B8] mt-1">
-            يُعتمد نظام كسر التعادل الرسمي: النقاط &larr; الأكثر توقعاً لرجل المباراة (MVP) &larr; الأكثر توقعاً للهدافين &larr; أسبقية التسجيل.
+            {t('leaderboardDesc')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs bg-yellow-500/10 text-yellow-300 border border-yellow-500/30 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-            <span>تحديث فوري للنقاط</span>
+            <span>{t('tabLeaderboardShort')}</span>
           </span>
         </div>
       </div>
 
       {approvedUsers.length === 0 ? (
         <div className="p-8 text-center text-xs text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">
-          لا يوجد متوقعون مقبولون حالياً. بمجرد موافقة الآدمن على طلبات الأعضاء وتسجيل النقاط ستظهر النتائج هنا.
+          {t('noApprovedUsers')}
         </div>
       ) : (
         <>
@@ -117,7 +119,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
               const isFirst = index === 0;
               const isSecond = index === 1;
               const isThird = index === 2;
-              const stats = userStats[user.username] || { correctMvpCount: 0, correctScorersCount: 0 };
+              const stats = userStats[user.username] || { exactScoreCount: 0, correctMvpCount: 0, correctScorersCount: 0 };
 
               return (
                 <div 
@@ -168,7 +170,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                           </span>
                           <span className="text-[10px] text-blue-300 flex items-center gap-1">
                             <UserCheck className="w-3 h-3 text-blue-400" />
-                            عضو معتمد
+                            {t('memberBadge')}
                           </span>
                         </div>
                       </div>
@@ -185,7 +187,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                   <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
                     <span className="flex items-center gap-1">
                       <Target className="w-3 h-3 text-yellow-400" />
-                      <span>دقيقة: <strong className="text-yellow-300 font-bold">{stats.exactScoreCount}</strong></span>
+                      <span>{t('exactScoresCount')}: <strong className="text-yellow-300 font-bold">{stats.exactScoreCount}</strong></span>
                     </span>
                     <span className="flex items-center gap-1">
                       <Award className="w-3 h-3 text-purple-400" />
@@ -193,7 +195,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                     </span>
                     <span className="flex items-center gap-1">
                       <Flame className="w-3 h-3 text-emerald-400" />
-                      <span>هدافين: <strong className="text-emerald-300 font-bold">{stats.correctScorersCount}</strong></span>
+                      <span>{t('scorersCount')}: <strong className="text-emerald-300 font-bold">{stats.correctScorersCount}</strong></span>
                     </span>
                   </div>
                 </div>
@@ -203,16 +205,16 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
 
           {/* TABLET & DESKTOP VIEW: Full Data Table (hidden sm:block) */}
           <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-right border-collapse">
+            <table className={`w-full ${isRtl ? 'text-right' : 'text-left'} border-collapse`}>
               <thead>
                 <tr className="border-b border-slate-800 text-slate-400 text-xs uppercase">
-                  <th className="p-4">المركز</th>
-                  <th className="p-4">اسم المتوقع</th>
-                  <th className="p-4">الحالة</th>
-                  <th className="p-4 text-center">النتائج الدقيقة</th>
-                  <th className="p-4 text-center">نجوم اللقاء (MVP)</th>
-                  <th className="p-4 text-center">الهدافون المصابون</th>
-                  <th className="p-4 text-center">إجمالي النقاط</th>
+                  <th className="p-4">{t('rank')}</th>
+                  <th className="p-4">{t('member')}</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 text-center">{t('exactScoresCount')}</th>
+                  <th className="p-4 text-center">{t('mvpCount')}</th>
+                  <th className="p-4 text-center">{t('scorersCount')}</th>
+                  <th className="p-4 text-center">{t('totalPoints')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
@@ -260,7 +262,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                       <td className="p-4 text-xs font-semibold text-slate-400">
                         <span className="inline-flex items-center gap-1 bg-blue-950/60 text-blue-300 border border-blue-500/30 px-2.5 py-1 rounded-lg">
                           <UserCheck className="w-3 h-3 text-blue-400" />
-                          <span>عضو معتمد</span>
+                          <span>{t('memberBadge')}</span>
                         </span>
                       </td>
 
