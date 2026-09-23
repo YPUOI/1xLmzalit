@@ -61,16 +61,18 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
         {/* Center: (8+) User Auth Icon/Button + Language Switcher */}
         <div className="flex items-center gap-1 sm:gap-1.5 justify-center shrink-0">
           {currentUser ? (
-            <div className="flex items-center gap-1 bg-[#071324] border border-slate-700/80 px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-bold shrink-0 shadow-sm h-[30px]">
+            <div 
+              className="flex items-center gap-1.5 bg-[#071324] border border-slate-700/80 px-2 py-0.5 rounded-full text-xs font-bold shrink-0 shadow-sm h-[30px]"
+              title={`${currentUser.username} (${currentUser.role === 'admin' ? t('adminBadge') : t('memberBadge')})`}
+            >
               {currentUser.role === 'admin' ? (
                 <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0" />
               ) : (
                 <User className="w-3.5 h-3.5 text-[#00E5FF] shrink-0" />
               )}
-              <span className="max-w-[42px] sm:max-w-[58px] truncate text-white text-[10px] sm:text-[11px]">{currentUser.username}</span>
               <button 
                 onClick={onLogout} 
-                className="text-slate-400 hover:text-rose-400 p-0.5 cursor-pointer ml-0.5" 
+                className="text-slate-400 hover:text-rose-400 p-0.5 cursor-pointer flex items-center justify-center" 
                 title={t('logout')}
               >
                 <LogOut className="w-3 h-3" />
