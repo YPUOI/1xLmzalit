@@ -40,14 +40,15 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
     <header className="ucl-header-bg border-b border-slate-800/80 sticky top-0 z-40 backdrop-blur-2xl shadow-2xl shadow-black/80">
       
       {/* ========================================================================= */}
-      {/* MOBILE LAYOUT (< md): Compact, single-row layout tailored for smartphones */}
+      {/* MOBILE LAYOUT (< md): Exact 3-part construction matching user sketch      */}
+      {/* Left: 1xlmzalit v1.0 | Center: (8+) User Auth & Language | Right: UCL 26/27 */}
       {/* ========================================================================= */}
-      <div className="flex md:hidden justify-between items-center w-full px-2.5 sm:px-3 py-2 gap-2" dir="ltr">
-        {/* Brand Group at Left: 1xlmzalit Logo + v1.0 badge + دوري أبطال أوروبا */}
+      <div className="flex md:hidden justify-between items-center w-full px-2.5 py-2 gap-1.5" dir="ltr">
+        {/* Left: 1xlmzalit Logo + v1.0 tag */}
         <div 
-          className="flex items-center gap-1.5 cursor-pointer select-none shrink-0 min-w-0" 
+          className="flex items-center gap-1.5 cursor-pointer select-none shrink-0" 
           onClick={() => onSelectTab('home')}
-          title="1xlmzalit"
+          title="1xlmzalit v1.0"
         >
           <XlmzalitLogo variant="light" size="md" className="shrink-0" />
           <div className="bg-[#041E34] border border-[#00E5FF]/60 px-1.5 py-0.5 rounded-md flex items-center justify-center shrink-0 shadow-sm">
@@ -55,46 +56,50 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
               v1.0
             </span>
           </div>
-          <span className="hidden xs:inline text-[#E2E8F0] text-xs font-bold whitespace-nowrap">
-            {t('appSubtitle')}
-          </span>
         </div>
 
-        {/* Action Controls & Badges on Right in single line */}
-        <div className="flex items-center gap-1 sm:gap-1.5 flex-nowrap shrink-0 overflow-x-auto no-scrollbar py-0.5" dir={isRtl ? 'rtl' : 'ltr'}>
+        {/* Center: (8+) User Auth Icon/Button + Language Switcher */}
+        <div className="flex items-center gap-1.5 justify-center shrink-0">
           {currentUser ? (
-            <div className="flex items-center gap-1 bg-[#071324] border border-slate-800 px-2 py-1 rounded-xl text-xs font-bold shrink-0">
+            <div className="flex items-center gap-1 bg-[#071324] border border-slate-700/80 px-2 py-1 rounded-full text-xs font-bold shrink-0 shadow-sm">
               {currentUser.role === 'admin' ? (
                 <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0" />
               ) : (
-                <User className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <User className="w-3.5 h-3.5 text-[#00E5FF] shrink-0" />
               )}
-              <span className="max-w-[70px] truncate text-[#E2E8F0]">{currentUser.username}</span>
-              <button onClick={onLogout} className="text-[#94A3B8] hover:text-rose-400 p-0.5" title={t('logout')}>
-                <LogOut className="w-3.5 h-3.5" />
+              <span className="max-w-[58px] truncate text-white text-[11px]">{currentUser.username}</span>
+              <button 
+                onClick={onLogout} 
+                className="text-slate-400 hover:text-rose-400 p-0.5 cursor-pointer ml-0.5" 
+                title={t('logout')}
+              >
+                <LogOut className="w-3 h-3" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
-              <button 
-                onClick={() => onOpenAuth('login')}
-                className="bg-[#00E5FF] hover:bg-[#38bdf8] text-[#04101e] font-black text-[11px] px-3 py-1.5 rounded-full flex items-center gap-1.5 shrink-0 whitespace-nowrap shadow-sm active:scale-95 transition"
-              >
-                <span>{t('quickLogin')}</span>
-                <User className="w-3.5 h-3.5 text-[#04101e] shrink-0" />
-              </button>
-              <button 
-                onClick={() => onOpenAuth('signup')}
-                title={t('newAccount')}
-                className="bg-[#071324] hover:bg-[#0c1f38] text-amber-400 border border-amber-500/70 p-1.5 rounded-xl flex items-center justify-center shrink-0 active:scale-95 transition"
-              >
-                <UserPlus className="w-3.5 h-3.5 text-amber-400" />
-              </button>
-            </div>
+            <button 
+              onClick={() => onOpenAuth('login')}
+              className="bg-gradient-to-r from-cyan-500 to-[#00E5FF] hover:from-cyan-400 hover:to-cyan-300 text-slate-950 font-black text-xs px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0 shadow-[0_0_10px_rgba(0,229,255,0.3)] active:scale-95 transition cursor-pointer"
+              title={t('quickLogin')}
+            >
+              <User className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span className="text-xs font-black">+</span>
+            </button>
           )}
 
-          {/* Language Switcher on mobile */}
+          {/* Language Switcher Badge */}
           <LanguageSwitcher variant="header-mobile" />
+        </div>
+
+        {/* Right: UCL 26/27 Tournament Badge */}
+        <div 
+          onClick={() => onSelectTab('home')}
+          className="bg-[#051528] border border-[#00E5FF]/40 px-2 py-1 rounded-xl flex items-center gap-1 shadow-sm shrink-0 cursor-pointer active:scale-95 transition select-none"
+          title="UCL 2026/2027"
+        >
+          <span className="text-[11px] font-black text-white tracking-wider font-mono">
+            UCL 26/27
+          </span>
         </div>
       </div>
 

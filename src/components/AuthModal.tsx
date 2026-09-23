@@ -43,6 +43,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onRegisterUser
 }) => {
   const { t, isRtl, language } = useLanguage();
+  
   // Current active slide: 'login' | 'signup' | 'admin'
   const [activeSlide, setActiveSlide] = useState<AuthSlide>(
     initialTab || (initialRole === 'admin' ? 'admin' : 'login')
@@ -122,7 +123,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     const cleanUsername = loginUsername.trim();
     if (!cleanUsername) {
-      setStatusAlert({ type: 'error', text: 'الرجاء إدخال اسم المستخدم!' });
+      setStatusAlert({ 
+        type: 'error', 
+        text: language === 'ar' ? 'الرجاء إدخال اسم المستخدم!' : language === 'fr' ? 'Veuillez saisir un nom d\'utilisateur !' : 'Please enter your username!' 
+      });
       return;
     }
 
@@ -136,13 +140,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     ) {
       setStatusAlert({
         type: 'error',
-        text: 'هذا الاسم مخصص لإدارة النظام! يرجى استخدام بوابة الآدمن للدخول.'
+        text: language === 'ar' 
+          ? 'هذا الاسم مخصص لإدارة النظام! يرجى استخدام بوابة الآدمن للدخول.' 
+          : language === 'fr' 
+          ? 'Cet identifiant est réservé à l\'administration ! Utilisez le portail admin.' 
+          : 'This username is reserved for system admins! Please use the Admin tab.'
       });
       return;
     }
 
     if (!loginPassword.trim()) {
-      setStatusAlert({ type: 'error', text: 'الرجاء إدخال كلمة المرور لحسابك!' });
+      setStatusAlert({ 
+        type: 'error', 
+        text: language === 'ar' ? 'الرجاء إدخال كلمة المرور لحسابك!' : language === 'fr' ? 'Veuillez saisir votre mot de passe !' : 'Please enter your password!' 
+      });
       return;
     }
 
@@ -152,7 +163,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (!existingUser) {
       setStatusAlert({
         type: 'error',
-        text: `اسم المستخدم (${cleanUsername}) غير مسجل! إذا كنت عضواً جديداً، يرجى الانتقال إلى قسم "إنشاء حساب".`
+        text: language === 'ar'
+          ? `اسم المستخدم (${cleanUsername}) غير مسجل! إذا كنت عضواً جديداً، يرجى الانتقال إلى قسم "إنشاء حساب".`
+          : language === 'fr'
+          ? `L'utilisateur (${cleanUsername}) n'existe pas ! Veuillez créer un compte.`
+          : `Username (${cleanUsername}) not found! If you are new, please use Sign Up.`
       });
       return;
     }
@@ -160,7 +175,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (existingUser.role === 'admin') {
       setStatusAlert({
         type: 'error',
-        text: 'هذا الحساب مخصص للإدارة! يرجى التوجه إلى "بوابة الآدمن" وإدخال الرمز السري.'
+        text: language === 'ar'
+          ? 'هذا الحساب مخصص للإدارة! يرجى التوجه إلى "بوابة الآدمن" وإدخال الرمز السري.'
+          : language === 'fr'
+          ? 'Ce compte est administrateur ! Accédez à l\'onglet Admin avec le code secret.'
+          : 'This account is an admin! Please access the Admin portal with the passcode.'
       });
       return;
     }
@@ -169,7 +188,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (existingUser.password && existingUser.password !== cleanPassword) {
       setStatusAlert({
         type: 'error',
-        text: 'كلمة المرور غير صحيحة! يرجى التأكد من كلمة المرور الخاصة بحسابك.'
+        text: t('authWrongPassword')
       });
       return;
     }
@@ -178,7 +197,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (existingUser.status === 'pending') {
       setStatusAlert({
         type: 'info',
-        text: 'طلب حسابك قيد المراجعة حالياً من قبل الآدمن. يرجى الانتظار حتى تتم الموافقة لتتمكن من التوقع.'
+        text: t('authApprovalPending')
       });
       return;
     }
@@ -215,12 +234,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     // 1. Username validations
     if (!cleanUsername) {
-      setStatusAlert({ type: 'error', text: 'الرجاء إدخال اسم المستخدم!' });
+      setStatusAlert({ type: 'error', text: t('authMustEnterUsername') });
       return;
     }
 
     if (cleanUsername.length < 3) {
-      setStatusAlert({ type: 'error', text: 'اسم المستخدم يجب أن يتكون من 3 أحرف أو أكثر!' });
+      setStatusAlert({ 
+        type: 'error', 
+        text: language === 'ar' ? 'اسم المستخدم يجب أن يتكون من 3 أحرف أو أكثر!' : language === 'fr' ? 'Le nom d\'utilisateur doit contenir au moins 3 caractères !' : 'Username must be at least 3 characters!' 
+      });
       return;
     }
 
@@ -234,7 +256,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     ) {
       setStatusAlert({
         type: 'error',
-        text: 'لا يمكن اختيار اسم يحتوي على مسميات الإدارة! يرجى اختيار اسم شخصي فريد.'
+        text: language === 'ar' 
+          ? 'لا يمكن اختيار اسم يحتوي على مسميات الإدارة! يرجى اختيار اسم شخصي فريد.' 
+          : language === 'fr' 
+          ? 'Impossible d\'utiliser des termes réservés à l\'administration !' 
+          : 'Reserved admin words cannot be used as username!'
       });
       return;
     }
@@ -244,14 +270,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (userExists) {
       setStatusAlert({
         type: 'error',
-        text: `اسم المستخدم (${cleanUsername}) محجوز ومسجل مسبقاً! يرجى اختيار اسم مستخدم آخر.`
+        text: t('authUsernameTaken')
       });
       return;
     }
 
     // 2. Gmail validation (Must end with @gmail.com)
     if (!cleanGmail) {
-      setStatusAlert({ type: 'error', text: 'الرجاء إدخال بريد Gmail الخاص بك!' });
+      setStatusAlert({ type: 'error', text: t('authMustEnterGmail') });
       return;
     }
 
@@ -259,7 +285,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (!gmailRegex.test(cleanGmail)) {
       setStatusAlert({
         type: 'error',
-        text: 'يرجى إدخال بريد Gmail صالح ينتهي بـ @gmail.com (مثال: name@gmail.com) لتوثيق الحساب!'
+        text: t('authMustEnterGmail')
       });
       return;
     }
@@ -269,24 +295,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (emailExists) {
       setStatusAlert({
         type: 'error',
-        text: 'هذا البريد (Gmail) مرتبط بحساب مسجل مسبقاً! يرجى استخدام بريد Gmail الخاص بك أو تسجيل الدخول.'
+        text: language === 'ar'
+          ? 'هذا البريد (Gmail) مرتبط بحساب مسجل مسبقاً! يرجى استخدام بريدك أو تسجيل الدخول.'
+          : language === 'fr'
+          ? 'Cet email Gmail est déjà associé à un compte enregistré !'
+          : 'This Gmail address is already registered to an account!'
       });
       return;
     }
 
     // 3. Password validations
     if (!cleanPassword) {
-      setStatusAlert({ type: 'error', text: 'الرجاء إدخال كلمة المرور لحسابك!' });
+      setStatusAlert({ type: 'error', text: t('authMustEnterPassword') });
       return;
     }
 
     if (cleanPassword.length < 3) {
-      setStatusAlert({ type: 'error', text: 'كلمة المرور يجب أن تتكون من 3 خانات أو أكثر لحماية حسابك.' });
+      setStatusAlert({ 
+        type: 'error', 
+        text: language === 'ar' ? 'كلمة المرور يجب أن تتكون من 3 خانات أو أكثر لحماية حسابك.' : language === 'fr' ? 'Le mot de passe doit comporter au moins 3 caractères.' : 'Password must be at least 3 characters.' 
+      });
       return;
     }
 
     if (cleanPassword !== cleanConfirm) {
-      setStatusAlert({ type: 'error', text: 'كلمتا المرور غير متطابقتين! يرجى التأكد من إعادة كتابة كلمة المرور بدقة.' });
+      setStatusAlert({ type: 'error', text: t('authPasswordMismatch') });
       return;
     }
 
@@ -295,7 +328,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (deviceUser && deviceUser.toLowerCase() !== lowerName) {
       setStatusAlert({
         type: 'error',
-        text: `تنبيه: يُسمح بإنشاء حساب واحد فقط لكل جهاز (الحساب المسجل على هذا الجهاز: ${deviceUser}).`
+        text: language === 'ar'
+          ? `تنبيه: يُسمح بإنشاء حساب واحد فقط لكل جهاز (الحساب المسجل على هذا الجهاز: ${deviceUser}).`
+          : language === 'fr'
+          ? `Attention : un seul compte autorisé par appareil (Compte existant : ${deviceUser}).`
+          : `Note: Only one account is permitted per device (Current device user: ${deviceUser}).`
       });
       return;
     }
@@ -316,7 +353,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     setStatusAlert({
       type: 'success',
-      text: `تم إنشاء حسابك (${cleanUsername}) وربطه بـ (${cleanGmail}) بنجاح! تم إرسال طلب الانضمام إلى الآدمن للموافقة عليه قبل بدء التوقع.`
+      text: t('authAccountCreatedSuccess')
     });
   };
 
@@ -328,61 +365,59 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (adminPasscode.trim() !== '05082007') {
       setStatusAlert({
         type: 'error',
-        text: 'رمز سر الآدمن غير صحيح! يرجى إدخال الرمز السري الصحيح المعتمد للإدارة.'
+        text: t('authAdminWrongCode')
       });
       return;
     }
 
-    // Mark admin session as validated
     sessionStorage.setItem('cl_admin_verified', '05082007');
 
     let adminUser = users.find(u => u.role === 'admin');
     if (!adminUser) {
       adminUser = {
-        username: 'الآدمن (Admin)',
+        username: language === 'fr' ? 'Admin Système' : language === 'en' ? 'Master Admin' : 'الآدمن (Admin)',
         role: 'admin',
         points: 0,
         status: 'approved'
       };
-      onRegisterUser(adminUser);
     }
 
-    onLoginSuccess(adminUser);
+    onLoginSuccess(adminUser, false);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto" dir={isRtl ? 'rtl' : 'ltr'}>
-      <div className={`ucl-card p-5 sm:p-7 rounded-3xl max-w-md w-full border border-slate-800 relative shadow-2xl my-auto max-h-[95vh] flex flex-col justify-between ${isRtl ? 'text-right' : 'text-left'}`}>
-        
-        {/* Top bar with LanguageSwitcher and Close Button */}
-        <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-800">
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-[#00E5FF]" />
-            <span className="text-xs font-black text-slate-300">1xlmzalit Auth</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher variant="header-desktop" />
-            <button 
-              onClick={onClose} 
-              className="text-[#94A3B8] hover:text-white p-2 rounded-xl hover:bg-slate-800/80 transition cursor-pointer"
-              title={t('close')}
-              aria-label="Close modal"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div 
+        className="ucl-card w-full max-w-md rounded-3xl p-5 sm:p-7 shadow-2xl relative border border-slate-700/80 text-slate-100 max-h-[92vh] overflow-y-auto no-scrollbar"
+        dir={isRtl ? 'rtl' : 'ltr'}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Top Header Row: Close Button & Language Switcher */}
+        <div className="flex items-center justify-between mb-4">
+          <LanguageSwitcher variant="header-mobile" />
+
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
+            title={t('closeModal')}
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* 3 Slides Tabs Navigation */}
-        <div className="flex bg-[#080C19] p-1 rounded-2xl border border-slate-800/80 mb-5 gap-1">
+        {/* Auth Mode Toggle Bar (Login | Sign Up | Admin) */}
+        <div className="flex p-1 bg-[#080C19] rounded-2xl border border-slate-800 mb-5 gap-1">
           {/* Slide 1: Login */}
           <button 
             type="button" 
             onClick={() => { setActiveSlide('login'); setStatusAlert(null); }}
             className={`flex-1 py-2.5 px-2 text-xs sm:text-sm font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer select-none min-h-[42px] ${
               activeSlide === 'login' 
-                ? 'bg-[#10172A] text-[#00E5FF] shadow-[0_0_12px_rgba(0,229,255,0.25)] border border-[#00E5FF]/30' 
+                ? 'bg-[#00E5FF] text-slate-950 shadow-[0_0_12px_rgba(0,229,255,0.35)]' 
                 : 'text-[#94A3B8] hover:text-[#E2E8F0]'
             }`}
           >
@@ -396,7 +431,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             onClick={() => { setActiveSlide('signup'); setStatusAlert(null); }}
             className={`flex-1 py-2.5 px-2 text-xs sm:text-sm font-bold rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer select-none min-h-[42px] ${
               activeSlide === 'signup' 
-                ? 'bg-[#10172A] text-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.25)] border border-amber-400/30' 
+                ? 'bg-amber-400 text-slate-950 shadow-[0_0_12px_rgba(251,191,36,0.35)]' 
                 : 'text-[#94A3B8] hover:text-[#E2E8F0]'
             }`}
           >
@@ -487,7 +522,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         )}
 
-        {/* SLIDE 1: LOGIN FORM */}
+        {/* ========================================================================= */}
+        {/* SLIDE 1: LOGIN FORM                                                      */}
+        {/* ========================================================================= */}
         {activeSlide === 'login' && (
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <div>
@@ -498,11 +535,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <input
                 type="text"
                 required
+                dir="ltr"
                 value={loginUsername}
                 onChange={(e) => setLoginUsername(e.target.value)}
-                placeholder={t('username')}
+                placeholder="alex, john, user1..."
                 autoFocus
-                className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3.5 text-white text-base sm:text-sm outline-none focus:border-[#00E5FF] transition placeholder:text-slate-600 min-h-[48px]"
+                className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3.5 text-white text-base sm:text-sm outline-none focus:border-[#00E5FF] transition placeholder:text-slate-600 min-h-[48px] force-ltr text-left font-mono"
               />
             </div>
 
@@ -511,26 +549,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <Lock className="w-3.5 h-3.5 text-[#00E5FF]" />
                 <span>{t('password')}</span>
               </label>
-              <div className="relative">
+              <div className="relative" dir="ltr">
                 <input
                   type={showLoginPassword ? 'text' : 'password'}
                   required
+                  dir="ltr"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder={t('password')}
-                  className={`w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3.5 text-white text-base sm:text-sm outline-none focus:border-[#00E5FF] transition placeholder:text-slate-600 min-h-[48px] ${
-                    isRtl ? 'pl-12 pr-4' : 'pr-12 pl-4'
-                  }`}
+                  placeholder="••••••••"
+                  className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3.5 pr-12 pl-4 text-white text-base sm:text-sm outline-none focus:border-[#00E5FF] transition placeholder:text-slate-600 min-h-[48px] force-ltr text-left font-mono"
                 />
                 <button
                   type="button"
                   onClick={() => setShowLoginPassword(!showLoginPassword)}
-                  className={`absolute top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-2 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer ${
-                    isRtl ? 'left-3' : 'right-3'
-                  }`}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-2 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
                   title={showLoginPassword ? 'Hide' : 'Show'}
                 >
-                  {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-slate-400" />}
                 </button>
               </div>
             </div>
@@ -600,63 +635,67 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </form>
         )}
 
-        {/* SLIDE 2: SIGN UP FORM (Asks for Gmail, Username, and Password) */}
+        {/* ========================================================================= */}
+        {/* SLIDE 2: SIGN UP FORM                                                    */}
+        {/* ========================================================================= */}
         {activeSlide === 'signup' && (
           <form onSubmit={handleSignupSubmit} className="space-y-3.5">
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5 text-amber-400" />
-                <span>اسم المستخدم (فريد)</span>
+                <span>{t('authUsernameUnique')}</span>
               </label>
               <input
                 type="text"
                 required
+                dir="ltr"
                 value={signupUsername}
                 onChange={(e) => setSignupUsername(e.target.value)}
-                placeholder="مثال: يوسف، أحمد..."
+                placeholder="alex, yassine, sam..."
                 autoFocus
-                className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3 text-white text-sm outline-none focus:border-amber-400 transition placeholder:text-slate-600 min-h-[44px]"
+                className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3 text-white text-sm outline-none focus:border-amber-400 transition placeholder:text-slate-600 min-h-[44px] force-ltr text-left font-mono"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
                 <Mail className="w-3.5 h-3.5 text-amber-400" />
-                <span>بريد Gmail (مطلوب لتوثيق العضوية)</span>
+                <span>{t('authGmailRequired')}</span>
               </label>
               <input
                 type="email"
                 required
+                dir="ltr"
                 value={signupGmail}
                 onChange={(e) => setSignupGmail(e.target.value)}
                 placeholder="yourname@gmail.com"
-                className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3 text-white text-sm outline-none focus:border-amber-400 transition placeholder:text-slate-600 font-sans min-h-[44px]"
-                dir="ltr"
+                className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3 text-white text-sm outline-none focus:border-amber-400 transition placeholder:text-slate-600 min-h-[44px] force-ltr text-left font-mono"
               />
               <span className="text-[10px] text-slate-400 mt-1 block">
-                يجب أن يكون بريداً صالحاً ينتهي بـ @gmail.com
+                {language === 'ar' ? 'يجب أن يكون بريداً صالحاً ينتهي بـ @gmail.com' : language === 'fr' ? 'Doit être une adresse se terminant par @gmail.com' : 'Must be a valid email ending with @gmail.com'}
               </span>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5 text-amber-400" />
-                <span>كلمة المرور</span>
+                <span>{t('authPasswordMin')}</span>
               </label>
-              <div className="relative">
+              <div className="relative" dir="ltr">
                 <input
                   type={showSignupPassword ? 'text' : 'password'}
                   required
+                  dir="ltr"
                   value={signupPassword}
                   onChange={(e) => setSignupPassword(e.target.value)}
-                  placeholder="كلمة المرور (3 خانات فأكثر)..."
-                  className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3 pl-10 text-white text-sm outline-none focus:border-amber-400 transition placeholder:text-slate-600 min-h-[44px]"
+                  placeholder="••••••••"
+                  className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3 pr-10 pl-3 text-white text-sm outline-none focus:border-amber-400 transition placeholder:text-slate-600 min-h-[44px] force-ltr text-left font-mono"
                 />
                 <button
                   type="button"
                   onClick={() => setShowSignupPassword(!showSignupPassword)}
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-1.5 cursor-pointer"
-                  title={showSignupPassword ? 'إخفاء' : 'إظهار'}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-1.5 cursor-pointer"
+                  title={showSignupPassword ? 'Hide' : 'Show'}
                 >
                   {showSignupPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -666,22 +705,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5 text-amber-400" />
-                <span>تأكيد كلمة المرور</span>
+                <span>{t('authConfirmPassword')}</span>
               </label>
-              <div className="relative">
+              <div className="relative" dir="ltr">
                 <input
                   type={showSignupConfirmPassword ? 'text' : 'password'}
                   required
+                  dir="ltr"
                   value={signupConfirmPassword}
                   onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                  placeholder="أعد إدخال كلمة المرور..."
-                  className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3 pl-10 text-white text-sm outline-none focus:border-amber-400 transition placeholder:text-slate-600 min-h-[44px]"
+                  placeholder="••••••••"
+                  className="w-full bg-[#080C19] border border-slate-700 rounded-2xl p-3 pr-10 pl-3 text-white text-sm outline-none focus:border-amber-400 transition placeholder:text-slate-600 min-h-[44px] force-ltr text-left font-mono"
                 />
                 <button
                   type="button"
                   onClick={() => setShowSignupConfirmPassword(!showSignupConfirmPassword)}
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-1.5 cursor-pointer"
-                  title={showSignupConfirmPassword ? 'إخفاء' : 'إظهار'}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-1.5 cursor-pointer"
+                  title={showSignupConfirmPassword ? 'Hide' : 'Show'}
                 >
                   {showSignupConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -692,7 +732,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               type="submit"
               className="w-full font-black py-3.5 rounded-2xl transition shadow-lg mt-2 text-sm cursor-pointer active:scale-[0.99] min-h-[48px] flex items-center justify-center bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:to-yellow-300 text-slate-950 shadow-amber-500/20"
             >
-              إنشاء الحساب وإرسال للموافقة
+              {t('submitSignup')}
             </button>
 
             <div className="text-center pt-1.5">
@@ -701,41 +741,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 onClick={() => { setActiveSlide('login'); setStatusAlert(null); }}
                 className="text-xs text-amber-400 hover:underline cursor-pointer font-bold inline-flex items-center gap-1"
               >
-                <span>لديك حساب مسجل بالفعل؟ تسجيل الدخول</span>
+                <span>{t('hasAccountLink')}</span>
               </button>
             </div>
           </form>
         )}
 
-        {/* SLIDE 3: ADMIN FORM (Passcode only) */}
+        {/* ========================================================================= */}
+        {/* SLIDE 3: ADMIN FORM                                                      */}
+        {/* ========================================================================= */}
         {activeSlide === 'admin' && (
           <form onSubmit={handleAdminSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-rose-400 mb-1.5 flex items-center gap-1.5">
                 <KeyRound className="w-3.5 h-3.5 text-rose-400" />
-                <span>رمز سر الآدمن (Admin Secret Code)</span>
+                <span>{t('authAdminGatePassLabel')}</span>
               </label>
-              <div className="relative">
+              <div className="relative" dir="ltr">
                 <input
                   type={showAdminPasscode ? 'text' : 'password'}
                   required
+                  dir="ltr"
                   autoFocus
                   value={adminPasscode}
                   onChange={(e) => setAdminPasscode(e.target.value)}
-                  placeholder="أدخل الرمز السري للإدارة..."
-                  className="w-full bg-[#080C19] border border-rose-500/60 rounded-2xl p-3.5 pl-12 text-white text-base sm:text-sm outline-none focus:border-rose-400 transition shadow-inner placeholder:text-slate-600 min-h-[48px]"
+                  placeholder="••••••••"
+                  className="w-full bg-[#080C19] border border-rose-500/60 rounded-2xl p-3.5 pr-12 pl-4 text-white text-base sm:text-sm outline-none focus:border-rose-400 transition shadow-inner placeholder:text-slate-600 min-h-[48px] force-ltr text-left font-mono"
                 />
                 <button
                   type="button"
                   onClick={() => setShowAdminPasscode(!showAdminPasscode)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-2 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
-                  title={showAdminPasscode ? 'إخفاء' : 'إظهار'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-2 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
+                  title={showAdminPasscode ? 'Hide' : 'Show'}
                 >
-                  {showAdminPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showAdminPasscode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-slate-400" />}
                 </button>
               </div>
               <span className="text-[11px] text-slate-400 mt-1.5 block">
-                الدخول كآدمن لا يتطلب أي اسم مستخدم، فقط الرمز السري المعتمد للإدارة.
+                {t('adminPasscodeHint')}
               </span>
             </div>
 
@@ -743,7 +786,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               type="submit"
               className="w-full font-black py-3.5 rounded-2xl transition shadow-lg mt-2 text-sm cursor-pointer active:scale-[0.99] min-h-[48px] flex items-center justify-center bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-rose-600/25"
             >
-              التحقق والدخول المباشر كآدمن
+              {t('submitAdmin')}
             </button>
           </form>
         )}
@@ -752,9 +795,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-[#94A3B8]">
           <span className="flex items-center gap-1.5">
             <Shield className="w-3.5 h-3.5 text-[#00E5FF]" />
-            حماية الحسابات
+            {t('accountProtection')}
           </span>
-          <span>حساب موثق واحد لكل جهاز</span>
+          <span>{t('oneAccountPerDevice')}</span>
         </div>
       </div>
     </div>

@@ -175,23 +175,20 @@ export const SecurityGate: React.FC<SecurityGateProps> = ({ onUnlock }) => {
                 {t('gatePassLabel')}
               </span>
             </label>
-            <div className="relative">
+            <div className="relative" dir="ltr">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t('gatePassPlaceholder')}
                 autoFocus
-                className={`w-full bg-slate-950/80 border border-slate-700/80 focus:border-yellow-400 rounded-2xl py-3.5 text-sm text-white font-medium outline-none transition shadow-inner placeholder:text-slate-600 ${
-                  isRtl ? 'pr-4 pl-12' : 'pl-4 pr-12'
-                }`}
+                dir="ltr"
+                className="w-full bg-slate-950/80 border border-slate-700/80 focus:border-yellow-400 rounded-2xl py-3.5 pl-4 pr-12 text-sm text-white font-mono font-medium outline-none transition shadow-inner placeholder:text-slate-600 force-ltr text-left"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className={`absolute top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-1 cursor-pointer ${
-                  isRtl ? 'left-3' : 'right-3'
-                }`}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition p-1 cursor-pointer"
                 title={showPassword ? 'Hide' : 'Show'}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

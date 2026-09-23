@@ -146,5 +146,28 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 14px -2px rgba(0, 229, 255, 0.35) !important;
 }
 
+/* Prevent RTL language selection from reversing usernames, passwords, emails, PINs, scores, or codes */
+input[type="password"],
+input[type="email"],
+input[type="tel"],
+input[type="number"],
+input[name*="user"],
+input[name*="pass"],
+input[autocomplete*="username"],
+input[autocomplete*="password"],
+.input-ltr,
+.force-ltr {
+  direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: isolate !important;
+}
+
+/* Center aligned numeric inputs (like score steppers or PIN verification) */
+.input-center-ltr {
+  direction: ltr !important;
+  text-align: center !important;
+  unicode-bidi: isolate !important;
+}
+
 
 

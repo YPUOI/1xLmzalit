@@ -374,11 +374,11 @@ export default function App() {
 
   const getAvailableTabs = useCallback((): TabType[] => {
     const tabs: TabType[] = [
+      'rules',
+      'members_predictions',
       'home',
       'matches',
-      'members_predictions',
-      'leaderboard',
-      'rules'
+      'leaderboard'
     ];
     if (currentUser?.role === 'admin') {
       tabs.push('admin');
@@ -476,17 +476,23 @@ export default function App() {
     if (Math.abs(deltaX) >= 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3 && duration < 650) {
       const tabs = getAvailableTabs();
       const currentIdx = tabs.indexOf(activeTab);
+      if (currentIdx === -1) return;
 
-      // Solved: Reversed sliding direction on phone
-      // Swiping finger towards Right (deltaX > 0) advances to the next tab
-      // Swiping finger towards Left (deltaX < 0) goes back to the previous tab
-      if (deltaX > 0) {
+      // In LTR:
+      // Swiping finger Left (deltaX < 0) advances to the next tab (+1)
+      // Swiping finger Right (deltaX > 0) returns to the previous tab (-1)
+      // In RTL:
+      // Swiping finger Right (deltaX > 0) advances to the next tab (+1)
+      // Swiping finger Left (deltaX < 0) returns to the previous tab (-1)
+      const movingForward = isRtl ? deltaX > 0 : deltaX < 0;
+
+      if (movingForward) {
         if (currentIdx < tabs.length - 1) {
-          navigateToTab(tabs[currentIdx + 1], 1);
+          navigateToTab(tabs[currentIdx + 1], isRtl ? -1 : 1);
         }
       } else {
         if (currentIdx > 0) {
-          navigateToTab(tabs[currentIdx - 1], -1);
+          navigateToTab(tabs[currentIdx - 1], isRtl ? 1 : -1);
         }
       }
     }
@@ -712,79 +718,93 @@ export default function App() {
         </div>
       </div>
 
-        {/* Mobile Bottom Navigation Bar (Visible only on phone/mobile screens) */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#080C19]/95 border-t border-slate-800/80 backdrop-blur-2xl px-1.5 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom">
-          <button
-            onClick={() => navigateToTab('home')}
-            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-2 rounded-2xl transition cursor-pointer min-w-[50px] min-h-[48px] ${
-              activeTab === 'home'
-                ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
-                : 'text-[#94A3B8] font-bold hover:text-white'
-            }`}
-          >
-            <Home className="w-5 h-5 text-[#00E5FF]" />
-            <span className="text-[10px]">{t('tabHomeShort')}</span>
-          </button>
-
-          <button
-            onClick={() => navigateToTab('matches')}
-            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-2 rounded-2xl transition cursor-pointer min-w-[50px] min-h-[48px] ${
-              activeTab === 'matches'
-                ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
-                : 'text-[#94A3B8] font-bold hover:text-white'
-            }`}
-          >
-            <Trophy className="w-5 h-5 text-yellow-400" />
-            <span className="text-[10px]">{t('tabMatchesShort')}</span>
-          </button>
-
-          <button
-            onClick={() => navigateToTab('members_predictions')}
-            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition cursor-pointer min-w-[56px] min-h-[48px] ${
-              activeTab === 'members_predictions'
-                ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
-                : 'text-[#94A3B8] font-bold hover:text-white'
-            }`}
-          >
-            <Users className="w-5 h-5 text-[#00E5FF]" />
-            <span className="text-[10px]">{t('tabMembersPredictionsShort')}</span>
-          </button>
-
-          <button
-            onClick={() => navigateToTab('leaderboard')}
-            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition cursor-pointer min-w-[56px] min-h-[48px] ${
-              activeTab === 'leaderboard'
-                ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
-                : 'text-[#94A3B8] font-bold hover:text-white'
-            }`}
-          >
-            <Award className="w-5 h-5 text-amber-400" />
-            <span className="text-[10px]">{t('tabLeaderboardShort')}</span>
-          </button>
-
+        {/* Mobile Bottom Navigation Bar (Visible only on phone/mobile screens - matches photo construction) */}
+        <nav 
+          className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#080C19]/95 border-t border-slate-800/80 backdrop-blur-2xl px-1.5 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom"
+          dir="ltr"
+        >
+          {/* 1. [rules] (Far Left in sketch) */}
           <button
             onClick={() => navigateToTab('rules')}
-            className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition cursor-pointer min-w-[56px] min-h-[48px] ${
+            className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl transition cursor-pointer min-w-[52px] min-h-[46px] ${
               activeTab === 'rules'
                 ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
                 : 'text-[#94A3B8] font-bold hover:text-white'
             }`}
           >
             <Sparkles className="w-5 h-5 text-[#00E5FF]" />
-            <span className="text-[10px]">{t('tabRulesShort')}</span>
+            <span className="text-[9px] truncate max-w-[58px]">{t('tabRulesShort')}</span>
           </button>
 
+          {/* 2. [members predictions] (Second in sketch) */}
+          <button
+            onClick={() => navigateToTab('members_predictions')}
+            className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl transition cursor-pointer min-w-[52px] min-h-[46px] ${
+              activeTab === 'members_predictions'
+                ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
+                : 'text-[#94A3B8] font-bold hover:text-white'
+            }`}
+          >
+            <Users className="w-5 h-5 text-[#00E5FF]" />
+            <span className="text-[9px] truncate max-w-[62px]">{t('tabMembersPredictionsShort')}</span>
+          </button>
+
+          {/* 3. (( HOME )) Elevated Circular Center Button (Center in sketch) */}
+          <button
+            onClick={() => navigateToTab('home')}
+            className="flex flex-col items-center justify-center relative -top-3.5 cursor-pointer group select-none min-w-[58px]"
+            title={t('tabHomeShort')}
+          >
+            <div className={`w-13 h-13 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl border-2 ${
+              activeTab === 'home'
+                ? 'bg-gradient-to-tr from-cyan-500 to-[#00E5FF] text-slate-950 border-white shadow-[0_0_22px_rgba(0,229,255,0.65)] scale-105 ring-4 ring-[#080C19]'
+                : 'bg-slate-900/95 text-cyan-400 border-cyan-500/40 hover:border-[#00E5FF] hover:text-white shadow-cyan-950/40 ring-4 ring-[#080C19]'
+            }`}>
+              <Home className={`w-6 h-6 ${activeTab === 'home' ? 'text-slate-950 stroke-[2.5]' : 'text-[#00E5FF]'}`} />
+            </div>
+            <span className={`text-[9px] font-black mt-1 ${activeTab === 'home' ? 'text-[#00E5FF]' : 'text-[#94A3B8]'}`}>
+              {t('tabHomeShort')}
+            </span>
+          </button>
+
+          {/* 4. [matches available] (Fourth in sketch) */}
+          <button
+            onClick={() => navigateToTab('matches')}
+            className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl transition cursor-pointer min-w-[52px] min-h-[46px] ${
+              activeTab === 'matches'
+                ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
+                : 'text-[#94A3B8] font-bold hover:text-white'
+            }`}
+          >
+            <Trophy className="w-5 h-5 text-yellow-400" />
+            <span className="text-[9px] truncate max-w-[58px]">{t('tabMatchesShort')}</span>
+          </button>
+
+          {/* 5. [leader board] (Far Right in sketch) */}
+          <button
+            onClick={() => navigateToTab('leaderboard')}
+            className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl transition cursor-pointer min-w-[52px] min-h-[46px] ${
+              activeTab === 'leaderboard'
+                ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
+                : 'text-[#94A3B8] font-bold hover:text-white'
+            }`}
+          >
+            <Award className="w-5 h-5 text-amber-400" />
+            <span className="text-[9px] truncate max-w-[58px]">{t('tabLeaderboardShort')}</span>
+          </button>
+
+          {/* Discreet Admin icon if currentUser is admin */}
           {currentUser?.role === 'admin' && (
             <button
               onClick={() => navigateToTab('admin')}
-              className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-2xl transition cursor-pointer min-w-[64px] min-h-[48px] ${
+              className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl transition cursor-pointer min-w-[46px] min-h-[46px] ${
                 activeTab === 'admin'
                   ? 'text-rose-400 font-black bg-rose-500/20 border border-rose-500/30'
-                  : 'text-slate-400 font-bold hover:text-rose-300'
+                  : 'text-slate-500 font-bold hover:text-rose-300'
               }`}
             >
-              <ShieldAlert className="w-5 h-5 text-rose-400" />
-              <span className="text-[10px]">{t('tabAdminShort')}</span>
+              <ShieldAlert className="w-4 h-4 text-rose-400" />
+              <span className="text-[8px]">{t('tabAdminShort')}</span>
             </button>
           )}
         </nav>

@@ -273,14 +273,30 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
       const explanations: string[] = [];
       if (missingHomeIndices.length > 0) {
         const filled = draft.homeScore - missingHomeIndices.length;
-        explanations.push(`• فريق ${match.homeTeam}: توقعت تسجيل ${draft.homeScore} ${draft.homeScore === 1 ? 'هدف' : 'أهداف'} ولكنك حددت فقط (${filled} من ${draft.homeScore}) مسجلين. يرجى اختيار مسجل للهدف رقم (${missingHomeIndices.map(idx => idx + 1).join(' و ')}).`);
+        explanations.push(
+          language === 'fr'
+            ? `• Équipe ${getTeamEnglishName(match.homeTeam)} : vous avez pronostiqué ${draft.homeScore} buts mais vous n'avez sélectionné que (${filled} sur ${draft.homeScore}) buteurs. Veuillez désigner le buteur pour le but n° (${missingHomeIndices.map(idx => idx + 1).join(', ')}).`
+            : language === 'en'
+            ? `• Team ${getTeamEnglishName(match.homeTeam)}: you predicted ${draft.homeScore} goals but only chose (${filled} of ${draft.homeScore}) scorers. Please pick a scorer for goal # (${missingHomeIndices.map(idx => idx + 1).join(', ')}).`
+            : `• فريق ${match.homeTeam}: توقعت تسجيل ${draft.homeScore} ${draft.homeScore === 1 ? 'هدف' : 'أهداف'} ولكنك حددت فقط (${filled} من ${draft.homeScore}) مسجلين. يرجى اختيار مسجل للهدف رقم (${missingHomeIndices.map(idx => idx + 1).join(' و ')}).`
+        );
       }
       if (missingAwayIndices.length > 0) {
         const filled = draft.awayScore - missingAwayIndices.length;
-        explanations.push(`• فريق ${match.awayTeam}: توقعت تسجيل ${draft.awayScore} ${draft.awayScore === 1 ? 'هدف' : 'أهداف'} ولكنك حددت فقط (${filled} من ${draft.awayScore}) مسجلين. يرجى اختيار مسجل للهدف رقم (${missingAwayIndices.map(idx => idx + 1).join(' و ')}).`);
+        explanations.push(
+          language === 'fr'
+            ? `• Équipe ${getTeamEnglishName(match.awayTeam)} : vous avez pronostiqué ${draft.awayScore} buts mais vous n'avez sélectionné que (${filled} sur ${draft.awayScore}) buteurs. Veuillez désigner le buteur pour le but n° (${missingAwayIndices.map(idx => idx + 1).join(', ')}).`
+            : language === 'en'
+            ? `• Team ${getTeamEnglishName(match.awayTeam)}: you predicted ${draft.awayScore} goals but only chose (${filled} of ${draft.awayScore}) scorers. Please pick a scorer for goal # (${missingAwayIndices.map(idx => idx + 1).join(', ')}).`
+            : `• فريق ${match.awayTeam}: توقعت تسجيل ${draft.awayScore} ${draft.awayScore === 1 ? 'هدف' : 'أهداف'} ولكنك حددت فقط (${filled} من ${draft.awayScore}) مسجلين. يرجى اختيار مسجل للهدف رقم (${missingAwayIndices.map(idx => idx + 1).join(' و ')}).`
+        );
       }
 
-      const fullMessage = `لا يمكن حفظ التوقع حتى يتم إدخال وتحديد جميع مسجلي الأهداف كاملة!\n\n${explanations.join('\n')}`;
+      const fullMessage = language === 'fr'
+        ? `Impossible d'enregistrer le pronostic tant que tous les buteurs ne sont pas désignés !\n\n${explanations.join('\n')}`
+        : language === 'en'
+        ? `Cannot save prediction until all goalscorers are selected!\n\n${explanations.join('\n')}`
+        : `لا يمكن حفظ التوقع حتى يتم إدخال وتحديد جميع مسجلي الأهداف كاملة!\n\n${explanations.join('\n')}`;
       setValidationErrors(prev => ({ ...prev, [match.id]: fullMessage }));
       return; // Stop here!
     }
@@ -466,17 +482,19 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                                 className="px-3.5 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:border-cyan-400"
                               >
                                 <Download className="w-3.5 h-3.5 text-cyan-400" />
-                                <span>تحميل بطاقة التوقع (صورة) • Download</span>
+                                <span>{language === 'fr' ? 'Télécharger la carte de pronostic' : language === 'en' ? 'Download Prediction Card' : 'تحميل بطاقة التوقع (صورة)'}</span>
                               </button>
                             </div>
                           ) : (
                             <div className="pt-1.5 text-[11px] text-slate-500">
-                              تم إعلان النتيجة الرسمية للمباراة وانتهت فترة تحميل بطاقة التوقع.
+                              {language === 'fr' ? 'Le résultat officiel est publié, le téléchargement est clos.' : language === 'en' ? 'Official result announced; prediction card download closed.' : 'تم إعلان النتيجة الرسمية للمباراة وانتهت فترة تحميل بطاقة التوقع.'}
                             </div>
                           )}
                         </div>
                       ) : (
-                        <span className="text-slate-500">لم تقم بتسجيل توقع لهذه المباراة قبل إغلاقها.</span>
+                        <span className="text-slate-500">
+                          {language === 'fr' ? 'Vous n\'avez pas enregistré de pronostic pour ce match avant la clôture.' : language === 'en' ? 'You did not register a prediction for this match before deadline.' : 'لم تقم بتسجيل توقع لهذه المباراة قبل إغلاقها.'}
+                        </span>
                       )}
                     </div>
                   ) : (
@@ -487,7 +505,9 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                        match.status !== 'SETTLED' && (
                         <div className="p-3 rounded-2xl bg-rose-950/85 border border-rose-500/80 text-rose-200 text-xs font-bold flex items-center gap-2.5 shadow-lg animate-pulse">
                           <Flame className="w-4 h-4 text-rose-400 shrink-0" />
-                          <span>تنبيه عاجل: اقترب موعد إغلاق المباراة (أقل من ساعة واحدة)! احرص على إكمال وتثبيت توقعك الآن.</span>
+                          <span>
+                            {language === 'fr' ? 'Alerte urgente : fermeture du match imminente (< 1 heure) ! Confirmez votre pronostic dès maintenant.' : language === 'en' ? 'Urgent notice: match deadline approaching (< 1 hour)! Finalize your prediction now.' : 'تنبيه عاجل: اقترب موعد إغلاق المباراة (أقل من ساعة واحدة)! احرص على إكمال وتثبيت توقعك الآن.'}
+                          </span>
                         </div>
                       )}
 
@@ -502,7 +522,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                               type="button"
                               onClick={() => updateDraft(match.id, { homeScore: Math.max(0, draft.homeScore - 1) })}
                               className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-yellow-400 font-black flex items-center justify-center cursor-pointer transition active:scale-95 border border-slate-700 select-none shrink-0"
-                              title="تقليل هدف"
+                              title={language === 'fr' ? 'Diminuer but' : language === 'en' ? 'Decrease goal' : 'تقليل هدف'}
                             >
                               <Minus className="w-4 h-4" />
                             </button>
@@ -510,18 +530,19 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                               type="number"
                               min="0"
                               max="15"
+                              dir="ltr"
                               value={draft.homeScore}
                               onChange={(e) => {
                                 const val = Math.max(0, Math.min(15, parseInt(e.target.value) || 0));
                                 updateDraft(match.id, { homeScore: val });
                               }}
-                              className="w-12 sm:w-14 bg-transparent text-center font-black text-white text-xl sm:text-2xl outline-none"
+                              className="w-12 sm:w-14 bg-transparent text-center font-black text-white text-xl sm:text-2xl outline-none force-ltr"
                             />
                             <button
                               type="button"
                               onClick={() => updateDraft(match.id, { homeScore: Math.min(15, draft.homeScore + 1) })}
                               className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-yellow-400 font-black flex items-center justify-center cursor-pointer transition active:scale-95 border border-slate-700 select-none shrink-0"
-                              title="زيادة هدف"
+                              title={language === 'fr' ? 'Ajouter but' : language === 'en' ? 'Increase goal' : 'زيادة هدف'}
                             >
                               <Plus className="w-4 h-4" />
                             </button>
@@ -537,7 +558,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                               type="button"
                               onClick={() => updateDraft(match.id, { awayScore: Math.max(0, draft.awayScore - 1) })}
                               className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-yellow-400 font-black flex items-center justify-center cursor-pointer transition active:scale-95 border border-slate-700 select-none shrink-0"
-                              title="تقليل هدف"
+                              title={language === 'fr' ? 'Diminuer but' : language === 'en' ? 'Decrease goal' : 'تقليل هدف'}
                             >
                               <Minus className="w-4 h-4" />
                             </button>
@@ -545,18 +566,19 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                               type="number"
                               min="0"
                               max="15"
+                              dir="ltr"
                               value={draft.awayScore}
                               onChange={(e) => {
                                 const val = Math.max(0, Math.min(15, parseInt(e.target.value) || 0));
                                 updateDraft(match.id, { awayScore: val });
                               }}
-                              className="w-12 sm:w-14 bg-transparent text-center font-black text-white text-xl sm:text-2xl outline-none"
+                              className="w-12 sm:w-14 bg-transparent text-center font-black text-white text-xl sm:text-2xl outline-none force-ltr"
                             />
                             <button
                               type="button"
                               onClick={() => updateDraft(match.id, { awayScore: Math.min(15, draft.awayScore + 1) })}
                               className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-yellow-400 font-black flex items-center justify-center cursor-pointer transition active:scale-95 border border-slate-700 select-none shrink-0"
-                              title="زيادة هدف"
+                              title={language === 'fr' ? 'Ajouter but' : language === 'en' ? 'Increase goal' : 'زيادة هدف'}
                             >
                               <Plus className="w-4 h-4" />
                             </button>
@@ -572,7 +594,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                               {language === 'fr' ? `Buteurs ${getTeamEnglishName(home.name)} (${draft.homeScore} ${draft.homeScore === 1 ? 'but' : 'buts'}):` : language === 'en' ? `${getTeamEnglishName(home.name)} Scorers (${draft.homeScore} ${draft.homeScore === 1 ? 'goal' : 'goals'}):` : `مسجلو أهداف ${getTeamEnglishName(home.name)} (${draft.homeScore} ${draft.homeScore === 1 ? 'هدف' : 'أهداف'}):`}
                             </label>
                             <span className="text-[10px] text-slate-400 font-semibold">
-                              (مطلوب تحديد المسجل لكل هدف)
+                              {language === 'fr' ? '(Sélection du buteur obligatoire pour chaque but)' : language === 'en' ? '(Scorer required for each goal)' : '(مطلوب تحديد المسجل لكل هدف)'}
                             </span>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -594,7 +616,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                                           : 'border-slate-700 text-white focus:border-blue-400'
                                       } rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm outline-none min-h-[44px] cursor-pointer transition`}
                                     >
-                                      <option value="">اختر المسجل للهدف ({idx + 1})...</option>
+                                      <option value="">{language === 'fr' ? `Choisir le buteur du but (${idx + 1})...` : language === 'en' ? `Select scorer for goal (${idx + 1})...` : `اختر المسجل للهدف (${idx + 1})...`}</option>
                                       {home.squad.map(player => (
                                         <option key={player} value={player}>{player}</option>
                                       ))}
@@ -608,7 +630,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                                         nextScorers[idx] = e.target.value;
                                         updateDraft(match.id, { homeScorers: nextScorers });
                                       }}
-                                      placeholder={`اسم مسجل الهدف (${idx + 1})...`}
+                                      placeholder={language === 'fr' ? `Nom du buteur pour le but (${idx + 1})...` : language === 'en' ? `Scorer name for goal (${idx + 1})...` : `اسم مسجل الهدف (${idx + 1})...`}
                                       className={`w-full bg-slate-900 border ${
                                         isMissing 
                                           ? 'border-rose-500 ring-2 ring-rose-500/40 bg-rose-950/30 text-rose-100' 
@@ -619,7 +641,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                                   {isMissing && (
                                     <p className="text-[10px] text-rose-400 font-bold flex items-center gap-1">
                                       <AlertCircle className="w-3 h-3 text-rose-400 shrink-0" />
-                                      <span>مطلوب اختيار اسم مسجل الهدف ({idx + 1})</span>
+                                      <span>{language === 'fr' ? `Buteur requis pour le but (${idx + 1})` : language === 'en' ? `Scorer required for goal (${idx + 1})` : `مطلوب اختيار اسم مسجل الهدف (${idx + 1})`}</span>
                                     </p>
                                   )}
                                 </div>
@@ -637,7 +659,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                               {language === 'fr' ? `Buteurs ${getTeamEnglishName(away.name)} (${draft.awayScore} ${draft.awayScore === 1 ? 'but' : 'buts'}):` : language === 'en' ? `${getTeamEnglishName(away.name)} Scorers (${draft.awayScore} ${draft.awayScore === 1 ? 'goal' : 'goals'}):` : `مسجلو أهداف ${getTeamEnglishName(away.name)} (${draft.awayScore} ${draft.awayScore === 1 ? 'هدف' : 'أهداف'}):`}
                             </label>
                             <span className="text-[10px] text-slate-400 font-semibold">
-                              (مطلوب تحديد المسجل لكل هدف)
+                              {language === 'fr' ? '(Sélection du buteur obligatoire pour chaque but)' : language === 'en' ? '(Scorer required for each goal)' : '(مطلوب تحديد المسجل لكل هدف)'}
                             </span>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -659,7 +681,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                                           : 'border-slate-700 text-white focus:border-rose-400'
                                       } rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm outline-none min-h-[44px] cursor-pointer transition`}
                                     >
-                                      <option value="">اختر المسجل للهدف ({idx + 1})...</option>
+                                      <option value="">{language === 'fr' ? `Choisir le buteur du but (${idx + 1})...` : language === 'en' ? `Select scorer for goal (${idx + 1})...` : `اختر المسجل للهدف (${idx + 1})...`}</option>
                                       {away.squad.map(player => (
                                         <option key={player} value={player}>{player}</option>
                                       ))}
@@ -673,7 +695,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                                         nextScorers[idx] = e.target.value;
                                         updateDraft(match.id, { awayScorers: nextScorers });
                                       }}
-                                      placeholder={`اسم مسجل الهدف (${idx + 1})...`}
+                                      placeholder={language === 'fr' ? `Nom du buteur pour le but (${idx + 1})...` : language === 'en' ? `Scorer name for goal (${idx + 1})...` : `اسم مسجل الهدف (${idx + 1})...`}
                                       className={`w-full bg-slate-900 border ${
                                         isMissing 
                                           ? 'border-rose-500 ring-2 ring-rose-500/40 bg-rose-950/30 text-rose-100' 
@@ -684,7 +706,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                                   {isMissing && (
                                     <p className="text-[10px] text-rose-400 font-bold flex items-center gap-1">
                                       <AlertCircle className="w-3 h-3 text-rose-400 shrink-0" />
-                                      <span>مطلوب اختيار اسم مسجل الهدف ({idx + 1})</span>
+                                      <span>{language === 'fr' ? `Buteur requis pour le but (${idx + 1})` : language === 'en' ? `Scorer required for goal (${idx + 1})` : `مطلوب اختيار اسم مسجل الهدف (${idx + 1})`}</span>
                                     </p>
                                   )}
                                 </div>
@@ -724,12 +746,14 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
 
                       {/* Validation Error Banner with Clear Explication */}
                       {validationErrors[match.id] && (
-                        <div className="p-4 rounded-2xl bg-rose-950/90 border border-rose-500/80 text-rose-200 shadow-xl space-y-2 text-right">
+                        <div className={`p-4 rounded-2xl bg-rose-950/90 border border-rose-500/80 text-rose-200 shadow-xl space-y-2 ${isRtl ? 'text-right' : 'text-left'}`}>
                           <div className="flex items-center gap-2 font-black text-sm text-white">
                             <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
-                            <span>تعذر التحقق من التوقع: يرجى إكمال مسجلي الأهداف</span>
+                            <span>
+                              {language === 'fr' ? 'Validation impossible : veuillez désigner tous les buteurs' : language === 'en' ? 'Validation Failed: Please complete all goalscorers' : 'تعذر التحقق من التوقع: يرجى إكمال مسجلي الأهداف'}
+                            </span>
                           </div>
-                          <div className="text-xs leading-relaxed text-rose-200 whitespace-pre-line pr-7">
+                          <div className={`text-xs leading-relaxed text-rose-200 whitespace-pre-line ${isRtl ? 'pr-7' : 'pl-7'}`}>
                             {validationErrors[match.id]}
                           </div>
                         </div>
