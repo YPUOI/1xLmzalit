@@ -62,17 +62,19 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   // Mobile Header button variant
   if (variant === 'header-mobile') {
     return (
-      <div className={`relative inline-block ${className}`} ref={containerRef} dir="ltr">
+      <div className={`relative inline-block shrink-0 ${className}`} ref={containerRef} dir="ltr">
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="h-[34px] px-2.5 bg-[#071324] hover:bg-[#0c1f38] text-[#00E5FF] border border-[#00E5FF]/40 rounded-xl flex items-center gap-1.5 text-xs font-black transition cursor-pointer select-none shrink-0 active:scale-95 shadow-sm"
+          className="h-[30px] px-1.5 sm:px-2 bg-[#071324] hover:bg-[#0c1f38] text-[#00E5FF] border border-[#00E5FF]/40 rounded-xl flex items-center gap-1 text-[11px] font-black transition cursor-pointer select-none shrink-0 active:scale-95 shadow-sm"
           title="Select Language / اختيار اللغة"
           aria-label="Select Language"
         >
-          <Globe className="w-3.5 h-3.5 text-[#00E5FF] shrink-0" />
-          {renderLangBadge(currentMeta.code, false)}
-          <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <Globe className="w-3 h-3 text-[#00E5FF] shrink-0" />
+          <span className="inline-flex items-center justify-center min-w-[26px] h-[18px] px-1 rounded font-mono font-black text-[9px] tracking-wider leading-none bg-[#0A162B] text-[#00E5FF] border border-[#00E5FF]/40">
+            {currentMeta.code.toUpperCase()}
+          </span>
+          <ChevronDown className={`w-2.5 h-2.5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
 
         {isOpen && (

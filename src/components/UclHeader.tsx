@@ -37,37 +37,37 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
   const { t, isRtl } = useLanguage();
 
   return (
-    <header className="ucl-header-bg border-b border-slate-800/80 sticky top-0 z-40 backdrop-blur-2xl shadow-2xl shadow-black/80">
+    <header className="ucl-header-bg border-b border-slate-800/80 sticky top-0 z-40 backdrop-blur-2xl shadow-2xl shadow-black/80 w-full max-w-full overflow-hidden">
       
       {/* ========================================================================= */}
       {/* MOBILE LAYOUT (< md): Exact 3-part construction matching user sketch      */}
       {/* Left: 1xlmzalit v1.0 | Center: (8+) User Auth & Language | Right: UCL 26/27 */}
       {/* ========================================================================= */}
-      <div className="flex md:hidden justify-between items-center w-full px-2.5 py-2 gap-1.5" dir="ltr">
+      <div className="flex md:hidden justify-between items-center w-full px-2 sm:px-2.5 py-1.5 sm:py-2 gap-1 sm:gap-1.5 max-w-full overflow-hidden" dir="ltr">
         {/* Left: 1xlmzalit Logo + v1.0 tag */}
         <div 
-          className="flex items-center gap-1.5 cursor-pointer select-none shrink-0" 
+          className="flex items-center gap-1 cursor-pointer select-none shrink-0" 
           onClick={() => onSelectTab('home')}
           title="1xlmzalit v1.0"
         >
-          <XlmzalitLogo variant="light" size="md" className="shrink-0" />
-          <div className="bg-[#041E34] border border-[#00E5FF]/60 px-1.5 py-0.5 rounded-md flex items-center justify-center shrink-0 shadow-sm">
-            <span className="text-[10px] font-black text-[#00E5FF] tracking-wider font-mono">
+          <XlmzalitLogo variant="light" size="sm" className="shrink-0" />
+          <div className="bg-[#041E34] border border-[#00E5FF]/60 px-1 py-0.5 rounded-md flex items-center justify-center shrink-0 shadow-sm">
+            <span className="text-[9px] font-black text-[#00E5FF] tracking-wider font-mono">
               v1.0
             </span>
           </div>
         </div>
 
         {/* Center: (8+) User Auth Icon/Button + Language Switcher */}
-        <div className="flex items-center gap-1.5 justify-center shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 justify-center shrink-0">
           {currentUser ? (
-            <div className="flex items-center gap-1 bg-[#071324] border border-slate-700/80 px-2 py-1 rounded-full text-xs font-bold shrink-0 shadow-sm">
+            <div className="flex items-center gap-1 bg-[#071324] border border-slate-700/80 px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-bold shrink-0 shadow-sm h-[30px]">
               {currentUser.role === 'admin' ? (
                 <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0" />
               ) : (
                 <User className="w-3.5 h-3.5 text-[#00E5FF] shrink-0" />
               )}
-              <span className="max-w-[58px] truncate text-white text-[11px]">{currentUser.username}</span>
+              <span className="max-w-[42px] sm:max-w-[58px] truncate text-white text-[10px] sm:text-[11px]">{currentUser.username}</span>
               <button 
                 onClick={onLogout} 
                 className="text-slate-400 hover:text-rose-400 p-0.5 cursor-pointer ml-0.5" 
@@ -79,11 +79,11 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
           ) : (
             <button 
               onClick={() => onOpenAuth('login')}
-              className="bg-gradient-to-r from-cyan-500 to-[#00E5FF] hover:from-cyan-400 hover:to-cyan-300 text-slate-950 font-black text-xs px-2.5 py-1 rounded-full flex items-center gap-1 shrink-0 shadow-[0_0_10px_rgba(0,229,255,0.3)] active:scale-95 transition cursor-pointer"
+              className="bg-gradient-to-r from-cyan-500 to-[#00E5FF] hover:from-cyan-400 hover:to-cyan-300 text-slate-950 font-black text-xs h-[30px] px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 shadow-[0_0_10px_rgba(0,229,255,0.3)] active:scale-95 transition cursor-pointer"
               title={t('quickLogin')}
             >
-              <User className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span className="text-xs font-black">+</span>
+              <User className="w-3 h-3 stroke-[2.5]" />
+              <span className="text-[11px] font-black">+</span>
             </button>
           )}
 
@@ -94,10 +94,10 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
         {/* Right: UCL 26/27 Tournament Badge */}
         <div 
           onClick={() => onSelectTab('home')}
-          className="bg-[#051528] border border-[#00E5FF]/40 px-2 py-1 rounded-xl flex items-center gap-1 shadow-sm shrink-0 cursor-pointer active:scale-95 transition select-none"
+          className="bg-[#051528] border border-[#00E5FF]/40 px-1.5 sm:px-2 py-1 rounded-xl flex items-center gap-1 shadow-sm shrink-0 cursor-pointer active:scale-95 transition select-none"
           title="UCL 2026/2027"
         >
-          <span className="text-[11px] font-black text-white tracking-wider font-mono">
+          <span className="text-[10px] sm:text-[11px] font-black text-white tracking-wider font-mono whitespace-nowrap">
             UCL 26/27
           </span>
         </div>

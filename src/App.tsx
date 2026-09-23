@@ -386,10 +386,14 @@ export default function App() {
     return tabs;
   }, [currentUser?.role]);
 
-  const navigateToTab = useCallback((targetTab: TabType, direction?: number) => {
+  const navigateToTab = useCallback((targetTab: TabType, forcedDirection?: number) => {
     if (targetTab === 'admin') {
       if (sessionStorage.getItem('cl_admin_verified') === '05082007') {
-        if (direction !== undefined) setSlideDirection(direction);
+        if (forcedDirection !== undefined) {
+          setSlideDirection(forcedDirection);
+        } else {
+          setSlideDirection(1);
+        }
         setActiveTab('admin');
       } else {
         handleOpenAuth('admin');
@@ -397,13 +401,15 @@ export default function App() {
       return;
     }
 
-    if (direction !== undefined) {
-      setSlideDirection(direction);
+    if (forcedDirection !== undefined) {
+      setSlideDirection(forcedDirection);
     } else {
       const tabs = getAvailableTabs();
       const currentIdx = tabs.indexOf(activeTab);
       const targetIdx = tabs.indexOf(targetTab);
-      setSlideDirection(targetIdx > currentIdx ? 1 : -1);
+      // When target is to the right of current tab, motion goes right-to-left (+1)
+      // When target is to the left of current tab, motion goes left-to-right (-1)
+      setSlideDirection(targetIdx > currentIdx ? 1 : targetIdx < currentIdx ? -1 : 0);
     }
 
     setActiveTab(targetTab);
@@ -455,7 +461,7 @@ export default function App() {
     const deltaY = touch.clientY - touchStartRef.current.y;
 
     // If early movement is distinctly vertical, cancel tab swipe (normal page scrolling)
-    if (Math.abs(deltaY) > 20 && Math.abs(deltaY) > Math.abs(deltaX) * 1.5) {
+    if (Math.abs(deltaY) > 20 && Math.abs(deltaY) > Math.abs(deltaX) * 1.4) {
       touchStartRef.current.isValid = false;
     }
   };
@@ -472,30 +478,45 @@ export default function App() {
     const duration = Date.now() - touchStartRef.current.time;
     touchStartRef.current = null;
 
-    // Must exceed horizontal threshold of 50px, duration under 650ms, and be clearly horizontal
-    if (Math.abs(deltaX) >= 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.3 && duration < 650) {
+    // Must exceed horizontal threshold of 40px, duration under 650ms, and be clearly horizontal
+    if (Math.abs(deltaX) >= 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2 && duration < 650) {
       const tabs = getAvailableTabs();
       const currentIdx = tabs.indexOf(activeTab);
       if (currentIdx === -1) return;
 
-      // In LTR:
-      // Swiping finger Left (deltaX < 0) advances to the next tab (+1)
-      // Swiping finger Right (deltaX > 0) returns to the previous tab (-1)
-      // In RTL:
-      // Swiping finger Right (deltaX > 0) advances to the next tab (+1)
-      // Swiping finger Left (deltaX < 0) returns to the previous tab (-1)
-      const movingForward = isRtl ? deltaX > 0 : deltaX < 0;
-
-      if (movingForward) {
+      // Swiping finger from RIGHT to LEFT (deltaX < 0):
+      // The user pulls content from the right -> advances to next tab (+1)
+      // The slide animation comes from right to left (forcedDirection: 1)
+      if (deltaX < 0) {
         if (currentIdx < tabs.length - 1) {
-          navigateToTab(tabs[currentIdx + 1], isRtl ? -1 : 1);
+          navigateToTab(tabs[currentIdx + 1], 1);
         }
-      } else {
+      } 
+      // Swiping finger from LEFT to RIGHT (deltaX > 0):
+      // The user pulls content from the left -> returns to previous tab (-1)
+      // The slide animation comes from left to right (forcedDirection: -1)
+      else if (deltaX > 0) {
         if (currentIdx > 0) {
-          navigateToTab(tabs[currentIdx - 1], isRtl ? 1 : -1);
+          navigateToTab(tabs[currentIdx - 1], -1);
         }
       }
     }
+  };
+
+  // Fluid sliding page animation variants
+  const tabSlideVariants = {
+    enter: (dir: number) => ({
+      x: dir > 0 ? 80 : dir < 0 ? -80 : 0,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (dir: number) => ({
+      x: dir > 0 ? -80 : dir < 0 ? 80 : 0,
+      opacity: 0,
+    }),
   };
 
   // If friend is not authenticated, display the Security Gate
@@ -505,14 +526,14 @@ export default function App() {
 
   return (
     <div 
-      className="min-h-screen ucl-theme-bg relative text-slate-100 flex flex-col justify-between selection:bg-cyan-500/30 selection:text-cyan-200"
+      className="min-h-screen w-full max-w-full overflow-x-hidden ucl-theme-bg relative text-slate-100 flex flex-col justify-between selection:bg-cyan-500/30 selection:text-cyan-200"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       {/* Eye-Friendly Glowing UEFA Champions League Stars & Atmosphere Background */}
       <UclStarsBackground />
 
-      <div className="relative z-10 flex flex-col min-h-screen justify-between">
-        <div>
+      <div className="relative z-10 flex flex-col min-h-screen justify-between w-full max-w-full overflow-x-hidden">
+        <div className="w-full max-w-full overflow-x-hidden">
           {/* Navigation & Brand Header */}
         <UclHeader
           currentUser={currentUser}
@@ -525,7 +546,7 @@ export default function App() {
         />
 
         {/* Main Content Area */}
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 mt-3 sm:mt-5 pb-28 md:pb-8">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-4 mt-2.5 sm:mt-5 pb-28 md:pb-8 w-full overflow-x-hidden">
           
           {/* Desktop & Tablet Tabs Navigation (hidden on mobile) */}
           <div className="hidden md:flex border-b border-slate-800/80 mb-6 gap-2 overflow-x-auto pb-1 select-none">
@@ -638,18 +659,24 @@ export default function App() {
 
           {/* Tab Views with Touch Swipe & Fluid Animated Transitions */}
           <main
-            className="relative min-h-[500px] touch-pan-y"
+            className="relative min-h-[500px] w-full max-w-full overflow-hidden touch-pan-y"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" custom={slideDirection}>
               <motion.div
                 key={activeTab}
-                initial={{ opacity: 0, x: slideDirection > 0 ? -16 : slideDirection < 0 ? 16 : 0 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: slideDirection > 0 ? 16 : slideDirection < 0 ? -16 : 0 }}
-                transition={{ duration: 0.22, ease: "easeOut" }}
+                custom={slideDirection}
+                variants={tabSlideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: "tween", ease: [0.25, 1, 0.5, 1], duration: 0.22 },
+                  opacity: { duration: 0.18 }
+                }}
+                className="w-full max-w-full"
               >
                 {activeTab === 'home' && (
                   <HomeSection
