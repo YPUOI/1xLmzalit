@@ -37,13 +37,13 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
   const { t, isRtl } = useLanguage();
 
   return (
-    <header className="ucl-header-bg border-b border-slate-800/80 sticky top-0 z-40 backdrop-blur-2xl shadow-2xl shadow-black/80 w-full max-w-full overflow-hidden">
+    <header className="ucl-header-bg border-b border-slate-800/80 sticky top-0 z-40 backdrop-blur-2xl shadow-2xl shadow-black/80 w-full max-w-full">
       
       {/* ========================================================================= */}
       {/* MOBILE LAYOUT (< md): Exact 3-part construction matching user sketch      */}
       {/* Left: 1xlmzalit v1.0 | Center: (8+) User Auth & Language | Right: UCL 26/27 */}
       {/* ========================================================================= */}
-      <div className="flex md:hidden justify-between items-center w-full px-2 sm:px-2.5 py-1.5 sm:py-2 gap-1 sm:gap-1.5 max-w-full overflow-hidden" dir="ltr">
+      <div className="flex md:hidden justify-between items-center w-full px-2 sm:px-2.5 py-1.5 sm:py-2 gap-1 sm:gap-1.5 max-w-full" dir="ltr">
         {/* Left: 1xlmzalit Logo + v1.0 tag */}
         <div 
           className="flex items-center gap-1 cursor-pointer select-none shrink-0" 

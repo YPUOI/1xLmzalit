@@ -368,11 +368,27 @@ export default function App() {
     setActiveTab('home');
   };
 
-  // Mobile Tab Swipe Navigation State & Logic
+  // Mobile & Desktop Tab Swipe Navigation State & Logic
   const [slideDirection, setSlideDirection] = useState<number>(0);
   const touchStartRef = useRef<{ x: number; y: number; time: number; isValid: boolean } | null>(null);
+  const isMouseDownRef = useRef(false);
+  const mouseStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
-  const getAvailableTabs = useCallback((): TabType[] => {
+  const getDesktopTabs = useCallback((): TabType[] => {
+    const tabs: TabType[] = [
+      'home',
+      'matches',
+      'members_predictions',
+      'leaderboard',
+      'rules'
+    ];
+    if (currentUser?.role === 'admin') {
+      tabs.push('admin');
+    }
+    return tabs;
+  }, [currentUser?.role]);
+
+  const getMobileTabs = useCallback((): TabType[] => {
     const tabs: TabType[] = [
       'rules',
       'members_predictions',
@@ -386,13 +402,20 @@ export default function App() {
     return tabs;
   }, [currentUser?.role]);
 
+  const getAvailableTabs = useCallback((): TabType[] => {
+    const isMd = typeof window !== 'undefined' ? window.innerWidth >= 768 : false;
+    return isMd ? getDesktopTabs() : getMobileTabs();
+  }, [getDesktopTabs, getMobileTabs]);
+
   const navigateToTab = useCallback((targetTab: TabType, forcedDirection?: number) => {
     if (targetTab === 'admin') {
       if (sessionStorage.getItem('cl_admin_verified') === '05082007') {
+        const isMd = typeof window !== 'undefined' ? window.innerWidth >= 768 : false;
         if (forcedDirection !== undefined) {
           setSlideDirection(forcedDirection);
         } else {
-          setSlideDirection(1);
+          // On PC in Arabic (RTL), admin is situated on the far left of the tab bar
+          setSlideDirection(isMd && isRtl ? -1 : 1);
         }
         setActiveTab('admin');
       } else {
@@ -404,12 +427,27 @@ export default function App() {
     if (forcedDirection !== undefined) {
       setSlideDirection(forcedDirection);
     } else {
-      const tabs = getAvailableTabs();
+      const isMd = typeof window !== 'undefined' ? window.innerWidth >= 768 : false;
+      const tabs = isMd ? getDesktopTabs() : getMobileTabs();
       const currentIdx = tabs.indexOf(activeTab);
       const targetIdx = tabs.indexOf(targetTab);
-      // When target is to the right of current tab, motion goes right-to-left (+1)
-      // When target is to the left of current tab, motion goes left-to-right (-1)
-      setSlideDirection(targetIdx > currentIdx ? 1 : targetIdx < currentIdx ? -1 : 0);
+
+      if (currentIdx !== -1 && targetIdx !== -1 && currentIdx !== targetIdx) {
+        // Base direction: forward (+1) or backward (-1) in logical list
+        let dir = targetIdx > currentIdx ? 1 : -1;
+
+        // PC / Desktop in RTL (Arabic):
+        // Desktop tabs render right-to-left.
+        // Index 0 ('home') is physically on the right side of the monitor.
+        // Higher indexes are physically situated to the LEFT on screen.
+        // Moving to a higher index means moving LEFT -> slide enters from left (-1).
+        // Moving to a lower index means moving RIGHT -> slide enters from right (+1).
+        if (isMd && isRtl) {
+          dir = -dir as 1 | -1;
+        }
+
+        setSlideDirection(dir);
+      }
     }
 
     setActiveTab(targetTab);
@@ -422,7 +460,7 @@ export default function App() {
         // Safe catch for browsers that disallow vibration
       }
     }
-  }, [activeTab, getAvailableTabs]);
+  }, [activeTab, getDesktopTabs, getMobileTabs, isRtl]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     // Disable tab swiping when any modal dialog is open
@@ -480,28 +518,118 @@ export default function App() {
 
     // Must exceed horizontal threshold of 40px, duration under 650ms, and be clearly horizontal
     if (Math.abs(deltaX) >= 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2 && duration < 650) {
-      const tabs = getAvailableTabs();
+      const isMd = typeof window !== 'undefined' ? window.innerWidth >= 768 : false;
+      const tabs = isMd ? getDesktopTabs() : getMobileTabs();
       const currentIdx = tabs.indexOf(activeTab);
       if (currentIdx === -1) return;
 
-      // Swiping finger from RIGHT to LEFT (deltaX < 0):
-      // The user pulls content from the right -> advances to next tab (+1)
-      // The slide animation comes from right to left (forcedDirection: 1)
-      if (deltaX < 0) {
-        if (currentIdx < tabs.length - 1) {
-          navigateToTab(tabs[currentIdx + 1], 1);
+      if (isMd && isRtl) {
+        if (deltaX < 0) {
+          // Dragged left: pulling from right side of screen -> in Arabic PC, that's previous index
+          if (currentIdx > 0) navigateToTab(tabs[currentIdx - 1], 1);
+        } else if (deltaX > 0) {
+          // Dragged right: pulling from left side of screen -> in Arabic PC, that's next index
+          if (currentIdx < tabs.length - 1) navigateToTab(tabs[currentIdx + 1], -1);
         }
-      } 
-      // Swiping finger from LEFT to RIGHT (deltaX > 0):
-      // The user pulls content from the left -> returns to previous tab (-1)
-      // The slide animation comes from left to right (forcedDirection: -1)
-      else if (deltaX > 0) {
-        if (currentIdx > 0) {
-          navigateToTab(tabs[currentIdx - 1], -1);
+      } else {
+        if (deltaX < 0) {
+          if (currentIdx < tabs.length - 1) navigateToTab(tabs[currentIdx + 1], 1);
+        } else if (deltaX > 0) {
+          if (currentIdx > 0) navigateToTab(tabs[currentIdx - 1], -1);
         }
       }
     }
   };
+
+  // PC / Desktop Mouse drag swiping support
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    if (authModalOpen || securityModalOpen || matchToDelete || resetDbConfirmOpen) return;
+
+    const target = e.target as HTMLElement | null;
+    if (target && target.closest('input, textarea, select, button, a, [data-no-swipe], .overflow-x-auto, [role="slider"]')) {
+      return;
+    }
+
+    isMouseDownRef.current = true;
+    mouseStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      time: Date.now()
+    };
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (!isMouseDownRef.current || !mouseStartRef.current) {
+      isMouseDownRef.current = false;
+      return;
+    }
+    const deltaX = e.clientX - mouseStartRef.current.x;
+    const deltaY = e.clientY - mouseStartRef.current.y;
+    const duration = Date.now() - mouseStartRef.current.time;
+    isMouseDownRef.current = false;
+    mouseStartRef.current = null;
+
+    if (Math.abs(deltaX) >= 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2 && duration < 750) {
+      const isMd = typeof window !== 'undefined' ? window.innerWidth >= 768 : false;
+      const tabs = isMd ? getDesktopTabs() : getMobileTabs();
+      const currentIdx = tabs.indexOf(activeTab);
+      if (currentIdx === -1) return;
+
+      if (isMd && isRtl) {
+        if (deltaX < 0) {
+          if (currentIdx > 0) navigateToTab(tabs[currentIdx - 1], 1);
+        } else if (deltaX > 0) {
+          if (currentIdx < tabs.length - 1) navigateToTab(tabs[currentIdx + 1], -1);
+        }
+      } else {
+        if (deltaX < 0) {
+          if (currentIdx < tabs.length - 1) navigateToTab(tabs[currentIdx + 1], 1);
+        } else if (deltaX > 0) {
+          if (currentIdx > 0) navigateToTab(tabs[currentIdx - 1], -1);
+        }
+      }
+    }
+  };
+
+  // Keyboard Arrow navigation on PC for all languages
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest('input, textarea, select, [contenteditable="true"]')) {
+        return;
+      }
+      if (authModalOpen || securityModalOpen || matchToDelete || resetDbConfirmOpen) {
+        return;
+      }
+
+      const isMd = typeof window !== 'undefined' ? window.innerWidth >= 768 : false;
+      if (!isMd) return;
+
+      const tabs = getDesktopTabs();
+      const currentIdx = tabs.indexOf(activeTab);
+      if (currentIdx === -1) return;
+
+      if (e.key === 'ArrowRight') {
+        // Arrow Right: in LTR moves to tab on right (+1). In RTL on PC, moves to tab on right (-1)
+        if (isRtl) {
+          if (currentIdx > 0) navigateToTab(tabs[currentIdx - 1], 1);
+        } else {
+          if (currentIdx < tabs.length - 1) navigateToTab(tabs[currentIdx + 1], 1);
+        }
+      } else if (e.key === 'ArrowLeft') {
+        // Arrow Left: in LTR moves to tab on left (-1). In RTL on PC, moves to tab on left (+1)
+        if (isRtl) {
+          if (currentIdx < tabs.length - 1) navigateToTab(tabs[currentIdx + 1], -1);
+        } else {
+          if (currentIdx > 0) navigateToTab(tabs[currentIdx - 1], -1);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab, authModalOpen, securityModalOpen, matchToDelete, resetDbConfirmOpen, isRtl, getDesktopTabs, navigateToTab]);
 
   // Fluid sliding page animation variants
   const tabSlideVariants = {
@@ -542,7 +670,7 @@ export default function App() {
           onLockApp={handleLockApp}
           onOpenSecurityModal={() => setSecurityModalOpen(true)}
           activeTab={activeTab}
-          onSelectTab={(t) => setActiveTab(t as any)}
+          onSelectTab={(t) => navigateToTab(t as any)}
         />
 
         {/* Main Content Area */}
@@ -641,28 +769,48 @@ export default function App() {
                 <span className="text-slate-400 text-[10px]">{t('swipeSubhint')}</span>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 pl-1 shrink-0">
-              {getAvailableTabs().map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => navigateToTab(tab)}
-                  className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                    activeTab === tab ? 'w-6 bg-[#00E5FF] shadow-[0_0_8px_rgba(0,229,255,0.5)]' : 'w-2 bg-slate-700 hover:bg-slate-600'
-                  }`}
-                  title={tab}
-                  aria-label={tab}
-                />
-              ))}
+            <div className="flex items-center gap-1.5 pl-1 shrink-0" dir="ltr">
+              {getAvailableTabs().map((tab) => {
+                const isSelected = activeTab === tab;
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => {
+                      const tabs = getAvailableTabs();
+                      const currentIdx = tabs.indexOf(activeTab);
+                      const targetIdx = tabs.indexOf(tab);
+                      if (currentIdx !== -1 && targetIdx !== -1 && currentIdx !== targetIdx) {
+                        // In dir="ltr", targetIdx > currentIdx is physically situated to the RIGHT -> enters from right (+1)
+                        // targetIdx < currentIdx is physically situated to the LEFT -> enters from left (-1)
+                        navigateToTab(tab, targetIdx > currentIdx ? 1 : -1);
+                      }
+                    }}
+                    className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                      isSelected
+                        ? 'w-6 bg-[#00E5FF] shadow-[0_0_8px_rgba(0,229,255,0.5)]'
+                        : 'w-2 bg-slate-700 hover:bg-slate-600'
+                    }`}
+                    title={tab}
+                    aria-label={tab}
+                  />
+                );
+              })}
             </div>
           </div>
 
-          {/* Tab Views with Touch Swipe & Fluid Animated Transitions */}
+          {/* Tab Views with Touch & Mouse Swipe & Fluid Animated Transitions */}
           <main
             className="relative min-h-[500px] w-full max-w-full overflow-hidden touch-pan-y"
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={() => {
+              isMouseDownRef.current = false;
+              mouseStartRef.current = null;
+            }}
           >
             <AnimatePresence mode="wait" custom={slideDirection}>
               <motion.div
@@ -673,7 +821,7 @@ export default function App() {
                 animate="center"
                 exit="exit"
                 transition={{
-                  x: { type: "tween", ease: [0.25, 1, 0.5, 1], duration: 0.22 },
+                  x: { type: "tween", ease: [0.22, 1, 0.36, 1], duration: 0.24 },
                   opacity: { duration: 0.18 }
                 }}
                 className="w-full max-w-full"
