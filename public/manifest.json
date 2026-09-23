@@ -1,0 +1,32 @@
+{
+  "id": "/",
+  "name": "1XLMZALIT - UCL 2026/2027 Predictions",
+  "short_name": "1XLMZALIT",
+  "description": "منصة توقعات دوري أبطال أوروبا 2026/2027 مع بوابة حماية بكلمة السر وثيم دوري أبطال أوروبا المتكامل",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#080C19",
+  "theme_color": "#080C19",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
