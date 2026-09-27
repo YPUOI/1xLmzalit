@@ -29,17 +29,17 @@ export class ErrorBoundary extends Component<Props, State> {
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#080C19] text-[#E2E8F0] flex flex-col items-center justify-center p-6 text-center select-none" dir="rtl">
-          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(244,63,94,0.2)]">
+        <div className="min-h-screen bg-[#06141B] text-[#CCD0CF] flex flex-col items-center justify-center p-6 text-center select-none" dir="rtl">
+          <div className="w-14 h-14 rounded-2xl bg-[#11212D] border border-[#253745] flex items-center justify-center mb-4">
             <span className="text-2xl text-rose-400">⚠️</span>
           </div>
-          <h1 className="text-xl font-black text-white mb-2 font-mono">1XLMZALIT - UCL 2026/2027</h1>
-          <p className="text-sm text-slate-300 max-w-sm mb-6 leading-relaxed">
+          <h1 className="text-lg sm:text-xl font-bold text-[#CCD0CF] mb-1.5 font-mono">1XLMZALIT - UCL 2026/2027</h1>
+          <p className="text-xs sm:text-sm text-[#9BA8AB] max-w-sm mb-6 leading-relaxed">
             حدث خطأ غير متوقع أثناء تحميل الصفحة. يرجى إعادة تحميل التطبيق للمتابعة.
           </p>
           <button
             onClick={this.handleReload}
-            className="px-6 py-2.5 bg-[#00E5FF] hover:bg-[#38bdf8] text-[#04101e] font-black rounded-full shadow-[0_0_15px_rgba(0,229,255,0.4)] active:scale-95 transition cursor-pointer text-sm"
+            className="bg-[#CCD0CF] hover:bg-white text-[#06141B] px-6 py-2.5 rounded-xl font-bold transition-all duration-200 cursor-pointer text-xs sm:text-sm active:scale-[0.98] shadow"
           >
             إعادة تحميل التطبيق (Reload)
           </button>

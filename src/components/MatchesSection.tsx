@@ -45,7 +45,7 @@ const formatEnglishDeadline = (deadlineStr: string): string => {
   });
 };
 
-// Live countdown timer showing remaining time in minutes and seconds, turning red under 1 hour
+// Live countdown timer showing remaining time in minutes and seconds
 export const MatchCountdown: React.FC<{
   deadline: string;
   status: 'OPEN' | 'SETTLED';
@@ -67,8 +67,8 @@ export const MatchCountdown: React.FC<{
 
   if (status === 'SETTLED' || diffMs <= 0) {
     return (
-      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900/90 border border-slate-700/60 text-slate-400 text-[11px] font-bold shrink-0">
-        <Clock className="w-3 h-3 text-slate-500" />
+      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#06141B] border border-[#253745] text-[#9BA8AB] text-[11px] font-medium shrink-0">
+        <Clock className="w-3 h-3 text-[#9BA8AB]" />
         <span>{t('timeExpired')}</span>
       </div>
     );
@@ -86,27 +86,27 @@ export const MatchCountdown: React.FC<{
   if (isUnderOneHour) {
     return (
       <div 
-        className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-rose-950/90 to-red-950/90 border border-rose-500 text-rose-300 text-xs font-black shadow-[0_0_16px_rgba(244,63,94,0.45)] animate-pulse shrink-0"
+        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#253745] border border-rose-500/40 text-rose-300 text-xs font-semibold shrink-0"
         title="< 1h!"
       >
-        <Flame className="w-4 h-4 text-rose-400 shrink-0" />
-        <span className="text-[11px] text-rose-200 hidden xs:inline">{t('timeLeft')}:</span>
-        <span className="font-mono text-white text-xs font-black tracking-wider bg-rose-900/80 px-2 py-0.5 rounded-md border border-rose-500/60" dir="ltr">
+        <Flame className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+        <span className="text-[11px] text-rose-200/90 hidden xs:inline">{t('timeLeft')}:</span>
+        <span className="font-mono text-[#CCD0CF] text-xs font-bold tracking-wider bg-[#06141B] px-1.5 py-0.5 rounded border border-rose-500/40" dir="ltr">
           {pad(minutes)}:{pad(seconds)}
         </span>
-        <span className="text-[10px] text-rose-300 font-bold hidden sm:inline">(&lt; 1h)</span>
+        <span className="text-[10px] text-rose-300/80 font-medium hidden sm:inline">(&lt; 1h)</span>
       </div>
     );
   }
 
   return (
     <div 
-      className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-900/90 border border-blue-500/40 text-blue-300 text-xs font-bold shadow-sm shrink-0"
+      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#06141B] border border-[#253745] text-[#CCD0CF] text-xs font-medium shrink-0"
       title={t('timeLeft')}
     >
-      <Timer className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-      <span className="text-[11px] text-slate-400 hidden xs:inline">{t('timeLeft')}:</span>
-      <span className="font-mono text-white text-xs font-black tracking-wider bg-slate-950 px-2 py-0.5 rounded-md border border-slate-700/60" dir="ltr">
+      <Timer className="w-3.5 h-3.5 text-[#9BA8AB] shrink-0" />
+      <span className="text-[11px] text-[#9BA8AB] hidden xs:inline">{t('timeLeft')}:</span>
+      <span className="font-mono text-[#CCD0CF] text-xs font-bold tracking-wider bg-[#11212D] px-1.5 py-0.5 rounded border border-[#253745]" dir="ltr">
         {days > 0 ? `${days}d ` : ''}{pad(hours)}:{pad(minutes)}:{pad(seconds)}
       </span>
     </div>
@@ -160,19 +160,19 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   };
 
   const getDraft = (match: Match) => {
+    const userPredKey = currentUser ? `${currentUser.username}_${match.id}` : null;
+    const existing = userPredKey ? predictions[userPredKey] : null;
+
     if (draftPreds[match.id]) {
       return draftPreds[match.id];
     }
-
-    const userPredKey = currentUser ? `${currentUser.username}_${match.id}` : null;
-    const existing = userPredKey ? predictions[userPredKey] : null;
 
     if (existing) {
       return {
         homeScore: existing.homeScore,
         awayScore: existing.awayScore,
-        homeScorers: existing.homeScorers || [],
-        awayScorers: existing.awayScorers || [],
+        homeScorers: [...(existing.homeScorers || [])],
+        awayScorers: [...(existing.awayScorers || [])],
         mvp: existing.mvp || ''
       };
     }
@@ -202,25 +202,30 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
         awayScorers: [],
         mvp: ''
       });
-      return {
-        ...prev,
-        [matchId]: { ...current, ...updates }
-      };
-    });
 
-    // Clear or update missing scorer highlights dynamically as user edits
-    setMissingScorers(prev => {
-      if (!prev[matchId]) return prev;
-      return {
-        ...prev,
-        [matchId]: {
-          home: updates.homeScorers ? [] : prev[matchId].home,
-          away: updates.awayScorers ? [] : prev[matchId].away
+      const next = { ...current, ...updates };
+
+      if (typeof updates.homeScore === 'number') {
+        const diff = updates.homeScore - (next.homeScorers?.length || 0);
+        if (diff > 0) {
+          next.homeScorers = [...(next.homeScorers || []), ...Array(diff).fill('')];
+        } else if (diff < 0) {
+          next.homeScorers = (next.homeScorers || []).slice(0, updates.homeScore);
         }
-      };
+      }
+
+      if (typeof updates.awayScore === 'number') {
+        const diff = updates.awayScore - (next.awayScorers?.length || 0);
+        if (diff > 0) {
+          next.awayScorers = [...(next.awayScorers || []), ...Array(diff).fill('')];
+        } else if (diff < 0) {
+          next.awayScorers = (next.awayScorers || []).slice(0, updates.awayScore);
+        }
+      }
+
+      return { ...prev, [matchId]: next };
     });
 
-    // Clear error message when user starts updating
     if (validationErrors[matchId]) {
       setValidationErrors(prev => {
         const copy = { ...prev };
@@ -231,77 +236,72 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   };
 
   const handleSave = (match: Match) => {
-    if (!currentUser) return;
-    const draft = getDraft(match);
-
-    // 1. Check deadline: do not validate or save if deadline passed or match is settled
-    const now = new Date();
-    const isLocked = now > new Date(match.deadline) || match.status === 'SETTLED';
-    if (isLocked) {
-      setValidationErrors(prev => ({
-        ...prev,
-        [match.id]: 'عذراً، لقد انتهى موعد إرسال التوقعات لهذه المباراة (أغلقت المباراة) ولا يمكن تسجيل أي توقع جديد!'
-      }));
+    if (!currentUser) {
+      onOpenAuth();
       return;
     }
 
-    // 2. Validate all Home Goal Scorers
-    const missingHomeIndices: number[] = [];
+    const draft = getDraft(match);
+
+    // Strict validation: every goal must have a scorer assigned
+    const missingHome: number[] = [];
+    const missingAway: number[] = [];
+
     for (let i = 0; i < draft.homeScore; i++) {
-      const scorer = draft.homeScorers[i];
-      if (!scorer || scorer.trim() === '') {
-        missingHomeIndices.push(i);
+      if (!draft.homeScorers[i] || !draft.homeScorers[i].trim()) {
+        missingHome.push(i);
       }
     }
 
-    // 3. Validate all Away Goal Scorers
-    const missingAwayIndices: number[] = [];
     for (let i = 0; i < draft.awayScore; i++) {
-      const scorer = draft.awayScorers[i];
-      if (!scorer || scorer.trim() === '') {
-        missingAwayIndices.push(i);
+      if (!draft.awayScorers[i] || !draft.awayScorers[i].trim()) {
+        missingAway.push(i);
       }
     }
 
-    // 4. If any scorers are missing: DO NOT VALIDATE OR SAVE, show clear explanatory error
-    if (missingHomeIndices.length > 0 || missingAwayIndices.length > 0) {
+    if (missingHome.length > 0 || missingAway.length > 0) {
       setMissingScorers(prev => ({
         ...prev,
-        [match.id]: { home: missingHomeIndices, away: missingAwayIndices }
+        [match.id]: { home: missingHome, away: missingAway }
       }));
 
-      const explanations: string[] = [];
-      if (missingHomeIndices.length > 0) {
-        const filled = draft.homeScore - missingHomeIndices.length;
-        explanations.push(
-          language === 'fr'
-            ? `• Équipe ${getTeamEnglishName(match.homeTeam)} : vous avez pronostiqué ${draft.homeScore} buts mais vous n'avez sélectionné que (${filled} sur ${draft.homeScore}) buteurs. Veuillez désigner le buteur pour le but n° (${missingHomeIndices.map(idx => idx + 1).join(', ')}).`
-            : language === 'en'
-            ? `• Team ${getTeamEnglishName(match.homeTeam)}: you predicted ${draft.homeScore} goals but only chose (${filled} of ${draft.homeScore}) scorers. Please pick a scorer for goal # (${missingHomeIndices.map(idx => idx + 1).join(', ')}).`
-            : `• فريق ${match.homeTeam}: توقعت تسجيل ${draft.homeScore} ${draft.homeScore === 1 ? 'هدف' : 'أهداف'} ولكنك حددت فقط (${filled} من ${draft.homeScore}) مسجلين. يرجى اختيار مسجل للهدف رقم (${missingHomeIndices.map(idx => idx + 1).join(' و ')}).`
-        );
-      }
-      if (missingAwayIndices.length > 0) {
-        const filled = draft.awayScore - missingAwayIndices.length;
-        explanations.push(
-          language === 'fr'
-            ? `• Équipe ${getTeamEnglishName(match.awayTeam)} : vous avez pronostiqué ${draft.awayScore} buts mais vous n'avez sélectionné que (${filled} sur ${draft.awayScore}) buteurs. Veuillez désigner le buteur pour le but n° (${missingAwayIndices.map(idx => idx + 1).join(', ')}).`
-            : language === 'en'
-            ? `• Team ${getTeamEnglishName(match.awayTeam)}: you predicted ${draft.awayScore} goals but only chose (${filled} of ${draft.awayScore}) scorers. Please pick a scorer for goal # (${missingAwayIndices.map(idx => idx + 1).join(', ')}).`
-            : `• فريق ${match.awayTeam}: توقعت تسجيل ${draft.awayScore} ${draft.awayScore === 1 ? 'هدف' : 'أهداف'} ولكنك حددت فقط (${filled} من ${draft.awayScore}) مسجلين. يرجى اختيار مسجل للهدف رقم (${missingAwayIndices.map(idx => idx + 1).join(' و ')}).`
-        );
+      const homeName = getTeamEnglishName(match.homeTeam);
+      const awayName = getTeamEnglishName(match.awayTeam);
+
+      let fullMessage = '';
+      if (language === 'fr') {
+        const parts: string[] = [];
+        if (missingHome.length > 0) {
+          parts.push(`Veuillez sélectionner le nom du buteur pour les buts manquants de ${homeName} (${missingHome.map(idx => `But ${idx + 1}`).join(', ')}).`);
+        }
+        if (missingAway.length > 0) {
+          parts.push(`Veuillez sélectionner le nom du buteur pour les buts manquants de ${awayName} (${missingAway.map(idx => `But ${idx + 1}`).join(', ')}).`);
+        }
+        fullMessage = parts.join('\n');
+      } else if (language === 'en') {
+        const parts: string[] = [];
+        if (missingHome.length > 0) {
+          parts.push(`Please designate a scorer for each goal of ${homeName} (${missingHome.map(idx => `Goal ${idx + 1}`).join(', ')}).`);
+        }
+        if (missingAway.length > 0) {
+          parts.push(`Please designate a scorer for each goal of ${awayName} (${missingAway.map(idx => `Goal ${idx + 1}`).join(', ')}).`);
+        }
+        fullMessage = parts.join('\n');
+      } else {
+        const parts: string[] = [];
+        if (missingHome.length > 0) {
+          parts.push(`يرجى تحديد اسم مسجل الهدف للأهداف المتبقية لفريق ${homeName} (${missingHome.map(idx => `الهدف ${idx + 1}`).join('، ')}).`);
+        }
+        if (missingAway.length > 0) {
+          parts.push(`يرجى تحديد اسم مسجل الهدف للأهداف المتبقية لفريق ${awayName} (${missingAway.map(idx => `الهدف ${idx + 1}`).join('، ')}).`);
+        }
+        fullMessage = parts.join('\n');
       }
 
-      const fullMessage = language === 'fr'
-        ? `Impossible d'enregistrer le pronostic tant que tous les buteurs ne sont pas désignés !\n\n${explanations.join('\n')}`
-        : language === 'en'
-        ? `Cannot save prediction until all goalscorers are selected!\n\n${explanations.join('\n')}`
-        : `لا يمكن حفظ التوقع حتى يتم إدخال وتحديد جميع مسجلي الأهداف كاملة!\n\n${explanations.join('\n')}`;
       setValidationErrors(prev => ({ ...prev, [match.id]: fullMessage }));
-      return; // Stop here!
+      return;
     }
 
-    // 5. Clean validation: clear errors and save latest prediction
     setValidationErrors(prev => {
       const copy = { ...prev };
       delete copy[match.id];
@@ -325,36 +325,34 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
     };
 
     onSavePrediction(newPred);
-
-    // Automatically prompt member to download their official prediction card photo
     openPredictionCard(match, newPred);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Section Header */}
-      <div className="flex flex-wrap justify-between items-center ucl-card p-4 rounded-2xl border border-slate-700/60 gap-4" dir={isRtl ? 'rtl' : 'ltr'}>
-        <h2 className="text-xl font-black text-white flex items-center gap-2.5">
-          <Clock className="w-5 h-5 text-blue-400" />
+      <div className="flex flex-wrap justify-between items-center bg-[#11212D] p-4 rounded-2xl border border-[#253745] gap-4 shadow-xl" dir={isRtl ? 'rtl' : 'ltr'}>
+        <h2 className="text-lg sm:text-xl font-bold text-[#CCD0CF] flex items-center gap-2.5">
+          <Clock className="w-5 h-5 text-[#CCD0CF]" />
           <span>{t('tabMatches')}</span>
         </h2>
 
         {currentUser && (
-          <div className="ucl-gold-badge px-4 py-1.5 rounded-xl font-black text-xs sm:text-sm flex items-center gap-2 shadow-sm">
-            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-            <span><strong className="text-white text-base">{currentUser.points || 0}</strong> {t('pointsCount')}</span>
+          <div className="bg-[#253745] border border-[#4A5C6A] px-3.5 py-1 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 shadow-xs text-[#CCD0CF]">
+            <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+            <span><strong className="text-[#CCD0CF] text-sm sm:text-base font-mono">{currentUser.points || 0}</strong> {t('pointsCount')}</span>
           </div>
         )}
       </div>
 
       {/* Matches Grid */}
       {matches.length === 0 ? (
-        <div className="ucl-card p-10 text-center rounded-3xl text-slate-400 border border-slate-800">
-          <CalendarX className="w-12 h-12 mx-auto mb-3 text-slate-600" />
-          <p className="font-bold text-sm">{t('noMatchesFound')}</p>
+        <div className="bg-[#11212D] p-10 text-center rounded-2xl text-[#9BA8AB] border border-[#253745] shadow-xl">
+          <CalendarX className="w-10 h-10 mx-auto mb-3 text-[#9BA8AB]/40" />
+          <p className="font-semibold text-sm">{t('noMatchesFound')}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-5">
           {matches.map(match => {
             const home = teams[match.homeTeam] || { name: match.homeTeam, logo: 'https://placehold.co/100x100?text=Home', squad: [] };
             const away = teams[match.awayTeam] || { name: match.awayTeam, logo: 'https://placehold.co/100x100?text=Away', squad: [] };
@@ -367,15 +365,15 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
             return (
               <div 
                 key={match.id} 
-                className="ucl-card p-5 sm:p-6 rounded-3xl border border-slate-800/90 space-y-6 relative overflow-hidden transition hover:border-blue-500/40"
+                className="bg-[#11212D] p-4 sm:p-6 rounded-2xl border border-[#253745] space-y-5 relative overflow-hidden transition-all duration-200 hover:border-[#4A5C6A] shadow-xl"
                 dir={isRtl ? 'rtl' : 'ltr'}
               >
                 {/* Match Status Bar */}
-                <div className="flex flex-wrap justify-between items-center border-b border-slate-800/80 pb-3 gap-2.5">
-                  <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 text-xs font-bold text-slate-300">
+                <div className="flex flex-wrap justify-between items-center border-b border-[#253745] pb-3 gap-2.5">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-semibold text-[#CCD0CF]">
                     <div className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span className="font-mono text-slate-200 tracking-wide font-semibold" dir="ltr">{formatEnglishDeadline(match.deadline)}</span>
+                      <Clock className="w-3.5 h-3.5 text-[#9BA8AB] shrink-0" />
+                      <span className="font-mono text-[#CCD0CF] tracking-wide" dir="ltr">{formatEnglishDeadline(match.deadline)}</span>
                     </div>
 
                     {/* Live Countdown Timer */}
@@ -387,7 +385,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                       <button
                         type="button"
                         onClick={() => onDeleteMatch(match)}
-                        className="bg-rose-950/80 hover:bg-rose-900 text-rose-400 border border-rose-500/40 text-[11px] px-2.5 py-1 rounded-xl transition flex items-center gap-1 font-bold cursor-pointer active:scale-95"
+                        className="bg-[#253745] hover:bg-[#4A5C6A] text-rose-300 border border-rose-500/30 text-[11px] px-2.5 py-1 rounded-lg transition-all duration-200 flex items-center gap-1 font-semibold cursor-pointer active:scale-95"
                         title="Delete Match"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -395,12 +393,12 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                       </button>
                     )}
 
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                    <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-semibold tracking-wide ${
                       match.status === 'SETTLED'
-                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                        ? 'bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A]'
                         : isLocked
-                        ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                        : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        ? 'bg-[#253745] text-rose-300 border border-rose-500/30'
+                        : 'bg-[#253745] text-emerald-300 border border-emerald-500/30'
                     }`}>
                       {match.status === 'SETTLED' ? t('settledStatus') : isLocked ? t('predictionLocked') : t('openForPrediction')}
                     </span>
@@ -408,10 +406,10 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                 </div>
 
                 {/* Match Teams Faceoff */}
-                <div className="grid grid-cols-3 items-center text-center gap-2 py-2" dir="ltr">
+                <div className="grid grid-cols-3 items-center text-center gap-2 py-1" dir="ltr">
                   {/* Home Team */}
                   <div className="flex flex-col items-center gap-2">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center p-2 bg-slate-900/80 rounded-2xl border border-slate-800 shrink-0">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center p-2.5 bg-[#06141B] rounded-2xl border border-[#253745] shrink-0 shadow-inner">
                       <img 
                         src={home.logo} 
                         alt={home.name} 
@@ -419,24 +417,24 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/1e293b/ffffff?text=Logo'; }}
                       />
                     </div>
-                    <span className="font-black text-xs sm:text-sm text-white">{getTeamEnglishName(home.name)}</span>
+                    <span className="font-bold text-xs sm:text-sm text-[#CCD0CF]">{getTeamEnglishName(home.name)}</span>
                   </div>
 
                   {/* VS / Score Result */}
                   <div className="flex flex-col items-center">
-                    <span className="text-xl sm:text-2xl font-black text-yellow-400 tracking-widest">VS</span>
+                    <span className="text-base sm:text-lg font-bold text-[#9BA8AB] font-mono tracking-widest">VS</span>
                     {match.result ? (
-                      <div className="mt-2 text-base sm:text-lg font-black bg-slate-900 px-4 py-1.5 rounded-xl border border-yellow-500/40 text-yellow-300 shadow-md">
+                      <div className="mt-2 text-base sm:text-lg font-bold bg-[#06141B] px-3.5 py-1 rounded-xl border border-[#253745] text-[#CCD0CF] shadow font-mono">
                         {match.result.homeScore} - {match.result.awayScore}
                       </div>
                     ) : (
-                      <span className="text-[10px] text-slate-500 mt-1 font-mono font-bold">UCL 2026/2027</span>
+                      <span className="text-[10px] text-[#9BA8AB] mt-1 font-mono">UCL 2026/2027</span>
                     )}
                   </div>
 
                   {/* Away Team */}
                   <div className="flex flex-col items-center gap-2">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center p-2 bg-slate-900/80 rounded-2xl border border-slate-800 shrink-0">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center p-2.5 bg-[#06141B] rounded-2xl border border-[#253745] shrink-0 shadow-inner">
                       <img 
                         src={away.logo} 
                         alt={away.name} 
@@ -444,20 +442,20 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/1e293b/ffffff?text=Logo'; }}
                       />
                     </div>
-                    <span className="font-black text-xs sm:text-sm text-white">{getTeamEnglishName(away.name)}</span>
+                    <span className="font-bold text-xs sm:text-sm text-[#CCD0CF]">{getTeamEnglishName(away.name)}</span>
                   </div>
                 </div>
 
                 {/* Prediction Input & Details Area */}
-                <div className="bg-slate-900/70 p-4 rounded-2xl border border-slate-800">
+                <div className="bg-[#06141B] p-4 rounded-xl border border-[#253745]">
                   {!currentUser ? (
                     <div className="text-center py-2">
-                      <p className="text-xs text-amber-400 font-bold mb-2">
+                      <p className="text-xs text-[#CCD0CF] font-medium mb-2.5">
                         {t('memberLogin')}
                       </p>
                       <button
                         onClick={onOpenAuth}
-                        className="bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition cursor-pointer"
+                        className="bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold text-xs px-4 py-2 rounded-xl transition-all duration-200 cursor-pointer shadow"
                       >
                         {t('memberLogin')}
                       </button>
@@ -466,33 +464,32 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                     <div className="text-center text-xs space-y-1 py-1">
                       {userPred ? (
                         <div>
-                          <span className="text-slate-400">{t('exactScore')}: </span>
-                          <span className="text-yellow-400 font-black text-sm">{userPred.homeScore} - {userPred.awayScore}</span>
+                          <span className="text-[#9BA8AB]">{t('exactScore')}: </span>
+                          <span className="text-[#CCD0CF] font-bold font-mono text-sm">{userPred.homeScore} - {userPred.awayScore}</span>
                           {userPred.mvp && (
-                            <div className="text-[11px] text-slate-400 mt-1">
-                              {t('manOfTheMatch')}: <strong className="text-cyan-300">{userPred.mvp}</strong>
+                            <div className="text-[11px] text-[#9BA8AB] mt-1">
+                              {t('manOfTheMatch')}: <strong className="text-[#CCD0CF] font-semibold">{userPred.mvp}</strong>
                             </div>
                           )}
-                          {/* Only allow downloading prediction card BEFORE the real score is launched */}
                           {!match.result && match.status !== 'SETTLED' ? (
                             <div className="pt-2 flex justify-center">
                               <button
                                 type="button"
                                 onClick={() => openPredictionCard(match, userPred)}
-                                className="px-3.5 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:border-cyan-400"
+                                className="px-3.5 py-1.5 rounded-xl bg-[#253745] hover:bg-[#4A5C6A] border border-[#253745] text-[#CCD0CF] text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow active:scale-[0.98]"
                               >
-                                <Download className="w-3.5 h-3.5 text-cyan-400" />
+                                <Download className="w-3.5 h-3.5 text-[#CCD0CF]" />
                                 <span>{language === 'fr' ? 'Télécharger la carte de pronostic' : language === 'en' ? 'Download Prediction Card' : 'تحميل بطاقة التوقع (صورة)'}</span>
                               </button>
                             </div>
                           ) : (
-                            <div className="pt-1.5 text-[11px] text-slate-500">
+                            <div className="pt-1.5 text-[11px] text-[#9BA8AB]">
                               {language === 'fr' ? 'Le résultat officiel est publié, le téléchargement est clos.' : language === 'en' ? 'Official result announced; prediction card download closed.' : 'تم إعلان النتيجة الرسمية للمباراة وانتهت فترة تحميل بطاقة التوقع.'}
                             </div>
                           )}
                         </div>
                       ) : (
-                        <span className="text-slate-500">
+                        <span className="text-[#9BA8AB]">
                           {language === 'fr' ? 'Vous n\'avez pas enregistré de pronostic pour ce match avant la clôture.' : language === 'en' ? 'You did not register a prediction for this match before deadline.' : 'لم تقم بتسجيل توقع لهذه المباراة قبل إغلاقها.'}
                         </span>
                       )}
@@ -503,7 +500,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                       {new Date(match.deadline).getTime() - Date.now() < 3600000 && 
                        new Date(match.deadline).getTime() - Date.now() > 0 && 
                        match.status !== 'SETTLED' && (
-                        <div className="p-3 rounded-2xl bg-rose-950/85 border border-rose-500/80 text-rose-200 text-xs font-bold flex items-center gap-2.5 shadow-lg animate-pulse">
+                        <div className="p-3 rounded-xl bg-[#253745] border border-rose-500/40 text-rose-200 text-xs font-medium flex items-center gap-2.5">
                           <Flame className="w-4 h-4 text-rose-400 shrink-0" />
                           <span>
                             {language === 'fr' ? 'Alerte urgente : fermeture du match imminente (< 1 heure) ! Confirmez votre pronostic dès maintenant.' : language === 'en' ? 'Urgent notice: match deadline approaching (< 1 hour)! Finalize your prediction now.' : 'تنبيه عاجل: اقترب موعد إغلاق المباراة (أقل من ساعة واحدة)! احرص على إكمال وتثبيت توقعك الآن.'}
@@ -511,17 +508,17 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         </div>
                       )}
 
-                      {/* Score Inputs with Mobile-Friendly Steppers */}
+                      {/* Score Inputs with Precision Steppers */}
                       <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                        <div className="bg-slate-950/80 p-2 sm:p-3 rounded-2xl border border-slate-800 text-center">
-                          <label className="block text-[11px] sm:text-xs font-bold text-slate-300 mb-2 truncate">
+                        <div className="bg-[#11212D] p-2.5 sm:p-3 rounded-xl border border-[#253745] text-center">
+                          <label className="block text-[11px] sm:text-xs font-semibold text-[#CCD0CF] mb-2 truncate">
                             {language === 'fr' ? `Buts ${getTeamEnglishName(home.name)}` : language === 'en' ? `${getTeamEnglishName(home.name)} Goals` : `أهداف ${getTeamEnglishName(home.name)}`}
                           </label>
                           <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                             <button
                               type="button"
                               onClick={() => updateDraft(match.id, { homeScore: Math.max(0, draft.homeScore - 1) })}
-                              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-yellow-400 font-black flex items-center justify-center cursor-pointer transition active:scale-95 border border-slate-700 select-none shrink-0"
+                              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] font-bold flex items-center justify-center cursor-pointer transition-all duration-200 active:scale-95 border border-[#253745] select-none shrink-0"
                               title={language === 'fr' ? 'Diminuer but' : language === 'en' ? 'Decrease goal' : 'تقليل هدف'}
                             >
                               <Minus className="w-4 h-4" />
@@ -536,12 +533,12 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                                 const val = Math.max(0, Math.min(15, parseInt(e.target.value) || 0));
                                 updateDraft(match.id, { homeScore: val });
                               }}
-                              className="w-12 sm:w-14 bg-transparent text-center font-black text-white text-xl sm:text-2xl outline-none force-ltr"
+                              className="w-12 sm:w-14 bg-transparent text-center font-bold font-mono text-[#CCD0CF] text-xl sm:text-2xl outline-none force-ltr"
                             />
                             <button
                               type="button"
                               onClick={() => updateDraft(match.id, { homeScore: Math.min(15, draft.homeScore + 1) })}
-                              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-yellow-400 font-black flex items-center justify-center cursor-pointer transition active:scale-95 border border-slate-700 select-none shrink-0"
+                              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] font-bold flex items-center justify-center cursor-pointer transition-all duration-200 active:scale-95 border border-[#253745] select-none shrink-0"
                               title={language === 'fr' ? 'Ajouter but' : language === 'en' ? 'Increase goal' : 'زيادة هدف'}
                             >
                               <Plus className="w-4 h-4" />
@@ -549,15 +546,15 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                           </div>
                         </div>
 
-                        <div className="bg-slate-950/80 p-2 sm:p-3 rounded-2xl border border-slate-800 text-center">
-                          <label className="block text-[11px] sm:text-xs font-bold text-slate-300 mb-2 truncate">
+                        <div className="bg-[#11212D] p-2.5 sm:p-3 rounded-xl border border-[#253745] text-center">
+                          <label className="block text-[11px] sm:text-xs font-semibold text-[#CCD0CF] mb-2 truncate">
                             {language === 'fr' ? `Buts ${getTeamEnglishName(away.name)}` : language === 'en' ? `${getTeamEnglishName(away.name)} Goals` : `أهداف ${getTeamEnglishName(away.name)}`}
                           </label>
                           <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                             <button
                               type="button"
                               onClick={() => updateDraft(match.id, { awayScore: Math.max(0, draft.awayScore - 1) })}
-                              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-yellow-400 font-black flex items-center justify-center cursor-pointer transition active:scale-95 border border-slate-700 select-none shrink-0"
+                              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] font-bold flex items-center justify-center cursor-pointer transition-all duration-200 active:scale-95 border border-[#253745] select-none shrink-0"
                               title={language === 'fr' ? 'Diminuer but' : language === 'en' ? 'Decrease goal' : 'تقليل هدف'}
                             >
                               <Minus className="w-4 h-4" />
@@ -572,12 +569,12 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                                 const val = Math.max(0, Math.min(15, parseInt(e.target.value) || 0));
                                 updateDraft(match.id, { awayScore: val });
                               }}
-                              className="w-12 sm:w-14 bg-transparent text-center font-black text-white text-xl sm:text-2xl outline-none force-ltr"
+                              className="w-12 sm:w-14 bg-transparent text-center font-bold font-mono text-[#CCD0CF] text-xl sm:text-2xl outline-none force-ltr"
                             />
                             <button
                               type="button"
                               onClick={() => updateDraft(match.id, { awayScore: Math.min(15, draft.awayScore + 1) })}
-                              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-yellow-400 font-black flex items-center justify-center cursor-pointer transition active:scale-95 border border-slate-700 select-none shrink-0"
+                              className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] font-bold flex items-center justify-center cursor-pointer transition-all duration-200 active:scale-95 border border-[#253745] select-none shrink-0"
                               title={language === 'fr' ? 'Ajouter but' : language === 'en' ? 'Increase goal' : 'زيادة هدف'}
                             >
                               <Plus className="w-4 h-4" />
@@ -586,14 +583,14 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         </div>
                       </div>
 
-                      {/* Dynamic Goal Scorers for Home */}
+                      {/* Goal Scorers for Home */}
                       {draft.homeScore > 0 && (
-                        <div className="p-3 sm:p-4 bg-slate-950/60 rounded-2xl border border-blue-900/40 space-y-2.5">
+                        <div className="p-3 sm:p-4 bg-[#11212D] rounded-xl border border-[#253745] space-y-2.5">
                           <div className="flex items-center justify-between">
-                            <label className="block text-xs font-bold text-blue-400">
+                            <label className="block text-xs font-semibold text-[#CCD0CF]">
                               {language === 'fr' ? `Buteurs ${getTeamEnglishName(home.name)} (${draft.homeScore} ${draft.homeScore === 1 ? 'but' : 'buts'}):` : language === 'en' ? `${getTeamEnglishName(home.name)} Scorers (${draft.homeScore} ${draft.homeScore === 1 ? 'goal' : 'goals'}):` : `مسجلو أهداف ${getTeamEnglishName(home.name)} (${draft.homeScore} ${draft.homeScore === 1 ? 'هدف' : 'أهداف'}):`}
                             </label>
-                            <span className="text-[10px] text-slate-400 font-semibold">
+                            <span className="text-[10px] text-[#9BA8AB]">
                               {language === 'fr' ? '(Sélection du buteur obligatoire pour chaque but)' : language === 'en' ? '(Scorer required for each goal)' : '(مطلوب تحديد المسجل لكل هدف)'}
                             </span>
                           </div>
@@ -610,11 +607,11 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                                         nextScorers[idx] = e.target.value;
                                         updateDraft(match.id, { homeScorers: nextScorers });
                                       }}
-                                      className={`w-full bg-slate-900 border ${
+                                      className={`w-full bg-[#06141B] border ${
                                         isMissing 
-                                          ? 'border-rose-500 ring-2 ring-rose-500/40 bg-rose-950/30 text-rose-100' 
-                                          : 'border-slate-700 text-white focus:border-blue-400'
-                                      } rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm outline-none min-h-[44px] cursor-pointer transition`}
+                                          ? 'border-rose-500 ring-2 ring-rose-500/40 bg-[#06141B] text-[#CCD0CF]' 
+                                          : 'border-[#253745] text-[#CCD0CF] focus:border-[#4A5C6A] focus:ring-1 focus:ring-[#4A5C6A]'
+                                      } rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm outline-none min-h-[42px] cursor-pointer transition-all duration-200`}
                                     >
                                       <option value="">{language === 'fr' ? `Choisir le buteur du but (${idx + 1})...` : language === 'en' ? `Select scorer for goal (${idx + 1})...` : `اختر المسجل للهدف (${idx + 1})...`}</option>
                                       {home.squad.map(player => (
@@ -631,15 +628,15 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                                         updateDraft(match.id, { homeScorers: nextScorers });
                                       }}
                                       placeholder={language === 'fr' ? `Nom du buteur pour le but (${idx + 1})...` : language === 'en' ? `Scorer name for goal (${idx + 1})...` : `اسم مسجل الهدف (${idx + 1})...`}
-                                      className={`w-full bg-slate-900 border ${
+                                      className={`w-full bg-[#06141B] border ${
                                         isMissing 
-                                          ? 'border-rose-500 ring-2 ring-rose-500/40 bg-rose-950/30 text-rose-100' 
-                                          : 'border-slate-700 text-white focus:border-blue-400'
-                                      } rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm outline-none min-h-[44px] transition`}
+                                          ? 'border-rose-500 ring-2 ring-rose-500/40 bg-[#06141B] text-[#CCD0CF]' 
+                                          : 'border-[#253745] text-[#CCD0CF] focus:border-[#4A5C6A] focus:ring-1 focus:ring-[#4A5C6A]'
+                                      } rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm outline-none min-h-[42px] transition-all duration-200`}
                                     />
                                   )}
                                   {isMissing && (
-                                    <p className="text-[10px] text-rose-400 font-bold flex items-center gap-1">
+                                    <p className="text-[10px] text-rose-400 font-medium flex items-center gap-1">
                                       <AlertCircle className="w-3 h-3 text-rose-400 shrink-0" />
                                       <span>{language === 'fr' ? `Buteur requis pour le but (${idx + 1})` : language === 'en' ? `Scorer required for goal (${idx + 1})` : `مطلوب اختيار اسم مسجل الهدف (${idx + 1})`}</span>
                                     </p>
@@ -651,14 +648,14 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         </div>
                       )}
 
-                      {/* Dynamic Goal Scorers for Away */}
+                      {/* Goal Scorers for Away */}
                       {draft.awayScore > 0 && (
-                        <div className="p-3 sm:p-4 bg-slate-950/60 rounded-2xl border border-rose-900/40 space-y-2.5">
+                        <div className="p-3 sm:p-4 bg-[#11212D] rounded-xl border border-[#253745] space-y-2.5">
                           <div className="flex items-center justify-between">
-                            <label className="block text-xs font-bold text-rose-400">
+                            <label className="block text-xs font-semibold text-[#CCD0CF]">
                               {language === 'fr' ? `Buteurs ${getTeamEnglishName(away.name)} (${draft.awayScore} ${draft.awayScore === 1 ? 'but' : 'buts'}):` : language === 'en' ? `${getTeamEnglishName(away.name)} Scorers (${draft.awayScore} ${draft.awayScore === 1 ? 'goal' : 'goals'}):` : `مسجلو أهداف ${getTeamEnglishName(away.name)} (${draft.awayScore} ${draft.awayScore === 1 ? 'هدف' : 'أهداف'}):`}
                             </label>
-                            <span className="text-[10px] text-slate-400 font-semibold">
+                            <span className="text-[10px] text-[#9BA8AB]">
                               {language === 'fr' ? '(Sélection du buteur obligatoire pour chaque but)' : language === 'en' ? '(Scorer required for each goal)' : '(مطلوب تحديد المسجل لكل هدف)'}
                             </span>
                           </div>
@@ -675,11 +672,11 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                                         nextScorers[idx] = e.target.value;
                                         updateDraft(match.id, { awayScorers: nextScorers });
                                       }}
-                                      className={`w-full bg-slate-900 border ${
+                                      className={`w-full bg-[#06141B] border ${
                                         isMissing 
-                                          ? 'border-rose-500 ring-2 ring-rose-500/40 bg-rose-950/30 text-rose-100' 
-                                          : 'border-slate-700 text-white focus:border-rose-400'
-                                      } rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm outline-none min-h-[44px] cursor-pointer transition`}
+                                          ? 'border-rose-500 ring-2 ring-rose-500/40 bg-[#06141B] text-[#CCD0CF]' 
+                                          : 'border-[#253745] text-[#CCD0CF] focus:border-[#4A5C6A] focus:ring-1 focus:ring-[#4A5C6A]'
+                                      } rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm outline-none min-h-[42px] cursor-pointer transition-all duration-200`}
                                     >
                                       <option value="">{language === 'fr' ? `Choisir le buteur du but (${idx + 1})...` : language === 'en' ? `Select scorer for goal (${idx + 1})...` : `اختر المسجل للهدف (${idx + 1})...`}</option>
                                       {away.squad.map(player => (
@@ -696,15 +693,15 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                                         updateDraft(match.id, { awayScorers: nextScorers });
                                       }}
                                       placeholder={language === 'fr' ? `Nom du buteur pour le but (${idx + 1})...` : language === 'en' ? `Scorer name for goal (${idx + 1})...` : `اسم مسجل الهدف (${idx + 1})...`}
-                                      className={`w-full bg-slate-900 border ${
+                                      className={`w-full bg-[#06141B] border ${
                                         isMissing 
-                                          ? 'border-rose-500 ring-2 ring-rose-500/40 bg-rose-950/30 text-rose-100' 
-                                          : 'border-slate-700 text-white focus:border-rose-400'
-                                      } rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm outline-none min-h-[44px] transition`}
+                                          ? 'border-rose-500 ring-2 ring-rose-500/40 bg-[#06141B] text-[#CCD0CF]' 
+                                          : 'border-[#253745] text-[#CCD0CF] focus:border-[#4A5C6A] focus:ring-1 focus:ring-[#4A5C6A]'
+                                      } rounded-xl p-2.5 sm:p-3 text-xs sm:text-sm outline-none min-h-[42px] transition-all duration-200`}
                                     />
                                   )}
                                   {isMissing && (
-                                    <p className="text-[10px] text-rose-400 font-bold flex items-center gap-1">
+                                    <p className="text-[10px] text-rose-400 font-medium flex items-center gap-1">
                                       <AlertCircle className="w-3 h-3 text-rose-400 shrink-0" />
                                       <span>{language === 'fr' ? `Buteur requis pour le but (${idx + 1})` : language === 'en' ? `Scorer required for goal (${idx + 1})` : `مطلوب اختيار اسم مسجل الهدف (${idx + 1})`}</span>
                                     </p>
@@ -718,15 +715,15 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
 
                       {/* MVP Select */}
                       <div>
-                        <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center gap-1.5">
-                          <Award className="w-3.5 h-3.5 text-yellow-400" />
+                        <label className="block text-xs font-semibold text-[#CCD0CF] mb-1.5 flex items-center gap-1.5">
+                          <Award className="w-3.5 h-3.5 text-[#9BA8AB]" />
                           <span>{t('manOfTheMatch')}</span>
                         </label>
                         {[...(home.squad || []), ...(away.squad || [])].length > 0 ? (
                           <select
                             value={draft.mvp}
                             onChange={(e) => updateDraft(match.id, { mvp: e.target.value })}
-                            className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs sm:text-sm text-white font-bold outline-none focus:border-yellow-400 min-h-[44px] cursor-pointer"
+                            className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-xs sm:text-sm text-[#CCD0CF] font-semibold outline-none focus:border-[#4A5C6A] focus:ring-1 focus:ring-[#4A5C6A] min-h-[42px] cursor-pointer transition-all duration-200"
                           >
                             <option value="">{t('chooseMvp')}</option>
                             {[...(home.squad || []), ...(away.squad || [])].map((player, idx) => (
@@ -739,21 +736,21 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                             value={draft.mvp}
                             onChange={(e) => updateDraft(match.id, { mvp: e.target.value })}
                             placeholder={t('chooseMvp')}
-                            className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs sm:text-sm text-white font-bold outline-none focus:border-yellow-400 min-h-[44px]"
+                            className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-xs sm:text-sm text-[#CCD0CF] font-semibold outline-none focus:border-[#4A5C6A] focus:ring-1 focus:ring-[#4A5C6A] min-h-[42px] transition-all duration-200"
                           />
                         )}
                       </div>
 
-                      {/* Validation Error Banner with Clear Explication */}
+                      {/* Validation Error Banner */}
                       {validationErrors[match.id] && (
-                        <div className={`p-4 rounded-2xl bg-rose-950/90 border border-rose-500/80 text-rose-200 shadow-xl space-y-2 ${isRtl ? 'text-right' : 'text-left'}`}>
-                          <div className="flex items-center gap-2 font-black text-sm text-white">
-                            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                        <div className={`p-3.5 rounded-xl bg-[#253745] border border-rose-500/40 text-rose-200 shadow space-y-1.5 ${isRtl ? 'text-right' : 'text-left'}`}>
+                          <div className="flex items-center gap-2 font-bold text-xs text-[#CCD0CF]">
+                            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
                             <span>
                               {language === 'fr' ? 'Validation impossible : veuillez désigner tous les buteurs' : language === 'en' ? 'Validation Failed: Please complete all goalscorers' : 'تعذر التحقق من التوقع: يرجى إكمال مسجلي الأهداف'}
                             </span>
                           </div>
-                          <div className={`text-xs leading-relaxed text-rose-200 whitespace-pre-line ${isRtl ? 'pr-7' : 'pl-7'}`}>
+                          <div className={`text-xs leading-relaxed text-[#CCD0CF]/90 whitespace-pre-line ${isRtl ? 'pr-6' : 'pl-6'}`}>
                             {validationErrors[match.id]}
                           </div>
                         </div>
@@ -763,25 +760,25 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                       <button
                         type="button"
                         onClick={() => handleSave(match)}
-                        className="w-full ucl-btn-primary font-black py-3.5 rounded-2xl transition text-sm cursor-pointer flex items-center justify-center gap-2 min-h-[48px]"
+                        className="w-full bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold py-3 rounded-xl transition-all duration-200 text-xs sm:text-sm cursor-pointer flex items-center justify-center gap-2 min-h-[44px] shadow active:scale-[0.98]"
                       >
                         <Save className="w-4 h-4" />
                         <span>{userPred ? t('editPrediction') : t('savePredictionBtn')}</span>
                       </button>
 
                       {userPred && (
-                        <div className="space-y-2.5">
+                        <div className="space-y-2">
                           <button
                             type="button"
                             onClick={() => openPredictionCard(match, userPred)}
-                            className="w-full bg-gradient-to-r from-cyan-950/80 via-blue-950/95 to-cyan-950/80 hover:from-cyan-900/90 hover:to-blue-900/90 border border-cyan-400/50 text-cyan-300 font-black py-3 rounded-2xl transition text-xs sm:text-sm cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-cyan-950/50 group select-none"
+                            className="w-full bg-[#253745] hover:bg-[#4A5C6A] border border-[#4A5C6A] text-[#CCD0CF] font-semibold py-2.5 rounded-xl transition-all duration-200 text-xs sm:text-sm cursor-pointer flex items-center justify-center gap-2 group active:scale-[0.98]"
                           >
-                            <Download className="w-4 h-4 text-cyan-400 group-hover:translate-y-0.5 transition-transform" />
+                            <Download className="w-4 h-4 text-[#CCD0CF] group-hover:translate-y-0.5 transition-transform" />
                             <span>{t('downloadCard')}</span>
                           </button>
 
-                          <div className="p-3 bg-slate-950/80 border border-emerald-500/30 rounded-2xl text-center space-y-1">
-                            <p className="text-xs text-emerald-400 font-bold flex items-center justify-center gap-1.5">
+                          <div className="p-2.5 bg-[#11212D] border border-emerald-500/30 rounded-xl text-center">
+                            <p className="text-xs text-emerald-300 font-medium flex items-center justify-center gap-1.5">
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                               <span>{t('predictionSaved')}: ({userPred.homeScore} - {userPred.awayScore})</span>
                             </p>

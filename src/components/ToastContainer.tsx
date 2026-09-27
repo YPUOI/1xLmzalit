@@ -24,32 +24,26 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onDismis
         return (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-center justify-between gap-3 p-3.5 sm:p-4 rounded-2xl shadow-2xl border backdrop-blur-lg animate-in slide-in-from-top-3 duration-200 text-right ${
-              isSuccess
-                ? 'bg-emerald-950/95 border-emerald-500/50 text-emerald-200'
-                : isError
-                ? 'bg-rose-950/95 border-rose-500/50 text-rose-200'
-                : 'bg-slate-900/95 border-blue-500/50 text-blue-200'
-            }`}
+            className="pointer-events-auto flex items-center justify-between gap-3 p-3 sm:p-3.5 rounded-xl shadow-xl border border-[#253745] bg-[#11212D] text-[#CCD0CF] animate-in slide-in-from-top-2 duration-150"
           >
             <div className="flex items-center gap-2.5 min-w-0">
               {isSuccess ? (
-                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-[#CCD0CF] shrink-0" />
               ) : isError ? (
-                <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
               ) : (
-                <Info className="w-5 h-5 text-blue-400 shrink-0" />
+                <Info className="w-4 h-4 text-[#9BA8AB] shrink-0" />
               )}
-              <span className="text-xs sm:text-sm font-black leading-snug">{toast.message}</span>
+              <span className="text-xs sm:text-sm font-semibold leading-snug">{toast.message}</span>
             </div>
 
             <button
               type="button"
               onClick={() => onDismiss(toast.id)}
-              className="text-slate-400 hover:text-white p-1 rounded-lg transition shrink-0 cursor-pointer"
-              aria-label="إغلاق"
+              className="text-[#9BA8AB] hover:text-[#CCD0CF] p-1 rounded-md transition-colors duration-200 shrink-0 cursor-pointer"
+              aria-label="Close"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         );

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Solid deep pitch black background -->
+  <rect width="512" height="512" fill="#000000"/>
+
+  <!-- ========================================================================= -->
+  <!-- 1X / IX ROMAN SERIF MONOGRAM                                              -->
+  <!-- ========================================================================= -->
+  <g fill="#FFFFFF">
+    <!-- LEFT STEM: ROMAN NUMERAL '1' / 'I' -->
+    <!-- Top horizontal serif -->
+    <rect x="94" y="86" width="102" height="14" rx="1"/>
+    <!-- Top bracket curves transitioning to stem -->
+    <path d="M 94 100 Q 124 100 124 126 L 166 126 Q 166 100 196 100 Z"/>
+    <!-- Upper stem -->
+    <rect x="124" y="124" width="42" height="98"/>
+
+    <!-- Lower stem -->
+    <rect x="124" y="290" width="42" height="98"/>
+    <!-- Bottom bracket curves transitioning from stem to serif -->
+    <path d="M 124 386 Q 124 412 94 412 L 196 412 Q 166 412 166 386 Z"/>
+    <!-- Bottom horizontal serif -->
+    <rect x="94" y="412" width="102" height="14" rx="1"/>
+
+    <!-- RIGHT CHARACTER: ROMAN SERIF 'X' -->
+    <!-- Heavy Diagonal (Top-Left to Bottom-Right) -->
+    <!-- Top-Left Serif of X -->
+    <rect x="210" y="86" width="76" height="14" rx="1"/>
+    <path d="M 210 100 Q 232 100 236 120 L 278 120 Q 282 100 286 100 Z"/>
+    <!-- Upper heavy diagonal segment entering ribbon -->
+    <polygon points="236,120 278,120 366,222 322,222"/>
+
+    <!-- Lower heavy diagonal segment exiting ribbon -->
+    <polygon points="334,290 378,290 436,392 392,392"/>
+    <path d="M 392 392 Q 398 412 372 412 L 448 412 Q 428 412 436 392 Z"/>
+    <!-- Bottom-Right Serif of X -->
+    <rect x="372" y="412" width="76" height="14" rx="1"/>
+
+    <!-- Light Diagonal (Top-Right to Bottom-Left) -->
+    <!-- Top-Right Serif of X -->
+    <rect x="354" y="86" width="76" height="14" rx="1"/>
+    <path d="M 354 100 Q 374 100 380 118 L 406 118 Q 412 100 430 100 Z"/>
+    <!-- Upper light diagonal segment entering ribbon -->
+    <polygon points="380,118 398,118 312,222 294,222"/>
+
+    <!-- Lower light diagonal segment exiting ribbon -->
+    <polygon points="278,290 296,290 212,392 194,392"/>
+    <path d="M 170 412 Q 188 412 194 392 L 212 392 Q 218 412 242 412 Z"/>
+    <!-- Bottom-Left Serif of X -->
+    <rect x="170" y="412" width="72" height="14" rx="1"/>
+  </g>
+
+  <!-- ========================================================================= -->
+  <!-- HORIZONTAL CUTOUT RIBBON                                                  -->
+  <!-- ========================================================================= -->
+  <rect x="0" y="222" width="512" height="68" fill="#000000"/>
+
+  <!-- Crisp framing hairlines marking the cutout band -->
+  <line x1="56" y1="222" x2="456" y2="222" stroke="#FFFFFF" stroke-opacity="0.32" stroke-width="1.2"/>
+  <line x1="56" y1="290" x2="456" y2="290" stroke="#FFFFFF" stroke-opacity="0.32" stroke-width="1.2"/>
+
+  <!-- ========================================================================= -->
+  <!-- BRAND NAME IN RIBBON: 1 M Z A L I T                                       -->
+  <!-- ========================================================================= -->
+  <g fill="#FFFFFF">
+    <!-- '1' -->
+    <path d="M 72 246 L 82 242 L 82 270 L 77 270 L 77 246 Z M 71 270 L 88 270 L 88 267.5 L 71 267.5 Z"/>
+
+    <!-- 'M' -->
+    <path d="M 118 242 L 125 242 L 134 262 L 143 242 L 150 242 L 150 270 L 144.5 270 L 144.5 250 L 136.5 268 L 131.5 268 L 123.5 250 L 123.5 270 L 118 270 Z"/>
+
+    <!-- 'Z' -->
+    <path d="M 184 242 L 210 242 L 210 246.5 L 191.5 265.5 L 211 265.5 L 211 270 L 183 270 L 183 265.5 L 202 246.5 L 184 246.5 Z"/>
+
+    <!-- 'A' -->
+    <path d="M 246 242 L 253 242 L 266 270 L 259.5 270 L 256.5 263 L 243.5 263 L 240.5 270 L 234 270 Z M 250 248.5 L 245.5 258.5 L 254.5 258.5 Z"/>
+
+    <!-- 'L' -->
+    <path d="M 302 242 L 308.5 242 L 308.5 265.5 L 324 265.5 L 324 270 L 302 270 Z"/>
+
+    <!-- 'I' -->
+    <path d="M 360 242 L 366.5 242 L 366.5 270 L 360 270 Z"/>
+
+    <!-- 'T' -->
+    <path d="M 398 242 L 424 242 L 424 246.5 L 414.5 246.5 L 414.5 270 L 407.5 270 L 407.5 246.5 L 398 246.5 Z"/>
+  </g>
+</svg>

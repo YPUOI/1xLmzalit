@@ -1,12 +1,32 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --bg-dark: #06141B;
+    --bg-surface: #11212D;
+    --border-subtle: #253745;
+    --accent-muted: #4A5C6A;
+    --text-muted: #9BA8AB;
+    --text-primary: #CCD0CF;
+  }
+
+  html.light, [data-theme="light"] {
+    --bg-dark: #F1F5F9;
+    --bg-surface: #FFFFFF;
+    --border-subtle: #CBD5E1;
+    --accent-muted: #CBD5E1;
+    --text-muted: #475569;
+    --text-primary: #0F172A;
+  }
+
   html, body {
     overflow-x: hidden;
     max-width: 100vw;
     width: 100%;
     margin: 0;
     padding: 0;
+    background-color: #06141B;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   #root {
@@ -18,150 +38,126 @@
 
   body {
     font-family: 'Outfit', 'Cairo', 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: #070B19;
-    color: #E2E8F0;
-    line-height: 1.65;
+    background-color: #06141B;
+    color: #CCD0CF;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    color: #F8FAFC;
-    letter-spacing: -0.015em;
+    color: #CCD0CF;
+    letter-spacing: -0.02em;
+    font-weight: 700;
   }
 }
 
 /* =========================================================================
-   MIDNIGHT STAR THEME (UEFA Champions League)
-   Palette:
-   - Deep Navy Background: #070B19
-   - Dark Slate Cards: #10172A (eliminates screen glare)
-   - Electric Cyan Key Actions & Glow: #00E5FF
-   - Starball Silver Secondary & Icons: #94A3B8
-   - Off-White Text: #E2E8F0 (prevents eye fatigue)
-   - Dark Subtle Borders: #1E293B / rgba(148, 163, 184, 0.12)
+   DARK THEME PALETTE (Default)
+   - Dark Base Background: #06141B
+   - Secondary Background / Surface / Cards: #11212D
+   - Card Borders / Elevated Containers: #253745
+   - Accent / Muted Highlights / Active States: #4A5C6A
+   - Secondary Text / Subtitles / Muted Elements: #9BA8AB
+   - Primary Text / High-Contrast Headings / Bright Buttons: #CCD0CF
    ========================================================================= */
 
-/* High-Performance Theme Background Base */
 .ucl-theme-bg {
-  background-color: #070B19;
+  background-color: #06141B;
 }
 
-/* Dark Slate Floating Cards (#10172A) with Subtle Dark Borders */
+/* Elevated Card Container with 1px #253745 Border & Smooth Rounded Corners */
 .ucl-card {
-  background-color: #10172A;
-  border: 1px solid #1E293B;
-  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.65), 0 0 16px -2px rgba(0, 229, 255, 0.04);
+  background-color: #11212D;
+  border: 1px solid #253745;
+  border-radius: 0.875rem; /* 14px */
 }
 
 .ucl-card-hover {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .ucl-card-hover:hover {
-  border-color: rgba(0, 229, 255, 0.35);
-  background-color: #131E35;
-  box-shadow: 
-    0 18px 42px -4px rgba(0, 0, 0, 0.75), 
-    0 0 28px -2px rgba(0, 229, 255, 0.22),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  border-color: #4A5C6A;
+  background-color: #142837;
   transform: translateY(-1px);
 }
 
-/* Electric Cyan (#00E5FF) Key Action Button */
+/* High-Priority / Bright Action Button (#CCD0CF bg with #06141B text) */
 .ucl-btn-primary {
-  background-color: #00E5FF;
-  background-image: linear-gradient(135deg, #00E5FF 0%, #00B4D8 50%, #0096C7 100%);
-  color: #050811;
-  font-weight: 900;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  box-shadow: 0 4px 20px -2px rgba(0, 229, 255, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  transition: all 0.2s ease;
+  background-color: #CCD0CF;
+  color: #06141B;
+  font-weight: 700;
+  border: 1px solid #CCD0CF;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease-out;
 }
 
 .ucl-btn-primary:hover {
-  background-image: linear-gradient(135deg, #38EFFF 0%, #00D2F4 50%, #00A6D6 100%);
-  box-shadow: 0 6px 28px 0 rgba(0, 229, 255, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  background-color: #ffffff;
+  color: #06141B;
+  border-color: #ffffff;
   transform: translateY(-1px);
 }
 
 .ucl-btn-primary:active {
-  transform: translateY(0);
+  transform: scale(0.98);
 }
 
-/* Soft Cyan Ambient Glow on Active Fields and Focus States */
-.ucl-cyan-glow {
-  box-shadow: 0 0 22px -2px rgba(0, 229, 255, 0.35);
+/* Secondary Action Button (#4A5C6A with #CCD0CF text) */
+.ucl-btn-secondary {
+  background-color: #4A5C6A;
+  color: #CCD0CF;
+  font-weight: 600;
+  border: 1px solid #253745;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease-out;
 }
 
-.ucl-cyan-border-active {
-  border-color: #00E5FF !important;
-  box-shadow: 0 0 18px -2px rgba(0, 229, 255, 0.3) !important;
+.ucl-btn-secondary:hover {
+  background-color: #556979;
+  border-color: #4A5C6A;
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
-/* Starball Silver Secondary Accent */
-.ucl-silver-text {
-  background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #94A3B8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+/* Muted Accent Badge */
+.ucl-gold-badge {
+  background-color: #253745;
+  border: 1px solid #4A5C6A;
+  color: #CCD0CF;
+  border-radius: 0.75rem;
 }
 
-.ucl-silver-badge {
-  background: rgba(148, 163, 184, 0.08);
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  color: #E2E8F0;
-}
-
-/* Frosted-Glass Header Bar */
+/* Header Background */
 .ucl-header-bg {
-  background-color: rgba(8, 12, 25, 0.82);
+  background-color: rgba(17, 33, 45, 0.94);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-  background-image: 
-    /* Starball Mesh Subtle Texture */
-    radial-gradient(circle at 50% -20%, rgba(0, 229, 255, 0.14) 0%, transparent 55%),
-    radial-gradient(circle at 10% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
-    radial-gradient(circle at 90% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
-    radial-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 14px 14px;
+  border-bottom: 1px solid #253745;
 }
 
-/* Athletic Title "1XLMZALIT" with Starball Cool-White / Silver Sheen */
-.ucl-title-starball {
-  background: linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 30%, #E2E8F0 65%, #94A3B8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7));
-  letter-spacing: 0.04em;
+/* Form Inputs, Selects, and Textareas */
+input, select, textarea {
+  background-color: #253745;
+  border: 1px solid #253745;
+  color: #CCD0CF;
+  transition: all 0.2s ease-out;
 }
 
-/* UCL 2026 Frosted Glass Badge with Glowing Silver Border */
-.ucl-badge-glass {
-  background: rgba(16, 23, 42, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  box-shadow: 0 0 14px -2px rgba(0, 229, 255, 0.18), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
-  color: #38EFFF;
+input::placeholder, textarea::placeholder {
+  color: #9BA8AB;
+  opacity: 0.75;
 }
 
-/* Metallic Platinum / Silver Trophy Container */
-.ucl-trophy-platinum {
-  background: linear-gradient(145deg, #FFFFFF 0%, #F1F5F9 25%, #E2E8F0 60%, #CBD5E1 100%);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 
-    0 0 20px rgba(0, 229, 255, 0.25),
-    0 0 10px rgba(255, 255, 255, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-
-/* Input Fields with Soft Cyan Glow on Focus */
+/* Focus States with Soft #4A5C6A Glow */
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: #00E5FF !important;
-  box-shadow: 0 0 14px -2px rgba(0, 229, 255, 0.35) !important;
+  border-color: #4A5C6A !important;
+  box-shadow: 0 0 0 3px rgba(74, 92, 106, 0.35) !important;
 }
 
-/* Prevent RTL language selection from reversing usernames, passwords, emails, PINs, scores, or codes */
+/* Numeric / Password inputs LTR enforcement for international consistency */
 input[type="password"],
 input[type="email"],
 input[type="tel"],
@@ -177,12 +173,218 @@ input[autocomplete*="password"],
   unicode-bidi: isolate !important;
 }
 
-/* Center aligned numeric inputs (like score steppers or PIN verification) */
 .input-center-ltr {
   direction: ltr !important;
   text-align: center !important;
   unicode-bidi: isolate !important;
 }
 
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #06141B;
+}
+::-webkit-scrollbar-thumb {
+  background: #253745;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4A5C6A;
+}
 
+/* =========================================================================
+   LIGHT THEME ADAPTATION
+   Transforms the exact palette tokens for clean, high-contrast daytime viewing
+   ========================================================================= */
 
+html.light,
+html[data-theme="light"],
+[data-theme="light"] {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+}
+
+html.light body,
+[data-theme="light"] body {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+}
+
+html.light h1, html.light h2, html.light h3, html.light h4, html.light h5, html.light h6,
+[data-theme="light"] h1, [data-theme="light"] h2, [data-theme="light"] h3, [data-theme="light"] h4, [data-theme="light"] h5, [data-theme="light"] h6 {
+  color: #0F172A !important;
+}
+
+/* Base Canvas & Page Backgrounds */
+html.light .bg-\[\#06141B\],
+[data-theme="light"] .bg-\[\#06141B\] {
+  background-color: #F8FAFC !important;
+}
+
+html.light .bg-\[\#06141B\]\/40,
+[data-theme="light"] .bg-\[\#06141B\]\/40 {
+  background-color: rgba(241, 245, 249, 0.6) !important;
+}
+
+html.light .bg-\[\#06141B\]\/60,
+[data-theme="light"] .bg-\[\#06141B\]\/60 {
+  background-color: rgba(241, 245, 249, 0.85) !important;
+}
+
+/* Card & Modal Surfaces */
+html.light .bg-\[\#11212D\],
+[data-theme="light"] .bg-\[\#11212D\] {
+  background-color: #FFFFFF !important;
+}
+
+html.light .bg-\[\#11212D\]\/90,
+[data-theme="light"] .bg-\[\#11212D\]\/90 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* Secondary Surface, Inactive Buttons & Containers */
+html.light .bg-\[\#253745\],
+[data-theme="light"] .bg-\[\#253745\] {
+  background-color: #E2E8F0 !important;
+}
+
+/* Active Highlight / Accent States */
+html.light .bg-\[\#4A5C6A\],
+[data-theme="light"] .bg-\[\#4A5C6A\] {
+  background-color: #CBD5E1 !important;
+}
+
+/* High Contrast Accent / Primary Buttons */
+html.light .bg-\[\#CCD0CF\],
+[data-theme="light"] .bg-\[\#CCD0CF\] {
+  background-color: #0F172A !important;
+  color: #FFFFFF !important;
+}
+
+/* Primary High-Contrast Text */
+html.light .text-\[\#CCD0CF\],
+[data-theme="light"] .text-\[\#CCD0CF\] {
+  color: #0F172A !important;
+}
+
+/* Secondary Muted Text */
+html.light .text-\[\#9BA8AB\],
+[data-theme="light"] .text-\[\#9BA8AB\] {
+  color: #475569 !important;
+}
+
+/* Dark text inside bright elements */
+html.light .text-\[\#06141B\],
+[data-theme="light"] .text-\[\#06141B\] {
+  color: #FFFFFF !important;
+}
+
+/* Container & Component Borders */
+html.light .border-\[\#253745\],
+[data-theme="light"] .border-\[\#253745\] {
+  border-color: #CBD5E1 !important;
+}
+
+html.light .border-\[\#4A5C6A\],
+[data-theme="light"] .border-\[\#4A5C6A\] {
+  border-color: #94A3B8 !important;
+}
+
+html.light .border-\[\#CCD0CF\],
+[data-theme="light"] .border-\[\#CCD0CF\] {
+  border-color: #0F172A !important;
+}
+
+/* SVG Fill & Stroke */
+html.light .fill-\[\#CCD0CF\],
+[data-theme="light"] .fill-\[\#CCD0CF\] {
+  fill: #0F172A !important;
+}
+
+/* Interactive States & Hovers */
+html.light .hover\:bg-\[\#253745\]:hover,
+[data-theme="light"] .hover\:bg-\[\#253745\]:hover {
+  background-color: #E2E8F0 !important;
+}
+
+html.light .hover\:bg-\[\#4A5C6A\]:hover,
+[data-theme="light"] .hover\:bg-\[\#4A5C6A\]:hover {
+  background-color: #CBD5E1 !important;
+}
+
+html.light .hover\:bg-white:hover,
+[data-theme="light"] .hover\:bg-white:hover {
+  background-color: #1E293B !important;
+  color: #FFFFFF !important;
+}
+
+html.light .hover\:text-\[\#CCD0CF\]:hover,
+[data-theme="light"] .hover\:text-\[\#CCD0CF\]:hover {
+  color: #0F172A !important;
+}
+
+html.light .hover\:border-\[\#4A5C6A\]:hover,
+[data-theme="light"] .hover\:border-\[\#4A5C6A\]:hover {
+  border-color: #64748B !important;
+}
+
+/* Global Component Classes in Light Mode */
+html.light .ucl-header-bg,
+[data-theme="light"] .ucl-header-bg {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light .ucl-card,
+[data-theme="light"] .ucl-card {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light .ucl-card-hover:hover,
+[data-theme="light"] .ucl-card-hover:hover {
+  border-color: #94A3B8 !important;
+  background-color: #F8FAFC !important;
+}
+
+html.light .ucl-theme-bg,
+[data-theme="light"] .ucl-theme-bg {
+  background-color: #F1F5F9 !important;
+}
+
+html.light input,
+html.light select,
+html.light textarea,
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background-color: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+  color: #0F172A !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder,
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* Light Mode Scrollbars */
+html.light ::-webkit-scrollbar-track,
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+html.light ::-webkit-scrollbar-thumb,
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+}
+html.light ::-webkit-scrollbar-thumb:hover,
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}

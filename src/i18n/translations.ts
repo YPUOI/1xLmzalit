@@ -102,6 +102,11 @@ export const translations = {
     quickRulesDesc: 'دليل احتساب النقاط: 5 نقاط للنتيجة الدقيقة، 3 نقاط لنجم المباراة (MVP)، ونقطة لكل مسجل هدف.',
     enterRulesBtn: 'دليل القواعد الكامل',
 
+    // Theme
+    themeDark: 'الداكن',
+    themeLight: 'الفاتح',
+    themeToggle: 'تبديل المظهر',
+
     // Security Gate
     gateTitle: 'بوابة دخول الأصدقاء',
     gateSubtitle: 'المنصة محمية ومخصصة للأصدقاء فقط. يرجى إدخال كلمة المرور المعتمدة للمتابعة.',
@@ -393,6 +398,11 @@ export const translations = {
     quickRulesDesc: 'Barème officiel : 5 pts score exact, 3 pts homme du match (MVP), 1 pt par buteur.',
     enterRulesBtn: 'Guide des Règles',
 
+    // Theme
+    themeDark: 'Sombre',
+    themeLight: 'Clair',
+    themeToggle: 'Changer le thème',
+
     // Security Gate
     gateTitle: 'Porte d\'Accès Sécurisée Amis',
     gateSubtitle: 'Cette plateforme est privée et réservée aux amis. Veuillez saisir le mot de passe requis pour continuer.',
@@ -683,6 +693,11 @@ export const translations = {
     quickRulesTitle: 'Rules & Point System',
     quickRulesDesc: 'Official rules: 5 pts exact score, 3 pts Man of the Match (MVP), 1 pt per goalscorer.',
     enterRulesBtn: 'Rules Guide',
+
+    // Theme
+    themeDark: 'Dark',
+    themeLight: 'Light',
+    themeToggle: 'Toggle theme',
 
     // Security Gate
     gateTitle: 'Friends Security Gate',

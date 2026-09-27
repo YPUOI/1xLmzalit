@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '../theme/ThemeContext';
 
 interface XlmzalitLogoProps {
   className?: string;
@@ -11,6 +12,8 @@ export const XlmzalitLogo: React.FC<XlmzalitLogoProps> = ({
   variant = 'light',
   size = 'md',
 }) => {
+  const { isDark } = useTheme();
+
   // Height sizing with responsive fluid breakpoints
   const sizeClasses = {
     sm: 'h-6 sm:h-7 md:h-8',
@@ -23,9 +26,9 @@ export const XlmzalitLogo: React.FC<XlmzalitLogoProps> = ({
   // - Top arrowhead of '1' in Cyan (#00E5FF on dark, #00A6E0 on light)
   // - Bottom triangle of '1' in vibrant Gold (#E5A118)
   // - Dot of 'i' in vibrant Gold (#E5A118)
-  // - Letters: 'light' or 'white' uses crisp clean white / bright slate so it integrates seamlessly without any white box!
-  const isDarkNavyText = variant === 'dark';
-  const mainTextColor = isDarkNavyText ? '#031753' : '#FFFFFF';
+  // - Letters: In light mode, automatically use sharp dark contrast unless explicitly 'white'
+  const isDarkNavyText = variant === 'dark' || (variant !== 'white' && !isDark);
+  const mainTextColor = isDarkNavyText ? '#06141B' : '#FFFFFF';
   const cyanColor = '#00D9F5';
   const goldColor = '#EAA81B';
 

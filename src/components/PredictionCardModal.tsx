@@ -117,25 +117,25 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md animate-in fade-in duration-200" dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" dir={isRtl ? 'rtl' : 'ltr'}>
       <div 
-        className="ucl-card w-full max-w-2xl max-h-[92vh] flex flex-col rounded-3xl border border-blue-500/40 shadow-2xl shadow-blue-950/60 overflow-hidden relative"
+        className="w-full max-w-2xl max-h-[92vh] flex flex-col rounded-2xl border border-[#253745] bg-[#11212D] shadow-2xl overflow-hidden relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/80 gap-3">
+        <div className="p-4 sm:p-5 border-b border-[#253745] flex items-center justify-between bg-[#11212D] gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 border border-cyan-400/40 flex items-center justify-center text-cyan-400">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-lg bg-[#253745] border border-[#4A5C6A] flex items-center justify-center text-[#CCD0CF]">
+              <Sparkles className="w-4 h-4 text-[#CCD0CF]" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+              <h3 className="text-sm sm:text-base font-bold text-[#CCD0CF] flex items-center gap-2">
                 <span>{language === 'fr' ? 'Carte Officielle de Pronostic' : language === 'en' ? 'Official Prediction Ticket' : 'بطاقة التوقع الرسمية'}</span>
-                <span className="text-[10px] font-mono font-black text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-mono font-bold text-[#CCD0CF] bg-[#253745] border border-[#4A5C6A] px-2 py-0.5 rounded">
                   HD PHOTO
                 </span>
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[#9BA8AB]">
                 {language === 'fr' ? 'Prêt à être téléchargé et partagé au design officiel UEFA Champions League' : language === 'en' ? 'Ready to share and download in official UEFA Champions League design' : 'جاهزة للمشاركة والتحميل بجودة وتصميم دوري أبطال أوروبا الرسمي'}
               </p>
             </div>
@@ -143,33 +143,33 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
+            className="p-1.5 rounded-lg text-[#9BA8AB] hover:text-[#CCD0CF] hover:bg-[#253745] transition-all duration-200 cursor-pointer"
             aria-label={t('close')}
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Body: Scrollable Image Preview */}
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 flex flex-col items-center justify-center bg-slate-950/60">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 flex flex-col items-center justify-center bg-[#06141B]">
           {isGenerating ? (
-            <div className="py-16 sm:py-24 text-center space-y-4">
-              <Loader2 className="w-12 h-12 text-cyan-400 animate-spin mx-auto" />
+            <div className="py-16 sm:py-24 text-center space-y-3">
+              <Loader2 className="w-10 h-10 text-[#CCD0CF] animate-spin mx-auto" />
               <div className="space-y-1">
-                <p className="font-bold text-white text-base">{t('loading')}</p>
-                <p className="text-xs text-slate-400">
+                <p className="font-semibold text-[#CCD0CF] text-sm sm:text-base">{t('loading')}</p>
+                <p className="text-xs text-[#9BA8AB]">
                   {language === 'fr' ? 'Génération de la carte HD avec 1xlmzalit et UEFA Champions League...' : language === 'en' ? 'Generating HD ticket with 1xlmzalit and UEFA Champions League...' : 'تضمين التوقيت، الهدافين، رجل المباراة، وشعار 1xlmzalit الرسمي'}
                 </p>
               </div>
             </div>
           ) : error ? (
-            <div className="p-6 bg-rose-950/60 border border-rose-500/50 rounded-2xl text-center text-rose-200 text-sm">
+            <div className="p-5 bg-rose-950/60 border border-rose-500/40 rounded-xl text-center text-rose-200 text-xs">
               {error}
             </div>
           ) : imageUrl ? (
             <div className="w-full flex flex-col items-center space-y-4">
               {/* Image Preview Box */}
-              <div className="relative group rounded-2xl overflow-hidden border border-slate-700/80 shadow-2xl max-w-sm sm:max-w-md w-full bg-slate-900/60">
+              <div className="relative group rounded-xl overflow-hidden border border-[#253745] shadow-2xl max-w-sm sm:max-w-md w-full bg-[#11212D]">
                 <img
                   src={imageUrl}
                   alt="Prediction Ticket"
@@ -178,15 +178,15 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
               </div>
 
               {/* Specs Summary Pill */}
-              <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-slate-400">
-                <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-cyan-300 font-mono">
+              <div className="flex flex-wrap items-center justify-center gap-2 text-[11px] text-[#9BA8AB]">
+                <span className="px-2.5 py-0.5 rounded bg-[#11212D] border border-[#253745] text-[#CCD0CF] font-mono text-[10px]">
                   1080 × 1350 px
                 </span>
-                <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300">
+                <span className="px-2.5 py-0.5 rounded bg-[#11212D] border border-[#253745] text-[#CCD0CF] text-[10px]">
                   1xlmzalit Verified
                 </span>
-                <span className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-emerald-300 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" />
+                <span className="px-2.5 py-0.5 rounded bg-[#11212D] border border-[#253745] text-[#CCD0CF] flex items-center gap-1 text-[10px]">
+                  <CheckCircle2 className="w-3 h-3 text-[#CCD0CF]" />
                   <span>{t('brandName')}</span>
                 </span>
               </div>
@@ -195,10 +195,10 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="p-4 sm:p-5 border-t border-slate-800/80 bg-slate-900/90 flex flex-wrap items-center justify-between gap-3">
-          <div className="text-xs text-slate-400">
+        <div className="p-3.5 sm:p-4 border-t border-[#253745] bg-[#11212D] flex flex-wrap items-center justify-between gap-3">
+          <div className="text-xs text-[#9BA8AB]">
             {memberName && (
-              <span>{t('member')}: <strong className="text-white">@{memberName}</strong></span>
+              <span>{t('member')}: <strong className="text-[#CCD0CF] font-semibold">@{memberName}</strong></span>
             )}
           </div>
 
@@ -207,16 +207,16 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
               type="button"
               onClick={handleCopyLinkOrShare}
               disabled={!imageUrl || isGenerating}
-              className="flex-1 sm:flex-none px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-[#253745] hover:bg-[#4A5C6A] border border-[#253745] text-[#CCD0CF] font-semibold text-xs transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-[0.98]"
             >
               {hasCopied ? (
                 <>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   <span className="text-emerald-400">{language === 'fr' ? 'Copié !' : language === 'en' ? 'Copied!' : 'تم النسخ!'}</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4 text-cyan-400" />
+                  <Copy className="w-3.5 h-3.5 text-[#CCD0CF]" />
                   <span>{language === 'fr' ? 'Partager' : language === 'en' ? 'Share' : 'نسخ / مشاركة'}</span>
                 </>
               )}
@@ -226,9 +226,9 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
               type="button"
               onClick={handleDownload}
               disabled={!imageUrl || isGenerating}
-              className="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-cyan-500 hover:opacity-95 text-white font-black text-xs sm:text-sm transition shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold text-xs transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-[0.98]"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-3.5 h-3.5" />
               <span>{language === 'fr' ? 'Télécharger PNG' : language === 'en' ? 'Download PNG' : 'تحميل الصورة (Download PNG)'}</span>
             </button>
           </div>

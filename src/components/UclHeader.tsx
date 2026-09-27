@@ -6,7 +6,6 @@ import {
   UserPlus,
   ShieldAlert, 
   LogOut, 
-  Sliders, 
   Star,
   Sparkles,
   Fingerprint
@@ -15,6 +14,7 @@ import { AppUser } from '../types';
 import { XlmzalitLogo } from './XlmzalitLogo';
 import { useLanguage } from '../i18n/LanguageContext';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { ThemeToggle } from './ThemeToggle';
 
 interface UclHeaderProps {
   currentUser: AppUser | null;
@@ -37,42 +37,42 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
   const { t, isRtl } = useLanguage();
 
   return (
-    <header className="ucl-header-bg border-b border-slate-800/80 sticky top-0 z-40 backdrop-blur-2xl shadow-2xl shadow-black/80 w-full max-w-full">
+    <header className="ucl-header-bg sticky top-0 z-40 shadow-xl shadow-black/40 w-full max-w-full">
       
       {/* ========================================================================= */}
-      {/* MOBILE LAYOUT (< md): Exact 3-part construction matching user sketch      */}
-      {/* Left: 1xlmzalit v1.0 | Center: (8+) User Auth & Language | Right: UCL 26/27 */}
+      {/* MOBILE LAYOUT (< md): Clean 3-part construction                            */}
+      {/* Left: 1xlmzalit v1.0 | Center: User Auth & Language | Right: UCL 26/27    */}
       {/* ========================================================================= */}
-      <div className="flex md:hidden justify-between items-center w-full px-2 sm:px-2.5 py-1.5 sm:py-2 gap-1 sm:gap-1.5 max-w-full" dir="ltr">
-        {/* Left: 1xlmzalit Logo + v1.0 tag */}
+      <div className="flex md:hidden justify-between items-center w-full px-2.5 py-2 gap-1.5 max-w-full" dir="ltr">
+        {/* Left: 1xlmzalit Logo + v1.0 */}
         <div 
-          className="flex items-center gap-1 cursor-pointer select-none shrink-0" 
+          className="flex items-center gap-1.5 cursor-pointer select-none shrink-0" 
           onClick={() => onSelectTab('home')}
           title="1xlmzalit v1.0"
         >
           <XlmzalitLogo variant="light" size="sm" className="shrink-0" />
-          <div className="bg-[#041E34] border border-[#00E5FF]/60 px-1 py-0.5 rounded-md flex items-center justify-center shrink-0 shadow-sm">
-            <span className="text-[9px] font-black text-[#00E5FF] tracking-wider font-mono">
+          <div className="bg-[#253745] border border-[#4A5C6A] px-1.5 py-0.5 rounded-md flex items-center justify-center shrink-0">
+            <span className="text-[9px] font-bold text-[#CCD0CF] font-mono tracking-wider">
               v1.0
             </span>
           </div>
         </div>
 
-        {/* Center: (8+) User Auth Icon/Button + Language Switcher */}
-        <div className="flex items-center gap-1 sm:gap-1.5 justify-center shrink-0">
+        {/* Center: User Auth Button + Language Switcher (No text name/admin label on mobile per design specs) */}
+        <div className="flex items-center gap-1.5 justify-center shrink-0">
           {currentUser ? (
             <div 
-              className="flex items-center gap-1.5 bg-[#071324] border border-slate-700/80 px-2 py-0.5 rounded-full text-xs font-bold shrink-0 shadow-sm h-[30px]"
+              className="flex items-center gap-1.5 bg-[#11212D] border border-[#253745] px-2.5 py-1 rounded-full text-xs font-semibold shrink-0 h-[32px] text-[#CCD0CF]"
               title={`${currentUser.username} (${currentUser.role === 'admin' ? t('adminBadge') : t('memberBadge')})`}
             >
               {currentUser.role === 'admin' ? (
-                <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                <ShieldAlert className="w-3.5 h-3.5 text-[#CCD0CF] shrink-0" />
               ) : (
-                <User className="w-3.5 h-3.5 text-[#00E5FF] shrink-0" />
+                <User className="w-3.5 h-3.5 text-[#CCD0CF] shrink-0" />
               )}
               <button 
                 onClick={onLogout} 
-                className="text-slate-400 hover:text-rose-400 p-0.5 cursor-pointer flex items-center justify-center" 
+                className="text-[#9BA8AB] hover:text-[#CCD0CF] transition-colors p-0.5 cursor-pointer flex items-center justify-center" 
                 title={t('logout')}
               >
                 <LogOut className="w-3 h-3" />
@@ -81,47 +81,50 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
           ) : (
             <button 
               onClick={() => onOpenAuth('login')}
-              className="bg-gradient-to-r from-cyan-500 to-[#00E5FF] hover:from-cyan-400 hover:to-cyan-300 text-slate-950 font-black text-xs h-[30px] px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 shadow-[0_0_10px_rgba(0,229,255,0.3)] active:scale-95 transition cursor-pointer"
+              className="bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold text-xs h-[32px] px-3 rounded-full flex items-center gap-1 shrink-0 active:scale-95 transition-all duration-200 cursor-pointer"
               title={t('quickLogin')}
             >
-              <User className="w-3 h-3 stroke-[2.5]" />
-              <span className="text-[11px] font-black">+</span>
+              <User className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span className="text-xs font-bold leading-none">+</span>
             </button>
           )}
 
           {/* Language Switcher Badge */}
           <LanguageSwitcher variant="header-mobile" />
+
+          {/* Theme Mode Toggle (Mobile: Symbol only next to Language selection) */}
+          <ThemeToggle variant="mobile" />
         </div>
 
         {/* Right: UCL 26/27 Tournament Badge */}
         <div 
           onClick={() => onSelectTab('home')}
-          className="bg-[#051528] border border-[#00E5FF]/40 px-1.5 sm:px-2 py-1 rounded-xl flex items-center gap-1 shadow-sm shrink-0 cursor-pointer active:scale-95 transition select-none"
+          className="bg-[#11212D] hover:bg-[#253745] border border-[#253745] hover:border-[#4A5C6A] px-2 py-1 rounded-xl flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 transition-all duration-200 select-none"
           title="UCL 2026/2027"
         >
-          <span className="text-[10px] sm:text-[11px] font-black text-white tracking-wider font-mono whitespace-nowrap">
+          <span className="text-[10px] font-bold text-[#CCD0CF] tracking-wider font-mono whitespace-nowrap">
             UCL 26/27
           </span>
         </div>
       </div>
 
       {/* ========================================================================= */}
-      {/* PC / DESKTOP LAYOUT (md:flex): Exact 2-row aligned layout requested by user */}
+      {/* PC / DESKTOP LAYOUT (md:flex): Exact 2-row layout with polished aesthetics */}
       {/* ========================================================================= */}
-      <div className="hidden md:flex flex-col gap-2 max-w-7xl mx-auto px-4 py-2.5" dir="ltr">
+      <div className="hidden md:flex flex-col gap-2.5 max-w-7xl mx-auto px-4 py-3" dir="ltr">
         
-        {/* Row 1: Top Row (1xlmzalit + v1.0 on Left, Tournament Title on Right) */}
+        {/* Row 1: Brand & Tournament Banner */}
         <div className="flex justify-between items-center w-full" dir="ltr">
-          {/* Top Left: 1xlmzalit Brand Vector Logo + v1.0 App Version Tag */}
+          {/* Top Left: 1xlmzalit Brand Vector Logo + v1.0 App Version */}
           <div 
             className="flex items-center gap-2.5 cursor-pointer select-none group min-w-0 shrink-0" 
             onClick={() => onSelectTab('home')}
             title="1xlmzalit - v1.0"
           >
-            <XlmzalitLogo variant="light" size="lg" className="shrink-0 hover:scale-105 transition-transform" />
+            <XlmzalitLogo variant="light" size="lg" className="shrink-0 group-hover:opacity-90 transition-opacity" />
 
-            <div className="bg-[#041E34] border border-[#00E5FF]/60 px-2 py-0.5 rounded-md flex items-center justify-center shadow-[0_0_10px_rgba(0,229,255,0.25)] shrink-0 select-none">
-              <span className="text-xs font-black text-[#00E5FF] tracking-wider font-mono">
+            <div className="bg-[#253745] border border-[#4A5C6A] px-2 py-0.5 rounded-md flex items-center justify-center shrink-0 select-none">
+              <span className="text-xs font-bold text-[#CCD0CF] tracking-wider font-mono">
                 v1.0
               </span>
             </div>
@@ -130,32 +133,32 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
           {/* Top Right: Tournament Title */}
           <div 
             onClick={() => onSelectTab('home')}
-            className="bg-[#061527]/90 hover:bg-[#0c1f36] border border-slate-800/90 hover:border-[#00E5FF]/40 px-4 py-1 rounded-2xl transition shadow-sm cursor-pointer flex items-center justify-center shrink-0 select-none"
+            className="bg-[#11212D] hover:bg-[#253745] border border-[#253745] hover:border-[#4A5C6A] px-3.5 py-1.5 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center shrink-0 select-none"
             title={t('tournamentTitle')}
           >
-            <span className="text-white text-sm font-bold tracking-wide whitespace-nowrap">
+            <span className="text-[#CCD0CF] text-xs font-semibold tracking-wide whitespace-nowrap">
               {t('tournamentTitle')}
             </span>
           </div>
         </div>
 
-        {/* Row 2: In the EXACT same line with the EXACT same height without changing places */}
-        <div className="flex justify-between items-center w-full gap-2" dir="ltr">
+        {/* Row 2: Controls, Auth status, and Language Switcher */}
+        <div className="flex justify-between items-center w-full gap-3" dir="ltr">
           
           {/* Left Side: Auth Controls / User Status */}
           {currentUser ? (
-            <div className="h-[34px] flex items-center gap-2 bg-[#071324] border border-slate-800 px-3 rounded-full text-xs font-bold shadow-sm shrink-0 whitespace-nowrap" dir={isRtl ? 'rtl' : 'ltr'}>
+            <div className="h-[36px] flex items-center gap-2.5 bg-[#11212D] border border-[#253745] px-3.5 rounded-xl text-xs font-semibold shrink-0 whitespace-nowrap text-[#CCD0CF]" dir={isRtl ? 'rtl' : 'ltr'}>
               {currentUser.role === 'admin' ? (
-                <ShieldAlert className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                <ShieldAlert className="w-4 h-4 text-[#CCD0CF] shrink-0" />
               ) : (
-                <User className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <User className="w-4 h-4 text-[#CCD0CF] shrink-0" />
               )}
-              <span className="max-w-[130px] truncate text-[#E2E8F0]">
-                {currentUser.username} ({currentUser.role === 'admin' ? t('adminBadge') : t('memberBadge')})
+              <span className="max-w-[140px] truncate text-[#CCD0CF]">
+                {currentUser.username} <span className="text-[#9BA8AB] font-normal">({currentUser.role === 'admin' ? t('adminBadge') : t('memberBadge')})</span>
               </span>
               <button 
                 onClick={onLogout}
-                className="text-[#94A3B8] hover:text-rose-400 mr-1 p-0.5 transition shrink-0" 
+                className="text-[#9BA8AB] hover:text-[#CCD0CF] ml-1 p-1 rounded-md hover:bg-[#253745] transition-colors duration-200 shrink-0 cursor-pointer" 
                 title={t('logout')}
               >
                 <LogOut className="w-3.5 h-3.5" />
@@ -166,46 +169,49 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
               {/* Button 1: Member Login */}
               <button 
                 onClick={() => onOpenAuth('login')}
-                className="h-[34px] bg-[#00E5FF] hover:bg-[#38bdf8] text-[#04101e] font-black text-xs px-4 rounded-full transition-all shadow-[0_0_14px_rgba(0,229,255,0.35)] flex items-center gap-2 cursor-pointer shrink-0 whitespace-nowrap active:scale-95"
+                className="h-[36px] bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold text-xs px-4 rounded-xl transition-all duration-200 flex items-center gap-2 cursor-pointer shrink-0 whitespace-nowrap active:scale-[0.98]"
               >
                 <span>{t('memberLogin')}</span>
-                <User className="w-4 h-4 text-[#04101e] shrink-0" />
+                <User className="w-4 h-4 text-[#06141B] shrink-0" />
               </button>
 
               {/* Button 2: Sign Up */}
               <button 
                 onClick={() => onOpenAuth('signup')}
                 title={t('newAccount')}
-                className="h-[34px] bg-[#071324] hover:bg-[#0c1f38] text-amber-400 hover:text-amber-300 border border-amber-500 hover:border-amber-400 font-bold text-xs px-3.5 rounded-full transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap active:scale-95 shadow-sm"
+                className="h-[36px] bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] border border-[#253745] hover:border-[#4A5C6A] font-semibold text-xs px-3.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap active:scale-[0.98]"
               >
                 <span>{t('newAccount')}</span>
-                <UserPlus className="w-4 h-4 text-amber-400 shrink-0" />
+                <UserPlus className="w-4 h-4 text-[#CCD0CF] shrink-0" />
               </button>
 
               {/* Button 3: Admin */}
               <button 
                 onClick={() => onOpenAuth('admin')}
-                className="h-[34px] bg-[#071324] hover:bg-[#0c1f38] text-[#CBD5E1] hover:text-rose-400 border border-slate-800 hover:border-rose-500/50 font-bold text-xs px-3.5 rounded-full transition-all flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap active:scale-95 shadow-sm"
+                className="h-[36px] bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] border border-[#253745] hover:border-[#4A5C6A] font-semibold text-xs px-3.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap active:scale-[0.98]"
               >
                 <span>{t('admin')}</span>
-                <ShieldAlert className="w-4 h-4 text-rose-500 shrink-0" />
+                <ShieldAlert className="w-4 h-4 text-[#CCD0CF] shrink-0" />
               </button>
             </div>
           )}
 
-          {/* Right Side: [Language Switcher] [Fingerprint Button] [UCL 2026/2027 Badge] */}
+          {/* Right Side: [Theme Toggle] [Language Switcher] [Fingerprint Button] */}
           <div className="flex items-center gap-2 shrink-0 select-none" dir="ltr">
-            {/* Language Switcher - exactly matching height h-[34px] */}
+            {/* Theme Mode Toggle (Desktop: Next to Language selector with words) */}
+            <ThemeToggle variant="desktop" />
+
+            {/* Language Switcher */}
             <LanguageSwitcher variant="header-desktop" />
 
-            {/* Fingerprint Button - exactly same height h-[34px] */}
+            {/* Fingerprint Security Settings */}
             <button
               onClick={onOpenSecurityModal}
               title={t('securitySettingsTitle')}
               aria-label={t('securitySettingsTitle')}
-              className="h-[34px] px-3 bg-[#0b1424] hover:bg-[#12203a] text-amber-400 hover:text-amber-300 rounded-full border border-amber-500 hover:border-amber-400 transition flex items-center justify-center shrink-0 cursor-pointer shadow-[0_0_10px_rgba(245,158,11,0.2)]"
+              className="h-[36px] px-3 bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] rounded-xl border border-[#253745] hover:border-[#4A5C6A] transition-all duration-200 flex items-center justify-center shrink-0 cursor-pointer active:scale-[0.98]"
             >
-              <Fingerprint className="w-4.5 h-4.5 text-amber-400 shrink-0" />
+              <Fingerprint className="w-4 h-4 text-[#CCD0CF] shrink-0" />
             </button>
           </div>
 
@@ -217,27 +223,28 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
       {currentUser && (
         <div className="max-w-7xl mx-auto px-4 pb-2.5">
           {currentUser.role === 'admin' ? (
-            <div className="p-2.5 rounded-2xl bg-gradient-to-r from-rose-950/70 via-slate-900 to-[#07090E] border border-rose-500/30 text-rose-200 flex items-center justify-between text-xs font-bold shadow-lg" dir={isRtl ? 'rtl' : 'ltr'}>
+            <div className="p-2.5 rounded-xl bg-[#11212D] border border-[#253745] text-[#CCD0CF] flex items-center justify-between text-xs font-semibold" dir={isRtl ? 'rtl' : 'ltr'}>
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
-                <span>{t('adminPortalActive')} - {currentUser.username}</span>
+                <span className="w-2 h-2 rounded-full bg-[#4A5C6A] animate-pulse" />
+                <span>{t('adminPortalActive')} <span className="text-[#9BA8AB]">·</span> {currentUser.username}</span>
               </div>
               <button 
                 onClick={() => onSelectTab('admin')} 
-                className="bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-black px-3 py-1 rounded-xl transition cursor-pointer"
+                className="bg-[#4A5C6A] hover:bg-[#4A5C6A]/80 text-[#CCD0CF] border border-[#253745] text-[11px] font-bold px-3 py-1 rounded-lg transition-all duration-200 cursor-pointer"
               >
                 {t('controlPanelBtn')}
               </button>
             </div>
           ) : (
-            <div className="p-2.5 rounded-2xl bg-gradient-to-r from-blue-950/60 via-slate-900 to-[#07090E] border border-blue-500/30 text-blue-200 flex items-center justify-between text-xs font-bold shadow-lg" dir={isRtl ? 'rtl' : 'ltr'}>
+            <div className="p-2.5 rounded-xl bg-[#11212D] border border-[#253745] text-[#CCD0CF] flex items-center justify-between text-xs font-semibold" dir={isRtl ? 'rtl' : 'ltr'}>
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                <span>{t('membersZoneActive')} - {t('welcomeMember')} {currentUser.username}!</span>
+                <span className="w-2 h-2 rounded-full bg-[#4A5C6A]" />
+                <span>{t('membersZoneActive')} <span className="text-[#9BA8AB]">·</span> {currentUser.username}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-yellow-400 font-bold">
-                <Star className="w-3.5 h-3.5 fill-yellow-400" />
-                <span>{currentUser.points || 0} {t('pointsCount')}</span>
+              <div className="flex items-center gap-1.5 text-[#CCD0CF] font-bold">
+                <Star className="w-3.5 h-3.5 fill-[#CCD0CF]" />
+                <span className="font-mono">{currentUser.points || 0}</span>
+                <span className="text-[11px] font-normal text-[#9BA8AB]">{t('pointsCount')}</span>
               </div>
             </div>
           )}

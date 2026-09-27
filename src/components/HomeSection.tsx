@@ -4,11 +4,11 @@ import {
   Award, 
   Users, 
   Sparkles, 
+  FileText,
   Clock, 
   ExternalLink,
   ChevronRight,
   ShieldCheck,
-  Flame,
   CheckCircle2
 } from 'lucide-react';
 import { Match, AppUser, Prediction } from '../types';
@@ -39,7 +39,7 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
     .filter(m => m.status === 'OPEN' && new Date(m.deadline) > new Date())
     .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
 
-  // 2. Leaderboard with just standings (rank, member, points - no extra details)
+  // 2. Leaderboard with just standings (rank, member, points)
   const approvedUsers = users
     .filter(u => u.status === 'approved' && u.role !== 'admin')
     .sort((a, b) => (b.points || 0) - (a.points || 0));
@@ -63,7 +63,7 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
   }
   const memberLatestPreds = Array.from(memberLatestPredsMap.values()).slice(0, 4);
 
-  // Helper to format remaining time nicely
+  // Helper to format remaining time
   const formatTimeRemaining = (deadlineStr: string) => {
     const diffMs = new Date(deadlineStr).getTime() - Date.now();
     if (diffMs <= 0) return language === 'fr' ? 'Expiré' : language === 'en' ? 'Expired' : 'انتهى';
@@ -83,61 +83,58 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
     <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-300 select-none pb-4">
       
       {/* ========================================================================= */}
-      {/* 1. TOP CARD: DETAILS (THE STAGE IS SET....)                               */}
+      {/* 1. TOP HERO CARD: THE STAGE IS SET                                        */}
       {/* ========================================================================= */}
       <section 
         aria-label="Details - The stage is set"
-        className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#10172A] via-[#0D1527] to-[#070B19] p-5 sm:p-7 border border-slate-800 shadow-2xl"
+        className="relative rounded-2xl overflow-hidden bg-[#11212D] p-5 sm:p-7 border border-[#253745] shadow-xl"
       >
-        {/* Ambient atmosphere glows */}
-        <div className="absolute top-0 right-1/4 w-72 h-72 bg-[#00E5FF]/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2" />
-        <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-blue-600/10 rounded-full blur-3xl pointer-events-none translate-y-1/2" />
-
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-          <div className="space-y-2.5 max-w-2xl">
-            {/* Pill */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00E5FF]/15 border border-[#00E5FF]/35 text-[#00E5FF] text-[10px] sm:text-xs font-black tracking-widest uppercase">
-              <span className="w-2 h-2 rounded-full bg-[#00E5FF] animate-ping" />
-              <span>UEFA CHAMPIONS LEAGUE 2026/2027</span>
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-3 max-w-2xl">
+            {/* Clean editorial kicker (zero-pill discipline) */}
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#9BA8AB] tracking-wider uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#4A5C6A]" />
+              <span>UEFA Champions League 2026/2027</span>
             </div>
 
-            {/* Headline: The Stage is Set / Le décor est planté / المسرح جاهز */}
-            <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white uppercase font-sans drop-shadow-sm leading-snug">
+            {/* Headline */}
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#CCD0CF] leading-tight">
               {t('stageIsSet')}
             </h1>
 
             {/* Details Description */}
-            <p className="text-[#E2E8F0] text-xs sm:text-sm font-semibold leading-relaxed">
+            <p className="text-[#9BA8AB] text-xs sm:text-sm font-normal leading-relaxed">
               {t('heroDescription')}
             </p>
 
-            {/* Tournament Badges */}
-            <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-              <span className="bg-[#080C19]/90 text-slate-200 border border-slate-800 px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1.5">
-                <Trophy className="w-3.5 h-3.5 text-yellow-400 shrink-0" />
-                <span>{t('highlightKnockouts')}</span>
-              </span>
-              <span className="bg-[#080C19]/90 text-slate-200 border border-slate-800 px-2.5 py-1 rounded-xl text-[11px] font-bold flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>{t('highlightAccuracy')}</span>
-              </span>
+            {/* Tournament Features */}
+            <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-[#9BA8AB]">
+              <div className="flex items-center gap-1.5">
+                <Trophy className="w-3.5 h-3.5 text-[#CCD0CF] shrink-0" />
+                <span className="text-[#CCD0CF] font-medium">{t('highlightKnockouts')}</span>
+              </div>
+              <span aria-hidden="true" className="text-[#4A5C6A]">·</span>
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#CCD0CF] shrink-0" />
+                <span className="text-[#CCD0CF] font-medium">{t('highlightAccuracy')}</span>
+              </div>
             </div>
           </div>
 
-          {/* Quick CTA */}
-          <div className="shrink-0 w-full md:w-auto flex flex-row md:flex-col gap-2">
+          {/* Quick CTA Actions */}
+          <div className="shrink-0 w-full md:w-auto flex flex-row md:flex-col gap-2.5">
             <button
               onClick={() => onNavigate('matches')}
-              className="ucl-btn-primary flex-1 md:flex-initial px-5 py-3 rounded-2xl font-black text-xs text-center cursor-pointer flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(0,229,255,0.35)] active:scale-95 transition-all"
+              className="bg-[#CCD0CF] hover:bg-white text-[#06141B] flex-1 md:flex-initial px-5 py-3 rounded-xl font-bold text-xs text-center cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200"
             >
               <Trophy className="w-4 h-4 shrink-0" />
               <span>{t('startPredictingBtn')}</span>
             </button>
             <button
               onClick={() => onNavigate('leaderboard')}
-              className="bg-[#080C19] hover:bg-slate-800 text-slate-200 border border-slate-800 px-4 py-3 rounded-2xl font-bold text-xs text-center transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 flex-1 md:flex-initial"
+              className="bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] border border-[#253745] px-4 py-3 rounded-xl font-semibold text-xs text-center transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98] flex-1 md:flex-initial"
             >
-              <Award className="w-4 h-4 text-amber-400 shrink-0" />
+              <Award className="w-4 h-4 text-[#CCD0CF] shrink-0" />
               <span>{t('tabLeaderboardShort')}</span>
             </button>
           </div>
@@ -145,38 +142,36 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
       </section>
 
       {/* ========================================================================= */}
-      {/* 2. MIDDLE ROW:                                                            */}
-      {/* Left: LEADERBOARD (STANDINGS ONLY)                                       */}
-      {/* Right: AVAILABLE MATCHES TO PREDICT (JUST TIME LEFT AND TEAMS)           */}
+      {/* 2. MIDDLE ROW: STANDINGS & AVAILABLE MATCHES                              */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         
-        {/* CARD 2A: LEADERBOARD WITH JUST STANDINGS NO EXTRA DETAILS */}
+        {/* CARD 2A: LEADERBOARD STANDINGS */}
         <div 
           onClick={() => onNavigate('leaderboard')}
-          className="bg-[#10172A] hover:bg-[#131E35] border border-slate-800 hover:border-amber-500/40 rounded-3xl p-4 sm:p-5 shadow-xl transition-all cursor-pointer flex flex-col justify-between group"
+          className="bg-[#11212D] border border-[#253745] hover:border-[#4A5C6A] rounded-2xl p-4 sm:p-5 cursor-pointer flex flex-col justify-between group transition-all duration-200"
         >
           <div className="space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+            <div className="flex items-center justify-between border-b border-[#253745] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#253745] border border-[#4A5C6A] flex items-center justify-center text-[#CCD0CF] shrink-0">
                   <Award className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-black text-white group-hover:text-amber-300 transition-colors">
+                  <h2 className="text-sm font-bold text-[#CCD0CF] group-hover:text-white transition-colors">
                     {t('photoStandingsOnly')}
                   </h2>
-                  <span className="text-[10px] text-slate-400 block font-semibold">
+                  <span className="text-[11px] text-[#9BA8AB] block font-normal">
                     {t('noExtraDetailsNotice')}
                   </span>
                 </div>
               </div>
-              <ChevronRight className={`w-4 h-4 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition ${isRtl ? 'rotate-180 group-hover:-translate-x-0.5' : ''}`} />
+              <ChevronRight className={`w-4 h-4 text-[#9BA8AB] group-hover:text-[#CCD0CF] transition-transform ${isRtl ? 'rotate-180' : ''}`} />
             </div>
 
-            {/* Standings List: Just rank, name, points */}
+            {/* Standings List */}
             {approvedUsers.length === 0 ? (
-              <div className="text-center py-6 text-xs text-slate-400 font-bold">
+              <div className="text-center py-6 text-xs text-[#9BA8AB]">
                 {language === 'ar' ? 'لا يوجد أعضاء في الترتيب حالياً' : language === 'fr' ? 'Aucun membre classé pour l\'instant' : 'No ranked members yet'}
               </div>
             ) : (
@@ -184,25 +179,25 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
                 {approvedUsers.slice(0, 5).map((u, idx) => (
                   <div
                     key={u.username}
-                    className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#080C19] border border-slate-800/80 text-xs font-bold"
+                    className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#06141B] border border-[#253745] text-xs"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${
+                      <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0 ${
                         idx === 0 
-                          ? 'bg-amber-400 text-slate-950 shadow-[0_0_8px_rgba(251,191,36,0.5)]' 
+                          ? 'bg-[#CCD0CF] text-[#06141B]' 
                           : idx === 1 
-                          ? 'bg-slate-300 text-slate-950' 
+                          ? 'bg-[#4A5C6A] text-[#CCD0CF]' 
                           : idx === 2
-                          ? 'bg-amber-700 text-white'
-                          : 'bg-slate-800 text-slate-400'
+                          ? 'bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A]'
+                          : 'bg-[#11212D] text-[#9BA8AB]'
                       }`}>
                         {idx + 1}
                       </span>
-                      <span className="text-white truncate max-w-[130px]">
+                      <span className="text-[#CCD0CF] font-semibold truncate max-w-[140px]">
                         {u.username}
                       </span>
                     </div>
-                    <span className="font-mono font-black text-[#00E5FF] shrink-0">
+                    <span className="font-mono font-bold text-[#CCD0CF] shrink-0">
                       {u.points || 0} pts
                     </span>
                   </div>
@@ -211,38 +206,38 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
             )}
           </div>
 
-          <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-bold text-amber-400 group-hover:underline">
+          <div className="pt-3 mt-3 border-t border-[#253745] flex items-center justify-between text-xs font-semibold text-[#CCD0CF] group-hover:text-white transition-colors">
             <span>{t('tabLeaderboardShort')}</span>
-            <span className="font-mono text-slate-400 text-[10px]">{approvedUsers.length} {language === 'ar' ? 'أعضاء' : language === 'fr' ? 'membres' : 'members'}</span>
+            <span className="font-mono text-[#9BA8AB] text-[11px]">{approvedUsers.length} {language === 'ar' ? 'أعضاء' : language === 'fr' ? 'membres' : 'members'}</span>
           </div>
         </div>
 
-        {/* CARD 2B: AVAILABLE MATCHES TO PREDICT (JUST TIME LEFT AND TEAMS) */}
+        {/* CARD 2B: AVAILABLE MATCHES TO PREDICT */}
         <div 
           onClick={() => onNavigate('matches')}
-          className="bg-[#10172A] hover:bg-[#131E35] border border-slate-800 hover:border-[#00E5FF]/40 rounded-3xl p-4 sm:p-5 shadow-xl transition-all cursor-pointer flex flex-col justify-between group"
+          className="bg-[#11212D] border border-[#253745] hover:border-[#4A5C6A] rounded-2xl p-4 sm:p-5 cursor-pointer flex flex-col justify-between group transition-all duration-200"
         >
           <div className="space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#00E5FF]/15 border border-[#00E5FF]/30 flex items-center justify-center text-[#00E5FF] shrink-0">
+            <div className="flex items-center justify-between border-b border-[#253745] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#253745] border border-[#4A5C6A] flex items-center justify-center text-[#CCD0CF] shrink-0">
                   <Trophy className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-black text-white group-hover:text-[#00E5FF] transition-colors">
+                  <h2 className="text-sm font-bold text-[#CCD0CF] group-hover:text-white transition-colors">
                     {t('photoMatchesOnly')}
                   </h2>
-                  <span className="text-[10px] text-slate-400 block font-semibold">
+                  <span className="text-[11px] text-[#9BA8AB] block font-normal">
                     {t('justTimeLeftNotice')}
                   </span>
                 </div>
               </div>
-              <ChevronRight className={`w-4 h-4 text-slate-500 group-hover:text-[#00E5FF] group-hover:translate-x-0.5 transition ${isRtl ? 'rotate-180 group-hover:-translate-x-0.5' : ''}`} />
+              <ChevronRight className={`w-4 h-4 text-[#9BA8AB] group-hover:text-[#CCD0CF] transition-transform ${isRtl ? 'rotate-180' : ''}`} />
             </div>
 
-            {/* Matches List: Just teams and time left */}
+            {/* Matches List */}
             {openMatches.length === 0 ? (
-              <div className="text-center py-6 text-xs text-slate-400 font-bold">
+              <div className="text-center py-6 text-xs text-[#9BA8AB]">
                 {language === 'ar' ? 'لا توجد مباريات متاحة للتوقع حالياً' : language === 'fr' ? 'Aucun match ouvert actuellement' : 'No available matches currently'}
               </div>
             ) : (
@@ -250,16 +245,16 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
                 {openMatches.slice(0, 4).map((m) => (
                   <div
                     key={m.id}
-                    className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#080C19] border border-slate-800/80 text-xs font-bold gap-2"
+                    className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#06141B] border border-[#253745] text-xs gap-2"
                   >
-                    <div className="text-white truncate flex items-center gap-1.5 min-w-0">
+                    <div className="text-[#CCD0CF] font-semibold truncate flex items-center gap-1.5 min-w-0">
                       <span className="truncate">{getTeamEnglishName(m.homeTeam)}</span>
-                      <span className="text-[#00E5FF] font-black text-[10px] px-1 font-mono">VS</span>
+                      <span className="text-[#9BA8AB] font-normal text-[10px] px-0.5">vs</span>
                       <span className="truncate">{getTeamEnglishName(m.awayTeam)}</span>
                     </div>
 
-                    <div className="flex items-center gap-1 text-[10px] font-mono font-bold text-amber-400 shrink-0 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
-                      <Clock className="w-3 h-3" />
+                    <div className="flex items-center gap-1 text-[11px] font-mono font-medium text-[#CCD0CF] shrink-0 bg-[#253745] px-2 py-0.5 rounded border border-[#4A5C6A]">
+                      <Clock className="w-3 h-3 text-[#CCD0CF]" />
                       <span>{formatTimeRemaining(m.deadline)}</span>
                     </div>
                   </div>
@@ -268,50 +263,48 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
             )}
           </div>
 
-          <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-bold text-[#00E5FF] group-hover:underline">
+          <div className="pt-3 mt-3 border-t border-[#253745] flex items-center justify-between text-xs font-semibold text-[#CCD0CF] group-hover:text-white transition-colors">
             <span>{t('tabMatchesShort')}</span>
-            <span className="font-mono text-slate-400 text-[10px]">{openMatches.length} {language === 'ar' ? 'مباريات' : language === 'fr' ? 'matchs' : 'matches'}</span>
+            <span className="font-mono text-[#9BA8AB] text-[11px]">{openMatches.length} {language === 'ar' ? 'مباريات' : language === 'fr' ? 'matchs' : 'matches'}</span>
           </div>
         </div>
 
       </div>
 
       {/* ========================================================================= */}
-      {/* 3. LOWER ROW:                                                             */}
-      {/* Left: LATEST PREDICTION FOR EACH MEMBER (AFTER DEADLINE)                  */}
-      {/* Right: POINTS CALCULATING RULES IN BRIEF                                 */}
+      {/* 3. LOWER ROW: LATEST PREDICTIONS & RULES IN BRIEF                         */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         
-        {/* CARD 3A: LATEST PREDICTION FOR EACH MEMBER (AFTER DEADLINE) (Span 2 on md) */}
+        {/* CARD 3A: LATEST PREDICTIONS FOR EACH MEMBER (Span 2 on md) */}
         <div 
           onClick={() => onNavigate('members_predictions')}
-          className="md:col-span-2 bg-[#10172A] hover:bg-[#131E35] border border-slate-800 hover:border-[#00E5FF]/40 rounded-3xl p-4 sm:p-5 shadow-xl transition-all cursor-pointer flex flex-col justify-between group"
+          className="md:col-span-2 bg-[#11212D] border border-[#253745] hover:border-[#4A5C6A] rounded-2xl p-4 sm:p-5 cursor-pointer flex flex-col justify-between group transition-all duration-200"
         >
           <div className="space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-[#00E5FF] shrink-0">
+            <div className="flex items-center justify-between border-b border-[#253745] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#253745] border border-[#4A5C6A] flex items-center justify-center text-[#CCD0CF] shrink-0">
                   <Users className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-black text-white group-hover:text-[#00E5FF] transition-colors">
+                  <h2 className="text-sm font-bold text-[#CCD0CF] group-hover:text-white transition-colors">
                     {t('photoLatestPreds')}
                   </h2>
-                  <span className="text-[10px] text-slate-400 block font-semibold">
+                  <span className="text-[11px] text-[#9BA8AB] block font-normal">
                     {language === 'ar' ? 'تظهر التوقعات فور إغلاق مهلة كل مباراة' : language === 'fr' ? 'Visibles dès la clôture de chaque match' : 'Unlocked automatically after kickoff deadline'}
                   </span>
                 </div>
               </div>
-              <ChevronRight className={`w-4 h-4 text-slate-500 group-hover:text-[#00E5FF] group-hover:translate-x-0.5 transition ${isRtl ? 'rotate-180 group-hover:-translate-x-0.5' : ''}`} />
+              <ChevronRight className={`w-4 h-4 text-[#9BA8AB] group-hover:text-[#CCD0CF] transition-transform ${isRtl ? 'rotate-180' : ''}`} />
             </div>
 
             {memberLatestPreds.length === 0 ? (
-              <div className="text-center py-5 text-xs text-slate-400 space-y-1">
-                <p className="font-bold">
+              <div className="text-center py-6 text-xs text-[#9BA8AB] space-y-1">
+                <p className="font-semibold text-[#CCD0CF]">
                   {language === 'ar' ? 'باب التوقعات ما زال مفتوحاً لجميع المباريات' : language === 'fr' ? 'Les votes sont encore ouverts pour tous les matchs' : 'Deadlines have not passed yet'}
                 </p>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-[#9BA8AB]">
                   {language === 'ar' ? 'ستظهر توقعات الأعضاء هنا تلقائياً بعد صافرة البداية' : language === 'fr' ? 'Les pronostics apparaîtront ici après le coup d\'envoi' : 'Members\' predictions will appear here immediately after kickoff'}
                 </p>
               </div>
@@ -320,16 +313,16 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
                 {memberLatestPreds.map(({ pred, match }) => (
                   <div 
                     key={`${pred.username}-${pred.matchId}`}
-                    className="p-2.5 rounded-xl bg-[#080C19] border border-slate-800/80 flex items-center justify-between text-xs"
+                    className="p-2.5 rounded-xl bg-[#06141B] border border-[#253745] flex items-center justify-between text-xs"
                   >
                     <div className="min-w-0">
-                      <span className="font-black text-white block truncate">{pred.username}</span>
-                      <span className="text-[10px] text-slate-400 block truncate">
+                      <span className="font-semibold text-[#CCD0CF] block truncate">{pred.username}</span>
+                      <span className="text-[11px] text-[#9BA8AB] block truncate">
                         {getTeamEnglishName(match.homeTeam)} × {getTeamEnglishName(match.awayTeam)}
                       </span>
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="font-mono font-black text-[#00E5FF] bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800/60">
+                      <span className="font-mono font-bold text-[#CCD0CF] bg-[#253745] px-2 py-0.5 rounded border border-[#4A5C6A]">
                         {pred.homeScore} - {pred.awayScore}
                       </span>
                     </div>
@@ -339,7 +332,7 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
             )}
           </div>
 
-          <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-bold text-[#00E5FF] group-hover:underline">
+          <div className="pt-3 mt-3 border-t border-[#253745] flex items-center justify-between text-xs font-semibold text-[#CCD0CF] group-hover:text-white transition-colors">
             <span>{t('tabMembersPredictionsShort')}</span>
             <ChevronRight className={`w-3.5 h-3.5 ${isRtl ? 'rotate-180' : ''}`} />
           </div>
@@ -348,58 +341,58 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
         {/* CARD 3B: POINTS CALCULATING RULES IN BRIEF (Span 1 on md) */}
         <div 
           onClick={() => onNavigate('rules')}
-          className="bg-[#10172A] hover:bg-[#131E35] border border-slate-800 hover:border-[#00E5FF]/40 rounded-3xl p-4 sm:p-5 shadow-xl transition-all cursor-pointer flex flex-col justify-between group"
+          className="bg-[#11212D] border border-[#253745] hover:border-[#4A5C6A] rounded-2xl p-4 sm:p-5 cursor-pointer flex flex-col justify-between group transition-all duration-200"
         >
           <div className="space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#00E5FF]/15 border border-[#00E5FF]/30 flex items-center justify-center text-[#00E5FF] shrink-0">
-                  <Sparkles className="w-4 h-4" />
+            <div className="flex items-center justify-between border-b border-[#253745] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#253745] border border-[#4A5C6A] flex items-center justify-center text-[#CCD0CF] shrink-0">
+                  <FileText className="w-4 h-4" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-black text-white group-hover:text-[#00E5FF] transition-colors">
+                  <h2 className="text-sm font-bold text-[#CCD0CF] group-hover:text-white transition-colors">
                     {t('photoRulesBrief')}
                   </h2>
-                  <span className="text-[10px] font-mono text-emerald-400 font-bold block">
-                    5 + 3 + 1
+                  <span className="text-[11px] font-mono text-[#CCD0CF] font-semibold block">
+                    5 + 3 + 1 pts
                   </span>
                 </div>
               </div>
-              <ChevronRight className={`w-4 h-4 text-slate-500 group-hover:text-[#00E5FF] group-hover:translate-x-0.5 transition ${isRtl ? 'rotate-180 group-hover:-translate-x-0.5' : ''}`} />
+              <ChevronRight className={`w-4 h-4 text-[#9BA8AB] group-hover:text-[#CCD0CF] transition-transform ${isRtl ? 'rotate-180' : ''}`} />
             </div>
 
             {/* Brief Rules */}
             <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between p-2 rounded-xl bg-[#080C19] border border-slate-800/80">
-                <span className="font-bold text-slate-200">
+              <div className="flex items-center justify-between p-2 rounded-xl bg-[#06141B] border border-[#253745]">
+                <span className="font-medium text-[#CCD0CF]">
                   {language === 'ar' ? 'النتيجة الدقيقة' : language === 'fr' ? 'Score Exact' : 'Exact Score'}
                 </span>
-                <span className="font-mono font-black text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/60">
+                <span className="font-mono font-bold text-[#CCD0CF] bg-[#253745] px-2 py-0.5 rounded border border-[#4A5C6A]">
                   +5 pts
                 </span>
               </div>
 
-              <div className="flex items-center justify-between p-2 rounded-xl bg-[#080C19] border border-slate-800/80">
-                <span className="font-bold text-slate-200">
+              <div className="flex items-center justify-between p-2 rounded-xl bg-[#06141B] border border-[#253745]">
+                <span className="font-medium text-[#CCD0CF]">
                   {language === 'ar' ? 'رجل المباراة (MVP)' : language === 'fr' ? 'Homme du Match (MVP)' : 'Man of the Match'}
                 </span>
-                <span className="font-mono font-black text-[#00E5FF] bg-cyan-950/40 px-2 py-0.5 rounded border border-cyan-800/60">
+                <span className="font-mono font-bold text-[#CCD0CF] bg-[#253745] px-2 py-0.5 rounded border border-[#4A5C6A]">
                   +3 pts
                 </span>
               </div>
 
-              <div className="flex items-center justify-between p-2 rounded-xl bg-[#080C19] border border-slate-800/80">
-                <span className="font-bold text-slate-200">
+              <div className="flex items-center justify-between p-2 rounded-xl bg-[#06141B] border border-[#253745]">
+                <span className="font-medium text-[#CCD0CF]">
                   {language === 'ar' ? 'مسجل الهدف' : language === 'fr' ? 'Buteur' : 'Goalscorer'}
                 </span>
-                <span className="font-mono font-black text-amber-400 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-800/60">
+                <span className="font-mono font-bold text-[#CCD0CF] bg-[#253745] px-2 py-0.5 rounded border border-[#4A5C6A]">
                   +1 pt
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-bold text-[#00E5FF] group-hover:underline">
+          <div className="pt-3 mt-3 border-t border-[#253745] flex items-center justify-between text-xs font-semibold text-[#CCD0CF] group-hover:text-white transition-colors">
             <span>{t('tabRulesShort')}</span>
             <ChevronRight className={`w-3.5 h-3.5 ${isRtl ? 'rotate-180' : ''}`} />
           </div>
@@ -408,45 +401,45 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* 4. UEFA AND FIFA OFFICIAL LOGOS (LEADS TO THEIR OFFICIAL SITES)           */}
+      {/* 4. UEFA AND FIFA OFFICIAL SITES FOOTER BANNER                             */}
       {/* ========================================================================= */}
-      <div className="rounded-2xl bg-[#0A1122]/90 border border-slate-800 p-3 sm:p-4 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center text-white shrink-0">
-            <Sparkles className="w-4 h-4 text-[#00E5FF]" />
+      <div className="rounded-2xl bg-[#11212D] border border-[#253745] p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#253745] border border-[#4A5C6A] flex items-center justify-center text-[#CCD0CF] shrink-0">
+            <Sparkles className="w-4 h-4 text-[#CCD0CF]" />
           </div>
           <div className={`${isRtl ? 'text-right' : 'text-left'}`}>
-            <span className="text-xs font-black text-white block">
+            <span className="text-xs font-bold text-[#CCD0CF] block">
               {t('photoOfficialLogos')}
             </span>
-            <span className="text-[10px] text-slate-400 font-semibold block">
+            <span className="text-[11px] text-[#9BA8AB] font-normal block">
               {language === 'ar' ? 'روابط مباشرة إلى المواقع الرسمية للاتحادات الكروية' : language === 'fr' ? 'Liens officiels vers les fédérations de football' : 'Direct official links to UEFA & FIFA'}
             </span>
           </div>
         </div>
 
         {/* Action badges for UEFA and FIFA */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           <a
             href="https://www.uefa.com/uefachampionsleague/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#041E34] hover:bg-[#062846] border border-[#00E5FF]/40 text-[#00E5FF] text-xs font-black tracking-wider transition active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#253745] hover:bg-[#4A5C6A] border border-[#253745] text-[#CCD0CF] hover:text-white text-xs font-semibold transition-all duration-200 active:scale-[0.98]"
             title={t('visitUefa')}
           >
             <span>UEFA.com</span>
-            <ExternalLink className="w-3 h-3" />
+            <ExternalLink className="w-3 h-3 text-[#9BA8AB]" />
           </a>
 
           <a
             href="https://www.fifa.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#06152B] hover:bg-[#0B1E3B] border border-blue-500/40 text-blue-300 text-xs font-black tracking-wider transition active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#253745] hover:bg-[#4A5C6A] border border-[#253745] text-[#CCD0CF] hover:text-white text-xs font-semibold transition-all duration-200 active:scale-[0.98]"
             title={t('visitFifa')}
           >
             <span>FIFA.com</span>
-            <ExternalLink className="w-3 h-3" />
+            <ExternalLink className="w-3 h-3 text-[#9BA8AB]" />
           </a>
         </div>
       </div>

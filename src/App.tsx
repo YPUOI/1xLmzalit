@@ -8,7 +8,8 @@ import {
   Lock, 
   ShieldAlert, 
   Award,
-  Sparkles
+  Sparkles,
+  FileText
 } from 'lucide-react';
 import { Team, Match, Prediction, AppUser } from './types';
 import { DEFAULT_TEAMS, INITIAL_MATCHES } from './data/defaultData';
@@ -654,7 +655,7 @@ export default function App() {
 
   return (
     <div 
-      className="min-h-screen w-full max-w-full overflow-x-hidden ucl-theme-bg relative text-slate-100 flex flex-col justify-between selection:bg-cyan-500/30 selection:text-cyan-200"
+      className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#06141B] relative text-[#CCD0CF] flex flex-col justify-between selection:bg-[#4A5C6A] selection:text-[#CCD0CF]"
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       {/* Eye-Friendly Glowing UEFA Champions League Stars & Atmosphere Background */}
@@ -677,96 +678,96 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-2.5 sm:px-4 mt-2.5 sm:mt-5 pb-28 md:pb-8 w-full overflow-x-hidden">
           
           {/* Desktop & Tablet Tabs Navigation (hidden on mobile) */}
-          <div className="hidden md:flex border-b border-slate-800/80 mb-6 gap-2 overflow-x-auto pb-1 select-none">
+          <div className="hidden md:flex border-b border-[#253745] mb-6 gap-1.5 overflow-x-auto pb-1 select-none">
             {/* 0. Home / الرئيسية (Main Page) */}
             <button
               onClick={() => navigateToTab('home')}
-              className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
+              className={`py-2.5 px-4 font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 shrink-0 text-xs sm:text-sm cursor-pointer ${
                 activeTab === 'home'
-                  ? 'border-[#00E5FF] text-[#00E5FF] bg-[#00E5FF]/15 shadow-[0_0_15px_rgba(0,229,255,0.2)]'
-                  : 'border-transparent text-[#94A3B8] hover:text-[#E2E8F0]'
+                  ? 'text-[#CCD0CF] bg-[#4A5C6A] border border-[#4A5C6A]'
+                  : 'text-[#9BA8AB] hover:text-[#CCD0CF] hover:bg-[#253745]'
               }`}
             >
-              <Home className="w-4 h-4 text-[#00E5FF]" />
+              <Home className="w-4 h-4 text-[#CCD0CF]" />
               <span>{t('tabHome')}</span>
             </button>
 
             {/* 1. Matches and Predictions */}
             <button
               onClick={() => navigateToTab('matches')}
-              className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
+              className={`py-2.5 px-4 font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 shrink-0 text-xs sm:text-sm cursor-pointer ${
                 activeTab === 'matches'
-                  ? 'border-[#00E5FF] text-[#00E5FF] bg-[#00E5FF]/15 shadow-[0_0_15px_rgba(0,229,255,0.2)]'
-                  : 'border-transparent text-[#94A3B8] hover:text-[#E2E8F0]'
+                  ? 'text-[#CCD0CF] bg-[#4A5C6A] border border-[#4A5C6A]'
+                  : 'text-[#9BA8AB] hover:text-[#CCD0CF] hover:bg-[#253745]'
               }`}
             >
-              <Trophy className="w-4 h-4 text-yellow-400" />
+              <Trophy className="w-4 h-4 text-[#CCD0CF]" />
               <span>{t('tabMatches')}</span>
             </button>
 
             {/* 2. Members Predictions */}
             <button
               onClick={() => navigateToTab('members_predictions')}
-              className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
+              className={`py-2.5 px-4 font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 shrink-0 text-xs sm:text-sm cursor-pointer ${
                 activeTab === 'members_predictions'
-                  ? 'border-[#00E5FF] text-[#00E5FF] bg-[#00E5FF]/15 shadow-[0_0_15px_rgba(0,229,255,0.2)]'
-                  : 'border-transparent text-[#94A3B8] hover:text-[#E2E8F0]'
+                  ? 'text-[#CCD0CF] bg-[#4A5C6A] border border-[#4A5C6A]'
+                  : 'text-[#9BA8AB] hover:text-[#CCD0CF] hover:bg-[#253745]'
               }`}
             >
-              <Users className="w-4 h-4 text-[#00E5FF]" />
+              <Users className="w-4 h-4 text-[#CCD0CF]" />
               <span>{t('tabMembersPredictions')}</span>
             </button>
 
             {/* 3. Leaderboard */}
             <button
               onClick={() => navigateToTab('leaderboard')}
-              className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
+              className={`py-2.5 px-4 font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 shrink-0 text-xs sm:text-sm cursor-pointer ${
                 activeTab === 'leaderboard'
-                  ? 'border-[#00E5FF] text-[#00E5FF] bg-[#00E5FF]/15 shadow-[0_0_15px_rgba(0,229,255,0.2)]'
-                  : 'border-transparent text-[#94A3B8] hover:text-[#E2E8F0]'
+                  ? 'text-[#CCD0CF] bg-[#4A5C6A] border border-[#4A5C6A]'
+                  : 'text-[#9BA8AB] hover:text-[#CCD0CF] hover:bg-[#253745]'
               }`}
             >
-              <Award className="w-4 h-4 text-amber-400" />
+              <Award className="w-4 h-4 text-[#CCD0CF]" />
               <span>{t('tabLeaderboard')}</span>
             </button>
 
             {/* 4. Rules */}
             <button
               onClick={() => navigateToTab('rules')}
-              className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
+              className={`py-2.5 px-4 font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 shrink-0 text-xs sm:text-sm cursor-pointer ${
                 activeTab === 'rules'
-                  ? 'border-[#00E5FF] text-[#00E5FF] bg-[#00E5FF]/15 shadow-[0_0_15px_rgba(0,229,255,0.2)]'
-                  : 'border-transparent text-[#94A3B8] hover:text-[#E2E8F0]'
+                  ? 'text-[#CCD0CF] bg-[#4A5C6A] border border-[#4A5C6A]'
+                  : 'text-[#9BA8AB] hover:text-[#CCD0CF] hover:bg-[#253745]'
               }`}
             >
-              <Sparkles className="w-4 h-4 text-[#00E5FF]" />
+              <FileText className="w-4 h-4 text-[#CCD0CF]" />
               <span>{t('tabRules')}</span>
             </button>
 
             {currentUser?.role === 'admin' && (
               <button
                 onClick={() => navigateToTab('admin')}
-                className={`py-3 px-5 font-bold rounded-t-2xl border-b-2 flex items-center gap-2.5 transition shrink-0 text-xs sm:text-sm cursor-pointer ${
+                className={`py-2.5 px-4 font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 shrink-0 text-xs sm:text-sm cursor-pointer ${
                   activeTab === 'admin'
-                    ? 'border-rose-500 text-rose-400 bg-rose-950/30'
-                    : 'border-transparent text-rose-400/80 hover:text-rose-300'
+                    ? 'text-[#CCD0CF] bg-[#4A5C6A] border border-[#4A5C6A]'
+                    : 'text-[#9BA8AB] hover:text-[#CCD0CF] hover:bg-[#253745]'
                 }`}
               >
-                <ShieldAlert className="w-4 h-4 text-rose-400" />
+                <ShieldAlert className="w-4 h-4 text-[#CCD0CF]" />
                 <span>{t('tabAdmin')}</span>
               </button>
             )}
           </div>
 
           {/* Mobile Swipe Navigation Hint & Interactive Dots Bar */}
-          <div className="md:hidden mb-4 bg-[#080C19]/80 border border-slate-800/80 rounded-2xl p-2.5 flex items-center justify-between text-xs text-slate-300 shadow-inner select-none backdrop-blur-sm">
+          <div className="md:hidden mb-4 bg-[#11212D] border border-[#253745] rounded-xl p-2.5 flex items-center justify-between text-xs text-[#CCD0CF] shadow-lg select-none backdrop-blur-md">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-xl bg-[#00E5FF]/15 border border-[#00E5FF]/30 flex items-center justify-center text-[#00E5FF] shrink-0">
-                <Sparkles className="w-4 h-4 animate-pulse" />
+              <div className="w-6 h-6 rounded-lg bg-[#06141B] border border-[#253745] flex items-center justify-center text-[#CCD0CF] shrink-0">
+                <Sparkles className="w-3.5 h-3.5" />
               </div>
               <div className="text-[11px] leading-tight truncate">
-                <span className="font-bold text-white block">{t('swipeHint')}</span>
-                <span className="text-slate-400 text-[10px]">{t('swipeSubhint')}</span>
+                <span className="font-semibold text-[#CCD0CF] block">{t('swipeHint')}</span>
+                <span className="text-[#9BA8AB] text-[10px]">{t('swipeSubhint')}</span>
               </div>
             </div>
             <div className="flex items-center gap-1.5 pl-1 shrink-0" dir="ltr">
@@ -781,15 +782,13 @@ export default function App() {
                       const currentIdx = tabs.indexOf(activeTab);
                       const targetIdx = tabs.indexOf(tab);
                       if (currentIdx !== -1 && targetIdx !== -1 && currentIdx !== targetIdx) {
-                        // In dir="ltr", targetIdx > currentIdx is physically situated to the RIGHT -> enters from right (+1)
-                        // targetIdx < currentIdx is physically situated to the LEFT -> enters from left (-1)
                         navigateToTab(tab, targetIdx > currentIdx ? 1 : -1);
                       }
                     }}
-                    className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
                       isSelected
-                        ? 'w-6 bg-[#00E5FF] shadow-[0_0_8px_rgba(0,229,255,0.5)]'
-                        : 'w-2 bg-slate-700 hover:bg-slate-600'
+                        ? 'w-5 bg-[#CCD0CF]'
+                        : 'w-1.5 bg-[#253745] hover:bg-[#4A5C6A]'
                     }`}
                     title={tab}
                     aria-label={tab}
@@ -895,49 +894,49 @@ export default function App() {
 
         {/* Mobile Bottom Navigation Bar (Visible only on phone/mobile screens - matches photo construction) */}
         <nav 
-          className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#080C19]/95 border-t border-slate-800/80 backdrop-blur-2xl px-1.5 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom"
+          className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#11212D] border-t border-[#253745] backdrop-blur-xl px-1.5 py-1.5 flex items-center justify-around shadow-2xl safe-area-bottom select-none"
           dir="ltr"
         >
           {/* 1. [rules] (Far Left in sketch) */}
           <button
             onClick={() => navigateToTab('rules')}
-            className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl transition cursor-pointer min-w-[52px] min-h-[46px] ${
+            className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-xl transition-all duration-200 cursor-pointer min-w-[50px] min-h-[44px] ${
               activeTab === 'rules'
-                ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
-                : 'text-[#94A3B8] font-bold hover:text-white'
+                ? 'text-[#CCD0CF] font-bold bg-[#4A5C6A] border border-[#4A5C6A]'
+                : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
             }`}
           >
-            <Sparkles className="w-5 h-5 text-[#00E5FF]" />
-            <span className="text-[9px] truncate max-w-[58px]">{t('tabRulesShort')}</span>
+            <FileText className="w-4 h-4 text-[#CCD0CF]" />
+            <span className="text-[9px] truncate max-w-[56px] font-medium">{t('tabRulesShort')}</span>
           </button>
 
           {/* 2. [members predictions] (Second in sketch) */}
           <button
             onClick={() => navigateToTab('members_predictions')}
-            className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl transition cursor-pointer min-w-[52px] min-h-[46px] ${
+            className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-xl transition-all duration-200 cursor-pointer min-w-[50px] min-h-[44px] ${
               activeTab === 'members_predictions'
-                ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
-                : 'text-[#94A3B8] font-bold hover:text-white'
+                ? 'text-[#CCD0CF] font-bold bg-[#4A5C6A] border border-[#4A5C6A]'
+                : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
             }`}
           >
-            <Users className="w-5 h-5 text-[#00E5FF]" />
-            <span className="text-[9px] truncate max-w-[62px]">{t('tabMembersPredictionsShort')}</span>
+            <Users className="w-4 h-4 text-[#CCD0CF]" />
+            <span className="text-[9px] truncate max-w-[60px] font-medium">{t('tabMembersPredictionsShort')}</span>
           </button>
 
           {/* 3. (( HOME )) Elevated Circular Center Button (Center in sketch) */}
           <button
             onClick={() => navigateToTab('home')}
-            className="flex flex-col items-center justify-center relative -top-3.5 cursor-pointer group select-none min-w-[58px]"
+            className="flex flex-col items-center justify-center relative -top-3 cursor-pointer group select-none min-w-[56px]"
             title={t('tabHomeShort')}
           >
-            <div className={`w-13 h-13 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl border-2 ${
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-lg border-2 ${
               activeTab === 'home'
-                ? 'bg-gradient-to-tr from-cyan-500 to-[#00E5FF] text-slate-950 border-white shadow-[0_0_22px_rgba(0,229,255,0.65)] scale-105 ring-4 ring-[#080C19]'
-                : 'bg-slate-900/95 text-cyan-400 border-cyan-500/40 hover:border-[#00E5FF] hover:text-white shadow-cyan-950/40 ring-4 ring-[#080C19]'
+                ? 'bg-[#CCD0CF] text-[#06141B] border-white scale-105 ring-4 ring-[#11212D]'
+                : 'bg-[#253745] text-[#CCD0CF] border-[#4A5C6A] hover:border-[#CCD0CF] ring-4 ring-[#11212D]'
             }`}>
-              <Home className={`w-6 h-6 ${activeTab === 'home' ? 'text-slate-950 stroke-[2.5]' : 'text-[#00E5FF]'}`} />
+              <Home className={`w-5 h-5 ${activeTab === 'home' ? 'text-[#06141B] stroke-[2.5]' : 'text-[#CCD0CF]'}`} />
             </div>
-            <span className={`text-[9px] font-black mt-1 ${activeTab === 'home' ? 'text-[#00E5FF]' : 'text-[#94A3B8]'}`}>
+            <span className={`text-[9px] font-bold mt-1 ${activeTab === 'home' ? 'text-[#CCD0CF]' : 'text-[#9BA8AB]'}`}>
               {t('tabHomeShort')}
             </span>
           </button>
@@ -945,41 +944,41 @@ export default function App() {
           {/* 4. [matches available] (Fourth in sketch) */}
           <button
             onClick={() => navigateToTab('matches')}
-            className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl transition cursor-pointer min-w-[52px] min-h-[46px] ${
+            className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-xl transition-all duration-200 cursor-pointer min-w-[50px] min-h-[44px] ${
               activeTab === 'matches'
-                ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
-                : 'text-[#94A3B8] font-bold hover:text-white'
+                ? 'text-[#CCD0CF] font-bold bg-[#4A5C6A] border border-[#4A5C6A]'
+                : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
             }`}
           >
-            <Trophy className="w-5 h-5 text-yellow-400" />
-            <span className="text-[9px] truncate max-w-[58px]">{t('tabMatchesShort')}</span>
+            <Trophy className="w-4 h-4 text-[#CCD0CF]" />
+            <span className="text-[9px] truncate max-w-[56px] font-medium">{t('tabMatchesShort')}</span>
           </button>
 
           {/* 5. [leader board] (Far Right in sketch) */}
           <button
             onClick={() => navigateToTab('leaderboard')}
-            className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl transition cursor-pointer min-w-[52px] min-h-[46px] ${
+            className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-xl transition-all duration-200 cursor-pointer min-w-[50px] min-h-[44px] ${
               activeTab === 'leaderboard'
-                ? 'text-[#00E5FF] font-black bg-[#00E5FF]/15 border border-[#00E5FF]/30'
-                : 'text-[#94A3B8] font-bold hover:text-white'
+                ? 'text-[#CCD0CF] font-bold bg-[#4A5C6A] border border-[#4A5C6A]'
+                : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
             }`}
           >
-            <Award className="w-5 h-5 text-amber-400" />
-            <span className="text-[9px] truncate max-w-[58px]">{t('tabLeaderboardShort')}</span>
+            <Award className="w-4 h-4 text-[#CCD0CF]" />
+            <span className="text-[9px] truncate max-w-[56px] font-medium">{t('tabLeaderboardShort')}</span>
           </button>
 
           {/* Discreet Admin icon if currentUser is admin */}
           {currentUser?.role === 'admin' && (
             <button
               onClick={() => navigateToTab('admin')}
-              className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl transition cursor-pointer min-w-[46px] min-h-[46px] ${
+              className={`flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-xl transition-all duration-200 cursor-pointer min-w-[44px] min-h-[44px] ${
                 activeTab === 'admin'
-                  ? 'text-rose-400 font-black bg-rose-500/20 border border-rose-500/30'
-                  : 'text-slate-500 font-bold hover:text-rose-300'
+                  ? 'text-[#CCD0CF] font-bold bg-[#4A5C6A] border border-[#4A5C6A]'
+                  : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
               }`}
             >
-              <ShieldAlert className="w-4 h-4 text-rose-400" />
-              <span className="text-[8px]">{t('tabAdminShort')}</span>
+              <ShieldAlert className="w-3.5 h-3.5 text-[#CCD0CF]" />
+              <span className="text-[8px] font-medium">{t('tabAdminShort')}</span>
             </button>
           )}
         </nav>
@@ -1044,7 +1043,7 @@ export default function App() {
       />
 
         {/* Footer */}
-        <footer className="mt-12 py-6 border-t border-slate-800/80 text-center text-xs text-slate-500">
+        <footer className="mt-12 py-6 border-t border-[#253745] text-center text-xs text-[#9BA8AB]">
           <p>{t('footerCopyright')}</p>
         </footer>
       </div>

@@ -853,16 +853,16 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   if (!isVerifiedAdmin) {
     return (
       <div 
-        className="max-w-md mx-auto my-6 sm:my-10 ucl-card p-6 sm:p-8 rounded-3xl border border-rose-500/40 ucl-gold-glow text-center shadow-2xl"
+        className="max-w-md mx-auto my-6 sm:my-10 bg-[#11212D] p-6 sm:p-7 rounded-2xl border border-[#253745] text-center shadow-2xl"
         dir={isRtl ? 'rtl' : 'ltr'}
       >
-        <div className="w-16 h-16 rounded-2xl bg-rose-950/80 border border-rose-500/40 text-rose-400 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-rose-950/50">
-          <ShieldAlert className="w-8 h-8" />
+        <div className="w-12 h-12 rounded-xl bg-[#06141B] border border-[#253745] text-[#CCD0CF] flex items-center justify-center mx-auto mb-3">
+          <ShieldAlert className="w-6 h-6 text-[#CCD0CF]" />
         </div>
-        <h2 className="text-xl sm:text-2xl font-black text-white mb-2">
+        <h2 className="text-lg sm:text-xl font-bold text-[#CCD0CF] mb-1.5">
           {language === 'fr' ? 'Accès Administrateur Sécurisé' : language === 'en' ? 'Protected Admin Portal' : 'لوحة الإدارة محمية'}
         </h2>
-        <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+        <p className="text-xs text-[#9BA8AB] mb-5 leading-relaxed">
           {language === 'fr'
             ? 'L\'accès aux paramètres et à la gestion du système requiert la saisie du code secret administrateur.'
             : language === 'en'
@@ -871,15 +871,15 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
         </p>
 
         {adminGateError && (
-          <div className="mb-4 p-3 rounded-2xl bg-rose-950/90 border border-rose-500/50 text-rose-200 text-xs font-bold leading-relaxed">
+          <div className="mb-4 p-3 rounded-xl bg-[#253745] border border-rose-500/40 text-rose-200 text-xs font-semibold leading-relaxed">
             {adminGateError}
           </div>
         )}
 
         <form onSubmit={handleAdminGateSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-rose-400 mb-2 flex items-center gap-1.5">
-              <KeyRound className="w-3.5 h-3.5" />
+            <label className="block text-xs font-semibold text-[#CCD0CF] mb-1.5 flex items-center gap-1.5">
+              <KeyRound className="w-3.5 h-3.5 text-[#9BA8AB]" />
               <span>
                 {language === 'fr' 
                   ? 'Code secret administrateur (Admin Code)' 
@@ -896,14 +896,14 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 onChange={(e) => setAdminGatePasscode(e.target.value)}
                 placeholder="••••••••"
                 autoFocus
-                className="w-full bg-slate-900 border border-rose-500/60 rounded-2xl p-3.5 text-center text-white text-base tracking-widest outline-none focus:border-rose-400 min-h-[48px] placeholder:text-slate-600 placeholder:tracking-normal force-ltr font-mono"
+                className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-center text-[#CCD0CF] text-base tracking-widest outline-none focus:border-[#4A5C6A] min-h-[44px] placeholder:text-[#9BA8AB]/40 placeholder:tracking-normal force-ltr font-mono transition-all duration-200"
               />
             </div>
           </div>
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-black py-3.5 rounded-2xl transition shadow-lg text-sm cursor-pointer min-h-[48px] flex items-center justify-center gap-2 active:scale-[0.99]"
+            className="w-full bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold py-3 rounded-xl transition-all duration-200 text-xs sm:text-sm cursor-pointer min-h-[44px] flex items-center justify-center gap-2 active:scale-[0.98] shadow"
           >
             <Lock className="w-4 h-4" />
             <span>
@@ -918,12 +918,12 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   return (
     <div className="space-y-6" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Top Organization Bar: Expand / Collapse All */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 bg-slate-900/70 rounded-2xl border border-slate-800">
-        <div className="text-xs text-slate-300">
-          <span className="font-black text-white ml-1.5 mr-1.5">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 sm:p-4 bg-[#11212D] rounded-2xl border border-[#253745] shadow-xl">
+        <div className="text-xs text-[#CCD0CF]">
+          <span className="font-bold text-[#CCD0CF] ml-1 mr-1">
             {language === 'fr' ? 'Panneau de Contrôle :' : language === 'en' ? 'Admin Control Center:' : 'لوحة تحكم الإدارة:'}
           </span>
-          <span className="text-slate-400">
+          <span className="text-[#9BA8AB]">
             {language === 'fr' 
               ? 'Cliquez sur une section pour la déplier et modifier son contenu.' 
               : language === 'en' 
@@ -935,45 +935,45 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           <button
             type="button"
             onClick={expandAllSections}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer border border-slate-700 hover:border-slate-600 flex items-center gap-1.5 active:scale-95"
+            className="px-3 py-1.5 rounded-xl bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] text-xs font-semibold transition-all duration-200 cursor-pointer border border-[#253745] flex items-center gap-1.5 active:scale-95"
           >
-            <ChevronDown className="w-3.5 h-3.5 text-cyan-400" />
+            <ChevronDown className="w-3.5 h-3.5 text-[#CCD0CF]" />
             <span>{t('expandAll')}</span>
           </button>
           <button
             type="button"
             onClick={collapseAllSections}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition cursor-pointer border border-slate-700 hover:border-slate-600 flex items-center gap-1.5 active:scale-95"
+            className="px-3 py-1.5 rounded-xl bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] text-xs font-semibold transition-all duration-200 cursor-pointer border border-[#253745] flex items-center gap-1.5 active:scale-95"
           >
-            <ChevronUp className="w-3.5 h-3.5 text-amber-400" />
+            <ChevronUp className="w-3.5 h-3.5 text-[#CCD0CF]" />
             <span>{t('collapseAll')}</span>
           </button>
         </div>
       </div>
 
       {/* 1. Friends Access Password & Biometric Settings Card */}
-      <div className="ucl-card rounded-3xl border border-yellow-500/30 overflow-hidden transition-all duration-200">
+      <div className="ucl-card rounded-2xl border border-[#253745] bg-[#11212D] overflow-hidden transition-all duration-200 shadow-xl">
         <button
           type="button"
           onClick={() => toggleSection('security')}
-          className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none ${
+          className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-[#253745]/40 transition-all duration-200 cursor-pointer select-none ${
             isRtl ? 'text-right' : 'text-left'
           }`}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-400 shrink-0">
-              <KeyRound className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-[#06141B] border border-[#253745] flex items-center justify-center text-[#CCD0CF] shrink-0">
+              <KeyRound className="w-5 h-5 text-[#CCD0CF]" />
             </div>
             <div className={`min-w-0 ${isRtl ? 'text-right' : 'text-left'}`}>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base sm:text-lg font-black text-yellow-400">
+                <h3 className="text-base sm:text-lg font-bold text-[#CCD0CF]">
                   {language === 'fr' 
                     ? 'Paramètres du mot de passe amis et sécurité' 
                     : language === 'en' 
                     ? 'Friends Access Password & Security Settings' 
                     : 'إعدادات كلمة مرور الأصدقاء والحماية'}
                 </h3>
-                <span className="text-[10px] text-cyan-300 font-bold bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800 font-mono" dir="ltr">
+                <span className="text-[10px] text-[#CCD0CF] font-bold bg-[#253745] px-2 py-0.5 rounded border border-[#4A5C6A] font-mono" dir="ltr">
                   {language === 'fr' ? 'Actuel : ' : language === 'en' ? 'Current: ' : 'الحالية: '}{securityConfig.friendPassword}
                 </span>
                 {securityConfig.biometricEnrolled && (
@@ -982,7 +982,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+              <p className="text-xs text-[#9BA8AB] mt-0.5 truncate hidden sm:block">
                 {language === 'fr'
                   ? 'Modifiez ou consultez le mot de passe requis pour que vos amis accèdent à la plateforme.'
                   : language === 'en'
@@ -993,20 +993,20 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-slate-400 font-bold hidden md:inline">
+            <span className="text-xs text-[#9BA8AB] font-semibold hidden md:inline">
               {expandedSections.security 
                 ? (language === 'fr' ? 'Masquer' : language === 'en' ? 'Hide' : 'إخفاء') 
                 : (language === 'fr' ? 'Voir détails' : language === 'en' ? 'Show details' : 'عرض التفاصيل')}
             </span>
-            <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.security ? 'rotate-180 bg-yellow-500/20 text-yellow-300 border-yellow-500/40' : 'hover:border-yellow-400/50'}`}>
+            <div className={`w-8 h-8 rounded-xl bg-[#253745] border border-[#253745] flex items-center justify-center text-[#CCD0CF] transition-transform duration-200 ${expandedSections.security ? 'rotate-180 bg-[#4A5C6A] text-[#CCD0CF] border-[#4A5C6A]' : 'hover:border-[#4A5C6A]'}`}>
               <ChevronDown className="w-4 h-4" />
             </div>
           </div>
         </button>
 
         {expandedSections.security && (
-          <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1">
-            <p className="text-xs text-slate-400 my-4 pb-3 border-b border-slate-800 sm:hidden">
+          <div className="p-5 sm:p-6 pt-0 border-t border-[#253745] mt-1">
+            <p className="text-xs text-[#9BA8AB] my-4 pb-3 border-b border-[#253745] sm:hidden">
               {language === 'fr'
                 ? 'Modifiez ou consultez le mot de passe requis pour que vos amis accèdent à la plateforme.'
                 : language === 'en'
@@ -1023,10 +1023,10 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
             <form onSubmit={handleSaveSecurity} className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-slate-300">
+                  <label className="block text-xs font-semibold text-[#CCD0CF]">
                     {language === 'fr' ? 'Modifier le mot de passe amis' : language === 'en' ? 'Edit Friends Passcode' : 'تعديل كلمة مرور الأصدقاء'}
                   </label>
-                  <span className="text-[10px] text-cyan-400 font-bold bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800 font-mono" dir="ltr">
+                  <span className="text-[10px] text-[#CCD0CF] font-bold bg-[#253745] px-2 py-0.5 rounded border border-[#4A5C6A] font-mono" dir="ltr">
                     {securityConfig.friendPassword}
                   </span>
                 </div>
@@ -1036,7 +1036,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     dir="ltr"
                     value={newFriendPassword}
                     onChange={(e) => setNewFriendPassword(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-xs text-yellow-300 font-mono font-black outline-none focus:border-yellow-400 force-ltr text-left"
+                    className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-xs text-[#CCD0CF] font-mono font-bold outline-none focus:border-[#4A5C6A] force-ltr text-left transition-all duration-200"
                     placeholder={language === 'fr' ? 'Nouveau mot de passe...' : language === 'en' ? 'New passcode...' : 'أدخل كلمة المرور الجديدة...'}
                   />
                 </div>
@@ -1046,7 +1046,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 <button
                   type="submit"
                   disabled={isSavingSecurity}
-                  className="w-full bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-slate-950 font-black text-xs py-3 px-4 rounded-xl transition cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full bg-[#CCD0CF] hover:bg-white disabled:opacity-50 text-[#06141B] font-bold text-xs py-3 px-4 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 active:scale-[0.98]"
                 >
                   {isSavingSecurity ? (
                     <>
@@ -1062,19 +1062,19 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 </button>
               </div>
 
-              <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+              <div className="p-3 bg-[#06141B] rounded-xl border border-[#253745] flex items-center justify-between text-xs">
                 <div>
-                  <span className="font-bold text-white block">
+                  <span className="font-bold text-[#CCD0CF] block">
                     {language === 'fr' ? 'Empreinte biométrique :' : language === 'en' ? 'Biometrics Status:' : 'حالة البصمة البيومترية:'}
                   </span>
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[11px] text-[#9BA8AB]">
                     {securityConfig.biometricEnrolled 
                       ? (language === 'fr' ? 'Active sur cet appareil' : language === 'en' ? 'Active on this device' : 'مفعلة على هذا الجهاز') 
                       : (language === 'fr' ? 'Non configurée' : language === 'en' ? 'Not configured yet' : 'غير مفعلة بعد')}
                   </span>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                  securityConfig.biometricEnrolled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                  securityConfig.biometricEnrolled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-[#253745] text-[#9BA8AB]'
                 }`}>
                   {securityConfig.biometricEnrolled 
                     ? (language === 'fr' ? 'Active' : language === 'en' ? 'Active' : 'نشطة') 
@@ -1087,21 +1087,21 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       </div>
 
       {/* 2. User Approval & Membership Control Card */}
-      <div className="ucl-card rounded-3xl border border-yellow-500/20 overflow-hidden transition-all duration-200">
+      <div className="ucl-card rounded-2xl border border-[#253745] bg-[#11212D] overflow-hidden transition-all duration-200 shadow-xl">
         <button
           type="button"
           onClick={() => toggleSection('users')}
-          className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none ${
+          className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-[#253745]/40 transition-all duration-200 cursor-pointer select-none ${
             isRtl ? 'text-right' : 'text-left'
           }`}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-yellow-400 shrink-0">
-              <UserCheck className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-[#06141B] border border-[#253745] flex items-center justify-center text-[#CCD0CF] shrink-0">
+              <UserCheck className="w-5 h-5 text-[#CCD0CF]" />
             </div>
             <div className={`min-w-0 ${isRtl ? 'text-right' : 'text-left'}`}>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base sm:text-lg font-black text-yellow-400">
+                <h3 className="text-base sm:text-lg font-bold text-[#CCD0CF]">
                   {language === 'fr' 
                     ? 'Gestion des demandes d\'adhésion et membres' 
                     : language === 'en' 
@@ -1109,19 +1109,19 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     : 'إدارة طلبات الانضمام والمستخدمين'}
                 </h3>
                 {pendingUsers.length > 0 ? (
-                  <span className="text-[10px] text-amber-300 font-bold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/40 animate-pulse">
+                  <span className="text-[10px] text-amber-300 font-bold bg-[#253745] px-2 py-0.5 rounded border border-[#4A5C6A] animate-pulse">
                     {language === 'fr' ? `En attente (${pendingUsers.length})` : language === 'en' ? `Pending (${pendingUsers.length})` : `طلبات معلقة (${pendingUsers.length})`}
                   </span>
                 ) : (
-                  <span className="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                  <span className="text-[10px] text-[#9BA8AB] bg-[#253745] px-2 py-0.5 rounded border border-[#253745]">
                     {language === 'fr' ? 'Aucune demande' : language === 'en' ? 'No pending' : 'لا طلبات معلقة'}
                   </span>
                 )}
-                <span className="text-[10px] text-emerald-300 bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-800/60">
+                <span className="text-[10px] text-[#CCD0CF] bg-[#253745] px-2 py-0.5 rounded border border-[#4A5C6A]">
                   {language === 'fr' ? `Approuvés (${approvedUsers.length})` : language === 'en' ? `Approved (${approvedUsers.length})` : `المقبولون (${approvedUsers.length})`}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+              <p className="text-xs text-[#9BA8AB] mt-0.5 truncate hidden sm:block">
                 {language === 'fr'
                   ? 'Approuvez ou rejetez les nouveaux membres avant qu\'ils puissent participer.'
                   : language === 'en'
@@ -1132,20 +1132,20 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-slate-400 font-bold hidden md:inline">
+            <span className="text-xs text-[#9BA8AB] font-semibold hidden md:inline">
               {expandedSections.users 
                 ? (language === 'fr' ? 'Masquer' : language === 'en' ? 'Hide' : 'إخفاء') 
                 : (language === 'fr' ? 'Voir détails' : language === 'en' ? 'Show details' : 'عرض التفاصيل')}
             </span>
-            <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.users ? 'rotate-180 bg-yellow-500/20 text-yellow-300 border-yellow-500/40' : 'hover:border-yellow-400/50'}`}>
+            <div className={`w-8 h-8 rounded-xl bg-[#253745] border border-[#253745] flex items-center justify-center text-[#CCD0CF] transition-transform duration-200 ${expandedSections.users ? 'rotate-180 bg-[#4A5C6A] text-[#CCD0CF] border-[#4A5C6A]' : 'hover:border-[#4A5C6A]'}`}>
               <ChevronDown className="w-4 h-4" />
             </div>
           </div>
         </button>
 
         {expandedSections.users && (
-          <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1">
-            <p className="text-xs text-slate-400 my-4 pb-3 border-b border-slate-800 sm:hidden">
+          <div className="p-5 sm:p-6 pt-0 border-t border-[#253745] mt-1">
+            <p className="text-xs text-[#9BA8AB] my-4 pb-3 border-b border-[#253745] sm:hidden">
               {language === 'fr'
                 ? 'Approuvez ou rejetez les nouveaux membres avant qu\'ils puissent participer.'
                 : language === 'en'
@@ -1155,43 +1155,43 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
               {/* Pending Users */}
-              <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-                <h4 className="text-sm font-bold text-amber-400 mb-3 flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
+              <div className="bg-[#06141B] p-4 rounded-xl border border-[#253745]">
+                <h4 className="text-sm font-bold text-[#CCD0CF] mb-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#CCD0CF]" />
                   <span>
                     {language === 'fr' ? `En attente (${pendingUsers.length})` : language === 'en' ? `Pending Requests (${pendingUsers.length})` : `طلبات معلقة (${pendingUsers.length})`}
                   </span>
                 </h4>
                 <div className="space-y-2.5 max-h-60 overflow-y-auto">
                   {pendingUsers.length === 0 ? (
-                    <p className="text-xs text-slate-500 text-center py-4">
+                    <p className="text-xs text-[#9BA8AB] text-center py-4">
                       {language === 'fr' ? 'Aucune demande en attente.' : language === 'en' ? 'No pending requests.' : 'لا توجد طلبات معلقة.'}
                     </p>
                   ) : (
                     pendingUsers.map(u => (
-                      <div key={u.username} className="p-3 bg-slate-950 rounded-xl border border-amber-500/30 flex items-center justify-between gap-2">
+                      <div key={u.username} className="p-3 bg-[#11212D] rounded-xl border border-[#253745] flex items-center justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <span className="font-bold text-xs text-white block truncate">{u.username}</span>
+                          <span className="font-bold text-xs text-[#CCD0CF] block truncate">{u.username}</span>
                           {u.email && (
-                            <span className="text-[10px] text-cyan-400 font-mono block truncate" dir="ltr">
+                            <span className="text-[10px] text-[#9BA8AB] font-mono block truncate" dir="ltr">
                               {u.email}
                             </span>
                           )}
-                          <span className="text-[10px] text-amber-400 font-semibold">
+                          <span className="text-[10px] text-amber-300 font-semibold">
                             {language === 'fr' ? 'En attente' : language === 'en' ? 'Awaiting approval' : 'بانتظار الموافقة'}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <button
                             onClick={() => handleApproveUser(u.username)}
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer"
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition-all duration-200 cursor-pointer active:scale-95"
                             title={language === 'fr' ? 'Approuver' : language === 'en' ? 'Approve' : 'قبول'}
                           >
                             <Check className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleRejectUser(u.username)}
-                            className="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer"
+                            className="bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition-all duration-200 cursor-pointer active:scale-95"
                             title={language === 'fr' ? 'Rejeter' : language === 'en' ? 'Reject' : 'رفض'}
                           >
                             <X className="w-3.5 h-3.5" />
@@ -1204,33 +1204,33 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               </div>
 
               {/* Approved Users */}
-              <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-                <h4 className="text-sm font-bold text-emerald-400 mb-3 flex items-center gap-2">
-                  <UserCheck className="w-4 h-4" />
+              <div className="bg-[#06141B] p-4 rounded-xl border border-[#253745]">
+                <h4 className="text-sm font-bold text-[#CCD0CF] mb-3 flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-[#CCD0CF]" />
                   <span>
                     {language === 'fr' ? `Membres approuvés (${approvedUsers.length})` : language === 'en' ? `Approved Members (${approvedUsers.length})` : `الأعضاء المقبولون (${approvedUsers.length})`}
                   </span>
                 </h4>
                 <div className="space-y-2.5 max-h-60 overflow-y-auto">
                   {approvedUsers.length === 0 ? (
-                    <p className="text-xs text-slate-500 text-center py-4">
+                    <p className="text-xs text-[#9BA8AB] text-center py-4">
                       {language === 'fr' ? 'Aucun membre approuvé pour le moment.' : language === 'en' ? 'No approved members yet.' : 'لا يوجد أعضاء مقبولون حالياً.'}
                     </p>
                   ) : (
                     approvedUsers.map(u => (
-                      <div key={u.username} className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
+                      <div key={u.username} className="p-3 bg-[#11212D] rounded-xl border border-[#253745] flex items-center justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <span className="font-bold text-xs text-white block truncate">{u.username}</span>
+                          <span className="font-bold text-xs text-[#CCD0CF] block truncate">{u.username}</span>
                           {u.email && (
-                            <span className="text-[10px] text-cyan-400 font-mono block truncate" dir="ltr">
+                            <span className="text-[10px] text-[#9BA8AB] font-mono block truncate" dir="ltr">
                               {u.email}
                             </span>
                           )}
-                          <span className="text-[10px] text-slate-400 font-semibold">{u.points || 0} {language === 'ar' ? 'نقطة' : 'pts'}</span>
+                          <span className="text-[10px] text-[#9BA8AB] font-semibold">{u.points || 0} {language === 'ar' ? 'نقطة' : 'pts'}</span>
                         </div>
                         <button
                           onClick={() => handleRevokeUser(u.username)}
-                          className="bg-slate-800 hover:bg-rose-900 text-rose-400 border border-slate-700 text-[10px] font-bold px-2.5 py-1 rounded-lg transition cursor-pointer shrink-0"
+                          className="bg-[#253745] hover:bg-rose-900/60 text-rose-300 border border-[#253745] text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer shrink-0 active:scale-95"
                         >
                           {language === 'fr' ? 'Suspendre' : language === 'en' ? 'Suspend' : 'تعليق'}
                         </button>
@@ -1241,26 +1241,26 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               </div>
 
               {/* Active Admins */}
-              <div className="bg-slate-900/60 p-4 rounded-2xl border border-rose-500/30">
-                <h4 className="text-sm font-bold text-rose-400 mb-3 flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4" />
+              <div className="bg-[#06141B] p-4 rounded-xl border border-[#253745]">
+                <h4 className="text-sm font-bold text-[#CCD0CF] mb-3 flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-[#CCD0CF]" />
                   <span>
                     {language === 'fr' ? `Administrateurs (${adminUsers.length})` : language === 'en' ? `Active Admins (${adminUsers.length})` : `الآدمنز المتواجدون (${adminUsers.length})`}
                   </span>
                 </h4>
                 <div className="space-y-2.5 max-h-60 overflow-y-auto">
                   {adminUsers.map(u => (
-                    <div key={u.username} className="p-3 bg-slate-950 rounded-xl border border-rose-500/30 flex items-center justify-between gap-2">
+                    <div key={u.username} className="p-3 bg-[#11212D] rounded-xl border border-[#253745] flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                        <span className="w-2 h-2 rounded-full bg-[#4A5C6A] animate-pulse" />
                         <div>
-                          <span className="font-bold text-xs text-white block">{u.username}</span>
-                          <span className="text-[10px] text-rose-400 font-semibold">
+                          <span className="font-bold text-xs text-[#CCD0CF] block">{u.username}</span>
+                          <span className="text-[10px] text-[#9BA8AB] font-semibold">
                             {language === 'fr' ? 'Admin Système' : language === 'en' ? 'Master Admin' : 'مدير نظام أساسي'}
                           </span>
                         </div>
                       </div>
-                      <span className="text-[10px] bg-rose-950 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded font-bold">
+                      <span className="text-[10px] bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] px-2 py-0.5 rounded font-bold">
                         {language === 'fr' ? 'Actif' : language === 'en' ? 'Active' : 'نشط'}
                       </span>
                     </div>
@@ -1273,27 +1273,27 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       </div>
 
       {/* 3. Points Correction Card */}
-      <div className="ucl-card rounded-3xl border border-amber-500/30 overflow-hidden transition-all duration-200">
+      <div className="ucl-card rounded-2xl border border-[#253745] bg-[#11212D] overflow-hidden transition-all duration-200 shadow-xl">
         <button
           type="button"
           onClick={() => toggleSection('points')}
-          className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none ${
+          className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-[#253745]/40 transition-all duration-200 cursor-pointer select-none ${
             isRtl ? 'text-right' : 'text-left'
           }`}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-              <Calculator className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-[#06141B] border border-[#253745] flex items-center justify-center text-[#CCD0CF] shrink-0">
+              <Calculator className="w-5 h-5 text-[#CCD0CF]" />
             </div>
             <div className={`min-w-0 ${isRtl ? 'text-right' : 'text-left'}`}>
-              <h3 className="text-base sm:text-lg font-black text-amber-400">
+              <h3 className="text-base sm:text-lg font-bold text-[#CCD0CF]">
                 {language === 'fr' 
                   ? 'Ajustement manuel des points des membres' 
                   : language === 'en' 
                   ? 'Member Points Adjustment' 
                   : 'تعديل نقاط المتوقعين (تصحيح أخطاء)'}
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+              <p className="text-xs text-[#9BA8AB] mt-0.5 truncate hidden sm:block">
                 {language === 'fr'
                   ? 'Ajoutez, déduisez ou définissez directement les points d\'un membre.'
                   : language === 'en'
@@ -1304,20 +1304,20 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-slate-400 font-bold hidden md:inline">
+            <span className="text-xs text-[#9BA8AB] font-semibold hidden md:inline">
               {expandedSections.points 
                 ? (language === 'fr' ? 'Masquer' : language === 'en' ? 'Hide' : 'إخفاء') 
                 : (language === 'fr' ? 'Voir détails' : language === 'en' ? 'Show details' : 'عرض التفاصيل')}
             </span>
-            <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.points ? 'rotate-180 bg-amber-500/20 text-amber-300 border-amber-500/40' : 'hover:border-amber-400/50'}`}>
+            <div className={`w-8 h-8 rounded-xl bg-[#253745] border border-[#253745] flex items-center justify-center text-[#CCD0CF] transition-transform duration-200 ${expandedSections.points ? 'rotate-180 bg-[#4A5C6A] text-[#CCD0CF] border-[#4A5C6A]' : 'hover:border-[#4A5C6A]'}`}>
               <ChevronDown className="w-4 h-4" />
             </div>
           </div>
         </button>
 
         {expandedSections.points && (
-          <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1">
-            <p className="text-xs text-slate-400 my-4 pb-3 border-b border-slate-800 sm:hidden">
+          <div className="p-5 sm:p-6 pt-0 border-t border-[#253745] mt-1">
+            <p className="text-xs text-[#9BA8AB] my-4 pb-3 border-b border-[#253745] sm:hidden">
               {language === 'fr'
                 ? 'Ajoutez, déduisez ou définissez directement les points d\'un membre.'
                 : language === 'en'
@@ -1329,7 +1329,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               <select
                 value={selectedUserForPoints}
                 onChange={(e) => setSelectedUserForPoints(e.target.value)}
-                className="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white font-bold outline-none focus:border-amber-400"
+                className="bg-[#06141B] border border-[#253745] rounded-xl p-2.5 text-xs text-[#CCD0CF] font-semibold outline-none focus:border-[#4A5C6A] transition-all duration-200"
               >
                 <option value="">{language === 'fr' ? 'Choisir le membre...' : language === 'en' ? 'Select member...' : 'اختر العضو...'}</option>
                 {users.filter(u => u.role !== 'admin').map(u => (
@@ -1342,7 +1342,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               <select
                 value={pointsAction}
                 onChange={(e) => setPointsAction(e.target.value as 'add' | 'sub' | 'set')}
-                className="bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white font-bold outline-none focus:border-amber-400"
+                className="bg-[#06141B] border border-[#253745] rounded-xl p-2.5 text-xs text-[#CCD0CF] font-semibold outline-none focus:border-[#4A5C6A] transition-all duration-200"
               >
                 <option value="add">{language === 'fr' ? 'Ajouter des points (+)' : language === 'en' ? 'Add points (+)' : 'إضافة نقاط (+)'}</option>
                 <option value="sub">{language === 'fr' ? 'Déduire des points (-)' : language === 'en' ? 'Deduct points (-)' : 'خصم نقاط (-)'}</option>
@@ -1357,13 +1357,13 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   value={pointsValue}
                   onChange={(e) => setPointsValue(parseInt(e.target.value) || 0)}
                   placeholder={language === 'fr' ? 'Nombre de points...' : language === 'en' ? 'Points amount...' : 'عدد النقاط...'}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-amber-400 force-ltr text-center font-mono"
+                  className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-2.5 text-xs text-[#CCD0CF] outline-none focus:border-[#4A5C6A] force-ltr text-center font-mono transition-all duration-200"
                 />
               </div>
 
               <button
                 onClick={handleApplyPointsModification}
-                className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer"
+                className="bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold text-xs py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
               >
                 <PenSquare className="w-3.5 h-3.5" />
                 <span>{language === 'fr' ? 'Appliquer' : language === 'en' ? 'Apply Adjustment' : 'تنفيذ التعديل'}</span>
@@ -1374,31 +1374,31 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       </div>
 
       {/* 4. Activity Log (سجل النشاطات) Card */}
-      <div className="ucl-card rounded-3xl border border-cyan-500/30 overflow-hidden transition-all duration-200">
+      <div className="ucl-card rounded-2xl border border-[#253745] bg-[#11212D] overflow-hidden transition-all duration-200 shadow-xl">
         <button
           type="button"
           onClick={() => toggleSection('activityLog')}
-          className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none ${
+          className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-[#253745]/40 transition-all duration-200 cursor-pointer select-none ${
             isRtl ? 'text-right' : 'text-left'
           }`}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-[#00E5FF] shrink-0">
-              <Activity className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-[#06141B] border border-[#253745] flex items-center justify-center text-[#CCD0CF] shrink-0">
+              <Activity className="w-5 h-5 text-[#CCD0CF]" />
             </div>
             <div className={`min-w-0 ${isRtl ? 'text-right' : 'text-left'}`}>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base sm:text-lg font-black text-white">
+                <h3 className="text-base sm:text-lg font-bold text-[#CCD0CF]">
                   {language === 'fr' 
                     ? 'Journal d\'activités (Activity Log)' 
                     : language === 'en' 
                     ? 'Activity Log & Live Monitoring' 
                     : 'سجل النشاطات (Activity Log)'}
                 </h3>
-                <span className="text-[10px] bg-cyan-950/80 text-[#00E5FF] border border-cyan-500/30 px-2 py-0.5 rounded-full font-bold">
+                <span className="text-[10px] bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] px-2 py-0.5 rounded-full font-bold">
                   {language === 'fr' ? 'Surveillance en direct' : language === 'en' ? 'Live monitoring' : 'مراقبة حية'}
                 </span>
-                <span className="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                <span className="text-[10px] text-[#9BA8AB] bg-[#253745] px-2 py-0.5 rounded border border-[#253745]">
                   {language === 'fr' 
                     ? `Total pronostics : ${Object.keys(predictions).length}` 
                     : language === 'en' 
@@ -1406,7 +1406,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     : `إجمالي التوقعات: ${Object.keys(predictions).length}`}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+              <p className="text-xs text-[#9BA8AB] mt-0.5 truncate hidden sm:block">
                 {language === 'fr'
                   ? 'Consultez les derniers pronostics soumis par les membres pour vérifier les délais.'
                   : language === 'en'
@@ -1417,20 +1417,20 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-slate-400 font-bold hidden md:inline">
+            <span className="text-xs text-[#9BA8AB] font-semibold hidden md:inline">
               {expandedSections.activityLog 
                 ? (language === 'fr' ? 'Masquer' : language === 'en' ? 'Hide' : 'إخفاء') 
                 : (language === 'fr' ? 'Voir détails' : language === 'en' ? 'Show details' : 'عرض التفاصيل')}
             </span>
-            <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.activityLog ? 'rotate-180 bg-cyan-500/20 text-cyan-300 border-cyan-500/40' : 'hover:border-cyan-400/50'}`}>
+            <div className={`w-8 h-8 rounded-xl bg-[#253745] border border-[#253745] flex items-center justify-center text-[#CCD0CF] transition-transform duration-200 ${expandedSections.activityLog ? 'rotate-180 bg-[#4A5C6A] text-[#CCD0CF] border-[#4A5C6A]' : 'hover:border-[#4A5C6A]'}`}>
               <ChevronDown className="w-4 h-4" />
             </div>
           </div>
         </button>
 
         {expandedSections.activityLog && (
-          <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1 space-y-4">
-            <p className="text-xs text-slate-400 my-4 pb-3 border-b border-slate-800 sm:hidden">
+          <div className="p-5 sm:p-6 pt-0 border-t border-[#253745] mt-1 space-y-4">
+            <p className="text-xs text-[#9BA8AB] my-4 pb-3 border-b border-[#253745] sm:hidden">
               {language === 'fr'
                 ? 'Consultez les derniers pronostics soumis par les membres pour vérifier les délais.'
                 : language === 'en'
@@ -1442,13 +1442,13 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
               {/* Search input */}
               <div className="relative">
-                <Search className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${isRtl ? 'right-3' : 'left-3'}`} />
+                <Search className={`w-4 h-4 text-[#9BA8AB] absolute top-1/2 -translate-y-1/2 pointer-events-none ${isRtl ? 'right-3' : 'left-3'}`} />
                 <input
                   type="text"
                   value={activitySearch}
                   onChange={(e) => setActivitySearch(e.target.value)}
                   placeholder={language === 'fr' ? 'Rechercher par membre ou club...' : language === 'en' ? 'Search by member or club...' : 'ابحث باسم العضو أو الفريق...'}
-                  className={`w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400 ${
+                  className={`w-full bg-[#06141B] border border-[#253745] rounded-xl py-2 text-xs text-[#CCD0CF] placeholder-[#9BA8AB]/50 outline-none focus:border-[#4A5C6A] transition-all duration-200 ${
                     isRtl ? 'pr-9 pl-3 text-right' : 'pl-9 pr-3 text-left'
                   }`}
                 />
@@ -1458,7 +1458,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               <select
                 value={activityMatchFilter}
                 onChange={(e) => setActivityMatchFilter(e.target.value)}
-                className="bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-400"
+                className="bg-[#06141B] border border-[#253745] rounded-xl px-3 py-2 text-xs text-[#CCD0CF] outline-none focus:border-[#4A5C6A] transition-all duration-200"
               >
                 <option value="ALL">
                   {language === 'fr' ? `Tous les matchs (${matches.length})` : language === 'en' ? `All matches (${matches.length})` : `جميع المباريات (${matches.length})`}
@@ -1474,7 +1474,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               {(activitySearch || activityMatchFilter !== 'ALL') && (
                 <button
                   onClick={() => { setActivitySearch(''); setActivityMatchFilter('ALL'); }}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-2 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5"
+                  className="bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] text-xs px-3 py-2 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                 >
                   <X className="w-3.5 h-3.5" />
                   <span>{language === 'fr' ? 'Réinitialiser' : language === 'en' ? 'Reset Filters' : 'إعادة ضبط التصفية'}</span>
@@ -1484,7 +1484,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
 
             {/* Logs Table / List */}
             {activityLogs.length === 0 ? (
-              <div className="p-8 text-center bg-slate-900/40 rounded-2xl border border-slate-800 text-xs text-slate-500">
+              <div className="p-8 text-center bg-[#06141B] rounded-xl border border-[#253745] text-xs text-[#9BA8AB]">
                 {language === 'fr' 
                   ? 'Aucun pronostic ou activité ne correspond aux filtres actuels.' 
                   : language === 'en' 
@@ -1492,10 +1492,10 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   : 'لا توجد نشاطات أو توقعات مسجلة تطابق التصفية الحالية.'}
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-2xl border border-slate-800">
+              <div className="overflow-x-auto rounded-xl border border-[#253745]">
                 <table className={`w-full border-collapse text-xs ${isRtl ? 'text-right' : 'text-left'}`}>
                   <thead>
-                    <tr className="bg-slate-900/80 border-b border-slate-800 text-slate-400 font-bold">
+                    <tr className="bg-[#06141B] border-b border-[#253745] text-[#CCD0CF] font-bold">
                       <th className="p-3">{language === 'fr' ? 'Date & Heure' : language === 'en' ? 'Timestamp' : 'وقت الإدخال'}</th>
                       <th className="p-3">{language === 'fr' ? 'Membre' : language === 'en' ? 'Member' : 'المتسابق'}</th>
                       <th className="p-3">{language === 'fr' ? 'Match' : language === 'en' ? 'Match' : 'المباراة'}</th>
@@ -1505,31 +1505,31 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       <th className="p-3 text-center">{language === 'fr' ? 'Délai' : language === 'en' ? 'Deadline' : 'حالة المهلة'}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-[#253745]">
                     {activityLogs.slice(0, 50).map(({ pred, match, isPastDeadline }) => (
-                      <tr key={`${pred.matchId}_${pred.username}`} className="hover:bg-slate-900/50 transition">
+                      <tr key={`${pred.matchId}_${pred.username}`} className="hover:bg-[#253745]/30 transition-all duration-150">
                         {/* Timestamp */}
-                        <td className="p-3 font-mono text-slate-400 whitespace-nowrap">
+                        <td className="p-3 font-mono text-[#9BA8AB] whitespace-nowrap">
                           {pred.updatedAt ? (
                             <div>
-                              <span className="block text-white font-bold" dir="ltr">
+                              <span className="block text-[#CCD0CF] font-bold" dir="ltr">
                                 {new Date(pred.updatedAt).toLocaleTimeString(language === 'ar' ? 'ar-EG' : language === 'fr' ? 'fr-FR' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
                               </span>
-                              <span className="text-[10px] text-slate-500" dir="ltr">
+                              <span className="text-[10px] text-[#9BA8AB]" dir="ltr">
                                 {new Date(pred.updatedAt).toLocaleDateString(language === 'ar' ? 'ar-EG' : language === 'fr' ? 'fr-FR' : 'en-US', { month: 'numeric', day: 'numeric' })}
                               </span>
                             </div>
                           ) : (
-                            <span className="text-slate-500 text-[10px]">
+                            <span className="text-[#9BA8AB] text-[10px]">
                               {language === 'fr' ? 'Enregistré' : language === 'en' ? 'Saved' : 'مسجل'}
                             </span>
                           )}
                         </td>
 
                         {/* User */}
-                        <td className="p-3 font-bold text-white whitespace-nowrap">
+                        <td className="p-3 font-bold text-[#CCD0CF] whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-black text-[10px]">
+                            <div className="w-6 h-6 rounded-lg bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] flex items-center justify-center font-bold text-[10px]">
                               {pred.username.charAt(0).toUpperCase()}
                             </div>
                             <span>{pred.username}</span>
@@ -1537,18 +1537,18 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                         </td>
 
                         {/* Match */}
-                        <td className="p-3 text-slate-300 whitespace-nowrap">
+                        <td className="p-3 text-[#CCD0CF] whitespace-nowrap">
                           {match ? (
                             <div>
-                              <span className="font-bold text-white">{getTeamEnglishName(match.homeTeam)} × {getTeamEnglishName(match.awayTeam)}</span>
-                              <span className="block text-[10px] text-slate-500">
+                              <span className="font-bold text-[#CCD0CF]">{getTeamEnglishName(match.homeTeam)} × {getTeamEnglishName(match.awayTeam)}</span>
+                              <span className="block text-[10px] text-[#9BA8AB]">
                                 {match.status === 'SETTLED' 
                                   ? (language === 'fr' ? 'Terminé et validé' : language === 'en' ? 'Settled' : 'منتهية ومعتمدة') 
                                   : (language === 'fr' ? 'Ouvert' : language === 'en' ? 'Open' : 'مفتوحة')}
                               </span>
                             </div>
                           ) : (
-                            <span className="text-slate-500">
+                            <span className="text-[#9BA8AB]">
                               {language === 'fr' ? 'Match #' : language === 'en' ? 'Match #' : 'مباراة #'}{pred.matchId}
                             </span>
                           )}
@@ -1556,23 +1556,23 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
 
                         {/* Score */}
                         <td className="p-3 text-center whitespace-nowrap">
-                          <span className="inline-block bg-[#080C19] border border-cyan-500/40 px-2.5 py-1 rounded-lg font-mono font-black text-cyan-300 text-sm" dir="ltr">
+                          <span className="inline-block bg-[#06141B] border border-[#253745] px-2.5 py-1 rounded-lg font-mono font-bold text-[#CCD0CF] text-sm" dir="ltr">
                             {pred.homeScore} - {pred.awayScore}
                           </span>
                         </td>
 
                         {/* Scorers */}
-                        <td className="p-3 text-slate-300 max-w-xs truncate">
+                        <td className="p-3 text-[#CCD0CF] max-w-xs truncate">
                           {[...(pred.homeScorers || []), ...(pred.awayScorers || [])].filter(Boolean).length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {[...(pred.homeScorers || []), ...(pred.awayScorers || [])].filter(Boolean).map((sc, i) => (
-                                <span key={i} className="text-[10px] bg-slate-800 text-slate-200 px-1.5 py-0.5 rounded border border-slate-700">
+                                <span key={i} className="text-[10px] bg-[#253745] text-[#CCD0CF] px-1.5 py-0.5 rounded border border-[#4A5C6A]">
                                   {sc}
                                 </span>
                               ))}
                             </div>
                           ) : (
-                            <span className="text-slate-600 text-[10px]">
+                            <span className="text-[#9BA8AB] text-[10px]">
                               {language === 'fr' ? 'Aucun' : language === 'en' ? 'None' : 'لا يوجد'}
                             </span>
                           )}
@@ -1581,11 +1581,11 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                         {/* MVP */}
                         <td className="p-3 whitespace-nowrap">
                           {pred.mvp ? (
-                            <span className="text-[11px] font-bold text-purple-300 bg-purple-950/60 border border-purple-800 px-2 py-0.5 rounded">
+                            <span className="text-[11px] font-bold text-[#CCD0CF] bg-[#253745] border border-[#4A5C6A] px-2 py-0.5 rounded">
                               {pred.mvp}
                             </span>
                           ) : (
-                            <span className="text-slate-600 text-[10px]">
+                            <span className="text-[#9BA8AB] text-[10px]">
                               {language === 'fr' ? 'Non spécifié' : language === 'en' ? 'Not specified' : 'لم يُحدد'}
                             </span>
                           )}
@@ -1594,7 +1594,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                         {/* Deadline Status */}
                         <td className="p-3 text-center whitespace-nowrap">
                           {isPastDeadline ? (
-                            <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-semibold border border-slate-700">
+                            <span className="text-[10px] bg-[#253745] text-[#9BA8AB] px-2 py-0.5 rounded font-semibold border border-[#253745]">
                               {language === 'fr' ? 'Expiré' : language === 'en' ? 'Closed' : 'مغلقة'}
                             </span>
                           ) : (
@@ -1614,27 +1614,27 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       </div>
 
       {/* 5. Match Creation Card */}
-      <div className="ucl-card rounded-3xl border border-amber-500/20 overflow-hidden transition-all duration-200">
+      <div className="ucl-card rounded-2xl border border-[#253745] bg-[#11212D] overflow-hidden transition-all duration-200 shadow-xl">
         <button
           type="button"
           onClick={() => toggleSection('addMatch')}
-          className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none ${
+          className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-[#253745]/40 transition-all duration-200 cursor-pointer select-none ${
             isRtl ? 'text-right' : 'text-left'
           }`}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 shrink-0">
-              <PlusCircle className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-[#06141B] border border-[#253745] flex items-center justify-center text-[#CCD0CF] shrink-0">
+              <PlusCircle className="w-5 h-5 text-[#CCD0CF]" />
             </div>
             <div className={`min-w-0 ${isRtl ? 'text-right' : 'text-left'}`}>
-              <h3 className="text-base sm:text-lg font-black text-amber-400">
+              <h3 className="text-base sm:text-lg font-bold text-[#CCD0CF]">
                 {language === 'fr' 
                   ? 'Ajouter un nouveau match' 
                   : language === 'en' 
                   ? 'Add New Match for Predictions' 
                   : 'إضافة مباراة جديدة للتوقع'}
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+              <p className="text-xs text-[#9BA8AB] mt-0.5 truncate hidden sm:block">
                 {language === 'fr'
                   ? 'Définir l\'équipe à domicile, à l\'extérieur et la date limite de pronostic.'
                   : language === 'en'
@@ -1645,20 +1645,20 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-slate-400 font-bold hidden md:inline">
+            <span className="text-xs text-[#9BA8AB] font-semibold hidden md:inline">
               {expandedSections.addMatch 
                 ? (language === 'fr' ? 'Masquer' : language === 'en' ? 'Hide' : 'إخفاء') 
                 : (language === 'fr' ? 'Voir détails' : language === 'en' ? 'Show details' : 'عرض التفاصيل')}
             </span>
-            <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.addMatch ? 'rotate-180 bg-amber-500/20 text-amber-300 border-amber-500/40' : 'hover:border-amber-400/50'}`}>
+            <div className={`w-8 h-8 rounded-xl bg-[#253745] border border-[#253745] flex items-center justify-center text-[#CCD0CF] transition-transform duration-200 ${expandedSections.addMatch ? 'rotate-180 bg-[#4A5C6A] text-[#CCD0CF] border-[#4A5C6A]' : 'hover:border-[#4A5C6A]'}`}>
               <ChevronDown className="w-4 h-4" />
             </div>
           </div>
         </button>
 
         {expandedSections.addMatch && (
-          <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1">
-            <p className="text-xs text-slate-400 my-4 pb-3 border-b border-slate-800 sm:hidden">
+          <div className="p-5 sm:p-6 pt-0 border-t border-[#253745] mt-1">
+            <p className="text-xs text-[#9BA8AB] my-4 pb-3 border-b border-[#253745] sm:hidden">
               {language === 'fr'
                 ? 'Définir l\'équipe à domicile, à l\'extérieur et la date limite de pronostic.'
                 : language === 'en'
@@ -1667,7 +1667,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
             </p>
 
             {teamKeys.length < 2 ? (
-              <div className="p-4 my-3 bg-amber-950/40 border border-amber-500/30 rounded-2xl text-xs text-amber-300 leading-relaxed">
+              <div className="p-4 my-3 bg-[#06141B] border border-amber-500/30 rounded-xl text-xs text-amber-200 leading-relaxed">
                 {language === 'fr'
                   ? 'Attention : Au moins 2 équipes sont requises pour créer un match. Veuillez d\'abord ajouter des équipes dans la section ci-dessous.'
                   : language === 'en'
@@ -1678,13 +1678,13 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               <form onSubmit={handleCreateMatch} className="space-y-4 pt-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-[#CCD0CF] mb-1.5">
                       {language === 'fr' ? 'Équipe à domicile (Home)' : language === 'en' ? 'Home Team' : 'الفريق المستضيف (Home)'}
                     </label>
                     <select
                       value={newHomeTeam}
                       onChange={(e) => setNewHomeTeam(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold focus:border-amber-400 outline-none text-xs"
+                      className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-[#CCD0CF] font-semibold focus:border-[#4A5C6A] outline-none text-xs transition-all duration-200"
                       required
                     >
                       {teamKeys.map(t => <option key={t} value={t}>{t}</option>)}
@@ -1692,13 +1692,13 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                    <label className="block text-xs font-semibold text-[#CCD0CF] mb-1.5">
                       {language === 'fr' ? 'Équipe à l\'extérieur (Away)' : language === 'en' ? 'Away Team' : 'الفريق الضيف (Away)'}
                     </label>
                     <select
                       value={newAwayTeam}
                       onChange={(e) => setNewAwayTeam(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold focus:border-amber-400 outline-none text-xs"
+                      className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-[#CCD0CF] font-semibold focus:border-[#4A5C6A] outline-none text-xs transition-all duration-200"
                       required
                     >
                       {teamKeys.map(t => <option key={t} value={t}>{t}</option>)}
@@ -1707,21 +1707,21 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-[#CCD0CF] mb-1.5">
                     {language === 'fr' ? 'Date & heure du match / Clôture des pronostics' : language === 'en' ? 'Kickoff date/time & deadline' : 'موعد المباراة ووقت إغلاق التوقع (Deadline)'}
                   </label>
                   <input
                     type="datetime-local"
                     value={newDeadline}
                     onChange={(e) => setNewDeadline(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold focus:border-amber-400 outline-none text-xs font-mono"
+                    className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-[#CCD0CF] font-semibold focus:border-[#4A5C6A] outline-none text-xs font-mono transition-all duration-200"
                     required
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black py-3.5 rounded-xl transition shadow-lg text-xs cursor-pointer active:scale-95"
+                  className="w-full bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold py-3.5 rounded-xl transition-all duration-200 shadow text-xs cursor-pointer active:scale-95"
                 >
                   {language === 'fr' ? 'Publier le match et ouvrir les pronostics' : language === 'en' ? 'Publish Match & Open Predictions' : 'نشر المباراة وإتاحة التوقع للمستخدمين'}
                 </button>
@@ -1732,32 +1732,32 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       </div>
 
       {/* 6. Match Score Settlement & Management */}
-      <div className="ucl-card rounded-3xl border border-blue-500/20 overflow-hidden transition-all duration-200">
+      <div className="ucl-card rounded-2xl border border-[#253745] bg-[#11212D] overflow-hidden transition-all duration-200 shadow-xl">
         <button
           type="button"
           onClick={() => toggleSection('settleMatches')}
-          className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none ${
+          className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-[#253745]/40 transition-all duration-200 cursor-pointer select-none ${
             isRtl ? 'text-right' : 'text-left'
           }`}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-500 shrink-0">
-              <ListCheck className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-[#06141B] border border-[#253745] flex items-center justify-center text-[#CCD0CF] shrink-0">
+              <ListCheck className="w-5 h-5 text-[#CCD0CF]" />
             </div>
             <div className={`min-w-0 ${isRtl ? 'text-right' : 'text-left'}`}>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base sm:text-lg font-black text-blue-400">
+                <h3 className="text-base sm:text-lg font-bold text-[#CCD0CF]">
                   {language === 'fr' 
                     ? 'Gestion des matchs & validation des scores' 
                     : language === 'en' 
                     ? 'Match Management & Settlement' 
                     : 'إدارة المباريات واعتماد النتائج'}
                 </h3>
-                <span className="text-[10px] bg-blue-950/80 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full font-bold">
+                <span className="text-[10px] bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] px-2 py-0.5 rounded-full font-bold">
                   {language === 'fr' ? `Matchs (${matches.length})` : language === 'en' ? `Matches (${matches.length})` : `المباريات (${matches.length})`}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+              <p className="text-xs text-[#9BA8AB] mt-0.5 truncate hidden sm:block">
                 {language === 'fr'
                   ? 'Modifier l\'heure, les scores et supprimer des matchs.'
                   : language === 'en'
@@ -1768,20 +1768,20 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-slate-400 font-bold hidden md:inline">
+            <span className="text-xs text-[#9BA8AB] font-semibold hidden md:inline">
               {expandedSections.settleMatches 
                 ? (language === 'fr' ? 'Masquer' : language === 'en' ? 'Hide' : 'إخفاء') 
                 : (language === 'fr' ? 'Voir détails' : language === 'en' ? 'Show details' : 'عرض التفاصيل')}
             </span>
-            <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.settleMatches ? 'rotate-180 bg-blue-500/20 text-blue-300 border-blue-500/40' : 'hover:border-blue-400/50'}`}>
+            <div className={`w-8 h-8 rounded-xl bg-[#253745] border border-[#253745] flex items-center justify-center text-[#CCD0CF] transition-transform duration-200 ${expandedSections.settleMatches ? 'rotate-180 bg-[#4A5C6A] text-[#CCD0CF] border-[#4A5C6A]' : 'hover:border-[#4A5C6A]'}`}>
               <ChevronDown className="w-4 h-4" />
             </div>
           </div>
         </button>
 
         {expandedSections.settleMatches && (
-          <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1 space-y-4">
-            <p className="text-xs text-slate-400 my-4 pb-3 border-b border-slate-800 sm:hidden">
+          <div className="p-5 sm:p-6 pt-0 border-t border-[#253745] mt-1 space-y-4">
+            <p className="text-xs text-[#9BA8AB] my-4 pb-3 border-b border-[#253745] sm:hidden">
               {language === 'fr'
                 ? 'Modifier l\'heure, les scores et supprimer des matchs.'
                 : language === 'en'
@@ -1790,7 +1790,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
             </p>
 
             {matches.length === 0 ? (
-              <p className="text-xs text-slate-500 text-center py-4">
+              <p className="text-xs text-[#9BA8AB] text-center py-4">
                 {language === 'fr' ? 'Aucun match enregistré.' : language === 'en' ? 'No matches recorded yet.' : 'لا توجد مباريات مسجلة بعد.'}
               </p>
             ) : (
@@ -1801,12 +1801,16 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               const draft = getSettleDraft(match.id);
 
               return (
-                <div key={match.id} className="p-4 bg-slate-900/80 rounded-2xl border border-slate-800 space-y-4">
+                <div key={match.id} className="p-4 bg-[#06141B] rounded-xl border border-[#253745] space-y-4">
                   {/* Title & Delete */}
-                  <div className="flex justify-between items-center text-xs font-bold text-slate-300">
-                    <span className="text-sm text-white font-black">{getTeamEnglishName(match.homeTeam)} VS {getTeamEnglishName(match.awayTeam)}</span>
-                    <div className="flex items-center gap-3">
-                      <span className={match.status === 'SETTLED' ? 'text-emerald-400' : 'text-amber-400'}>
+                  <div className="flex justify-between items-center text-xs font-bold text-[#CCD0CF]">
+                    <span className="text-sm text-[#CCD0CF] font-bold">{getTeamEnglishName(match.homeTeam)} VS {getTeamEnglishName(match.awayTeam)}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[11px] px-2 py-0.5 rounded font-bold ${
+                        match.status === 'SETTLED'
+                          ? 'text-[#CCD0CF] bg-[#253745] border border-[#4A5C6A]'
+                          : 'text-[#9BA8AB] bg-[#253745] border border-[#253745]'
+                      }`}>
                         {match.status === 'SETTLED' 
                           ? (language === 'fr' ? 'Résultat validé' : language === 'en' ? 'Settled' : 'تم تنزيل النتيجة') 
                           : (language === 'fr' ? 'Ouvert' : language === 'en' ? 'Open' : 'مفتوحة')}
@@ -1814,7 +1818,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       <button
                         type="button"
                         onClick={() => handleDeleteMatchClick(match)}
-                        className="bg-rose-950/80 hover:bg-rose-900 text-rose-400 border border-rose-500/40 text-[11px] px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 font-black cursor-pointer"
+                        className="bg-[#253745] hover:bg-rose-950/60 text-rose-300 border border-[#253745] text-[11px] px-3 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 font-bold cursor-pointer active:scale-95"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                         <span>{language === 'fr' ? 'Supprimer' : language === 'en' ? 'Delete' : 'حذف المباراة'}</span>
@@ -1823,22 +1827,22 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   </div>
 
                   {/* Edit Deadline */}
-                  <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="p-3 bg-[#11212D] rounded-xl border border-[#253745] flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div className="w-full">
-                      <label className="block text-[10px] text-slate-400 mb-1">
+                      <label className="block text-[10px] text-[#9BA8AB] mb-1">
                         {language === 'fr' ? 'Modifier la clôture :' : language === 'en' ? 'Edit deadline:' : 'تعديل موعد ووقت إغلاق التوقع:'}
                       </label>
                       <input
                         type="datetime-local"
                         value={editDeadlines[match.id] || (match.deadline ? match.deadline.slice(0, 16) : '')}
                         onChange={(e) => setEditDeadlines({ ...editDeadlines, [match.id]: e.target.value })}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white font-bold outline-none focus:border-amber-400 font-mono"
+                        className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-2 text-xs text-[#CCD0CF] font-semibold outline-none focus:border-[#4A5C6A] font-mono transition-all duration-200"
                       />
                     </div>
                     <button
                       type="button"
                       onClick={() => handleUpdateDeadline(match.id)}
-                      className="w-full sm:w-auto bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition shrink-0 cursor-pointer"
+                      className="w-full sm:w-auto bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] hover:text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all duration-200 shrink-0 cursor-pointer border border-[#253745] active:scale-95"
                     >
                       {language === 'fr' ? 'Enregistrer' : language === 'en' ? 'Save Time' : 'حفظ الوقت الجديد'}
                     </button>
@@ -1846,10 +1850,10 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
 
                   {/* Settlement Inputs (If not settled) */}
                   {match.status !== 'SETTLED' && (
-                    <div className="space-y-3 pt-2 border-t border-slate-800">
+                    <div className="space-y-3 pt-2 border-t border-[#253745]">
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-[10px] text-slate-400">
+                          <label className="block text-[10px] text-[#9BA8AB] mb-1">
                             {language === 'fr' ? `Buts ${getTeamEnglishName(match.homeTeam)}` : language === 'en' ? `${getTeamEnglishName(match.homeTeam)} Goals` : `أهداف ${getTeamEnglishName(match.homeTeam)}`}
                           </label>
                           <div dir="ltr">
@@ -1859,12 +1863,12 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                               dir="ltr"
                               value={draft.homeScore}
                               onChange={(e) => updateSettleDraft(match.id, { homeScore: parseInt(e.target.value) || 0 })}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-center text-white font-bold font-mono force-ltr"
+                              className="w-full bg-[#11212D] border border-[#253745] rounded-xl p-2 text-xs text-center text-[#CCD0CF] font-bold font-mono force-ltr outline-none focus:border-[#4A5C6A] transition-all duration-200"
                             />
                           </div>
                         </div>
                         <div>
-                          <label className="block text-[10px] text-slate-400">
+                          <label className="block text-[10px] text-[#9BA8AB] mb-1">
                             {language === 'fr' ? `Buts ${getTeamEnglishName(match.awayTeam)}` : language === 'en' ? `${getTeamEnglishName(match.awayTeam)} Goals` : `أهداف ${getTeamEnglishName(match.awayTeam)}`}
                           </label>
                           <div dir="ltr">
@@ -1874,7 +1878,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                               dir="ltr"
                               value={draft.awayScore}
                               onChange={(e) => updateSettleDraft(match.id, { awayScore: parseInt(e.target.value) || 0 })}
-                              className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-center text-white font-bold font-mono force-ltr"
+                              className="w-full bg-[#11212D] border border-[#253745] rounded-xl p-2 text-xs text-center text-[#CCD0CF] font-bold font-mono force-ltr outline-none focus:border-[#4A5C6A] transition-all duration-200"
                             />
                           </div>
                         </div>
@@ -1883,7 +1887,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       {/* Scorer picks for home */}
                       {draft.homeScore > 0 && (
                         <div className="space-y-1.5">
-                          <label className="block text-[10px] font-bold text-blue-400">
+                          <label className="block text-[10px] font-bold text-[#CCD0CF]">
                             {language === 'fr' ? `Buteurs ${getTeamEnglishName(match.homeTeam)} :` : language === 'en' ? `${getTeamEnglishName(match.homeTeam)} Goal Scorers:` : `مسجلو أهداف ${getTeamEnglishName(match.homeTeam)}:`}
                           </label>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1896,7 +1900,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                                   arr[idx] = e.target.value;
                                   updateSettleDraft(match.id, { homeScorers: arr });
                                 }}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white outline-none"
+                                className="w-full bg-[#11212D] border border-[#253745] rounded-xl p-2 text-xs text-[#CCD0CF] outline-none focus:border-[#4A5C6A] transition-all duration-200"
                               >
                                 <option value="">
                                   {language === 'fr' ? `Choisir le buteur (${idx + 1})...` : language === 'en' ? `Select scorer (${idx + 1})...` : `اختر المسجل للهدف (${idx + 1})...`}
@@ -1911,7 +1915,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       {/* Scorer picks for away */}
                       {draft.awayScore > 0 && (
                         <div className="space-y-1.5">
-                          <label className="block text-[10px] font-bold text-rose-400">
+                          <label className="block text-[10px] font-bold text-[#CCD0CF]">
                             {language === 'fr' ? `Buteurs ${getTeamEnglishName(match.awayTeam)} :` : language === 'en' ? `${getTeamEnglishName(match.awayTeam)} Goal Scorers:` : `مسجلو أهداف ${getTeamEnglishName(match.awayTeam)}:`}
                           </label>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1924,7 +1928,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                                   arr[idx] = e.target.value;
                                   updateSettleDraft(match.id, { awayScorers: arr });
                                 }}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-white outline-none"
+                                className="w-full bg-[#11212D] border border-[#253745] rounded-xl p-2 text-xs text-[#CCD0CF] outline-none focus:border-[#4A5C6A] transition-all duration-200"
                               >
                                 <option value="">
                                   {language === 'fr' ? `Choisir le buteur (${idx + 1})...` : language === 'en' ? `Select scorer (${idx + 1})...` : `اختر المسجل للهدف (${idx + 1})...`}
@@ -1937,13 +1941,13 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       )}
 
                       <div>
-                        <label className="block text-[10px] text-slate-400 mb-1">
+                        <label className="block text-[10px] text-[#9BA8AB] mb-1">
                           {language === 'fr' ? 'Homme du match officiel (MVP)' : language === 'en' ? 'Official Match MVP' : 'رجل المباراة الفعلي (MVP)'}
                         </label>
                         <select
                           value={draft.mvp}
                           onChange={(e) => updateSettleDraft(match.id, { mvp: e.target.value })}
-                          className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white font-bold outline-none"
+                          className="w-full bg-[#11212D] border border-[#253745] rounded-xl p-2 text-xs text-[#CCD0CF] font-semibold outline-none focus:border-[#4A5C6A] transition-all duration-200"
                         >
                           <option value="">
                             {language === 'fr' ? 'Choisir l\'homme du match...' : language === 'en' ? 'Select Match MVP...' : 'اختر رجل المباراة...'}
@@ -1957,7 +1961,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       <button
                         type="button"
                         onClick={() => setSettleConfirmMatch(match)}
-                        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs py-3 rounded-xl transition cursor-pointer"
+                        className="w-full bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold text-xs py-3 rounded-xl transition-all duration-200 cursor-pointer active:scale-[0.98] shadow"
                       >
                         {language === 'fr' ? 'Valider le score et calculer les points' : language === 'en' ? 'Confirm Result & Calculate Points' : 'اعتماد النتيجة واحتساب النقاط للمتوقعين'}
                       </button>
@@ -1973,28 +1977,28 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       </div>
 
       {/* 7. Teams & Squads Full Control */}
-      <div className="ucl-card rounded-3xl border border-purple-500/20 overflow-hidden transition-all duration-200">
+      <div className="ucl-card rounded-2xl border border-[#253745] bg-[#11212D] overflow-hidden transition-all duration-200 shadow-xl">
         <button
           type="button"
           onClick={() => toggleSection('teams')}
-          className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none ${
+          className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-[#253745]/40 transition-all duration-200 cursor-pointer select-none ${
             isRtl ? 'text-right' : 'text-left'
           }`}
         >
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
-              <Users className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-[#06141B] border border-[#253745] flex items-center justify-center text-[#CCD0CF] shrink-0">
+              <Users className="w-5 h-5 text-[#CCD0CF]" />
             </div>
             <div className={`min-w-0 ${isRtl ? 'text-right' : 'text-left'}`}>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base sm:text-lg font-black text-purple-400">
+                <h3 className="text-base sm:text-lg font-bold text-[#CCD0CF]">
                   {language === 'fr' 
                     ? 'Gestion des équipes & effectifs' 
                     : language === 'en' 
                     ? 'Teams & Squads Management' 
                     : 'التحكم في الفرق واللاعبين'}
                 </h3>
-                <span className="text-[10px] bg-purple-950/80 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-bold">
+                <span className="text-[10px] bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] px-2 py-0.5 rounded-full font-bold">
                   {language === 'fr' 
                     ? `${teamKeys.length} équipes` 
                     : language === 'en' 
@@ -2002,7 +2006,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     : `${teamKeys.length} فرق مسجلة`}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+              <p className="text-xs text-[#9BA8AB] mt-0.5 truncate hidden sm:block">
                 {language === 'fr'
                   ? 'Ajouter/modifier des équipes, logos et listes des joueurs.'
                   : language === 'en'
@@ -2013,21 +2017,21 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xs text-slate-400 font-bold hidden md:inline">
+            <span className="text-xs text-[#9BA8AB] font-semibold hidden md:inline">
               {expandedSections.teams 
                 ? (language === 'fr' ? 'Masquer' : language === 'en' ? 'Hide' : 'إخفاء') 
                 : (language === 'fr' ? 'Voir détails' : language === 'en' ? 'Show details' : 'عرض التفاصيل')}
             </span>
-            <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.teams ? 'rotate-180 bg-purple-500/20 text-purple-300 border-purple-500/40' : 'hover:border-purple-400/50'}`}>
+            <div className={`w-8 h-8 rounded-xl bg-[#253745] border border-[#253745] flex items-center justify-center text-[#CCD0CF] transition-transform duration-200 ${expandedSections.teams ? 'rotate-180 bg-[#4A5C6A] text-[#CCD0CF] border-[#4A5C6A]' : 'hover:border-[#4A5C6A]'}`}>
               <ChevronDown className="w-4 h-4" />
             </div>
           </div>
         </button>
 
         {expandedSections.teams && (
-          <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1 space-y-6">
+          <div className="p-5 sm:p-6 pt-0 border-t border-[#253745] mt-1 space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-3">
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[#9BA8AB]">
                 {language === 'fr'
                   ? 'Ajout et modification des équipes, joueurs, et suppression.'
                   : language === 'en'
@@ -2039,7 +2043,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 <button
                   type="button"
                   onClick={() => setDeleteAllTeamsConfirm(true)}
-                  className="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/40 text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 font-bold cursor-pointer active:scale-95 shrink-0"
+                  className="bg-[#253745] hover:bg-rose-950/60 text-rose-300 border border-[#253745] text-xs px-3.5 py-2 rounded-xl transition-all duration-200 flex items-center gap-1.5 font-bold cursor-pointer active:scale-95 shrink-0"
                 >
                   <Trash2 className="w-4 h-4 text-rose-400" />
                   <span>
@@ -2054,10 +2058,10 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
             </div>
 
         {/* Add Team */}
-        <div className="p-5 bg-slate-900/70 rounded-2xl border border-slate-800 space-y-4">
+        <div className="p-5 bg-[#06141B] rounded-xl border border-[#253745] space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h4 className="text-sm font-bold text-yellow-400 flex items-center gap-2">
-              <PlusCircle className="w-4 h-4" />
+            <h4 className="text-sm font-bold text-[#CCD0CF] flex items-center gap-2">
+              <PlusCircle className="w-4 h-4 text-[#CCD0CF]" />
               <span>
                 {language === 'fr' ? 'Ajouter une nouvelle équipe :' : language === 'en' ? 'Add New Team:' : 'إضافة فريق جديد للبطولة:'}
               </span>
@@ -2066,9 +2070,9 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               <button
                 type="button"
                 onClick={() => setShowPresetPicker(!showPresetPicker)}
-                className="bg-purple-950/70 hover:bg-purple-900 border border-purple-500/40 text-purple-300 text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                className="bg-[#253745] hover:bg-[#4A5C6A] border border-[#253745] text-[#CCD0CF] text-xs font-bold px-3 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer"
               >
-                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                <Sparkles className="w-3.5 h-3.5 text-[#CCD0CF]" />
                 <span>
                   {language === 'fr' 
                     ? `Clubs prédéfinis (${POPULAR_CLUB_PRESETS.length})` 
@@ -2079,15 +2083,15 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 {showPresetPicker ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </button>
 
-              <label className={`border text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer select-none ${
+              <label className={`border text-xs font-bold px-3 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer select-none ${
                 isProcessingLogo 
-                  ? 'bg-blue-950/80 border-blue-500/50 text-blue-300 animate-pulse' 
-                  : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200'
+                  ? 'bg-[#253745] border-[#4A5C6A] text-[#CCD0CF] animate-pulse' 
+                  : 'bg-[#253745] hover:bg-[#4A5C6A] border-[#253745] text-[#CCD0CF]'
               }`}>
                 {isProcessingLogo ? (
-                  <Loader2 className="w-3.5 h-3.5 text-cyan-400 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 text-[#CCD0CF] animate-spin" />
                 ) : (
-                  <Upload className="w-3.5 h-3.5 text-blue-400" />
+                  <Upload className="w-3.5 h-3.5 text-[#CCD0CF]" />
                 )}
                 <span>
                   {isProcessingLogo 
@@ -2106,10 +2110,10 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               <button
                 type="button"
                 onClick={handleGenerateFallbackLogo}
-                className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                className="bg-[#253745] hover:bg-[#4A5C6A] border border-[#253745] text-[#CCD0CF] text-xs font-bold px-3 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 cursor-pointer"
                 title={language === 'fr' ? 'Générer un écusson et logo automatique' : language === 'en' ? 'Generate shield crest based on team name' : 'توليد درع وشعار تلقائي حسب اسم الفريق'}
               >
-                <Wand2 className="w-3.5 h-3.5 text-amber-400" />
+                <Wand2 className="w-3.5 h-3.5 text-[#CCD0CF]" />
                 <span>{language === 'fr' ? 'Générer logo' : language === 'en' ? 'Auto-Generate' : 'توليد شعار تلقائي'}</span>
               </button>
             </div>
@@ -2117,8 +2121,8 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
 
           {/* Quick Preset Selector Grid */}
           {showPresetPicker && (
-            <div className="p-3 bg-slate-950/80 rounded-xl border border-purple-500/30 space-y-2">
-              <span className="text-[11px] font-bold text-slate-400 block">
+            <div className="p-3 bg-[#11212D] rounded-xl border border-[#253745] space-y-2">
+              <span className="text-[11px] font-bold text-[#9BA8AB] block">
                 {language === 'fr' 
                   ? 'Cliquez sur un club pour renseigner son nom et logo officiel :' 
                   : language === 'en' 
@@ -2131,7 +2135,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     key={preset.enName}
                     type="button"
                     onClick={() => handleSelectPreset(preset)}
-                    className={`flex items-center gap-2 p-2 bg-slate-900 hover:bg-purple-900/40 border border-slate-800 hover:border-purple-500/50 rounded-xl transition cursor-pointer group ${
+                    className={`flex items-center gap-2 p-2 bg-[#06141B] hover:bg-[#253745] border border-[#253745] rounded-xl transition-all duration-200 cursor-pointer group ${
                       isRtl ? 'text-right' : 'text-left'
                     }`}
                   >
@@ -2144,10 +2148,10 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       }}
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-bold text-slate-200 truncate group-hover:text-white">
+                      <div className="text-xs font-bold text-[#CCD0CF] truncate group-hover:text-white">
                         {language === 'en' ? preset.enName : preset.name}
                       </div>
-                      <div className="text-[9px] text-slate-500 truncate font-mono">
+                      <div className="text-[9px] text-[#9BA8AB] truncate font-mono">
                         {language === 'en' ? preset.name : preset.enName}
                       </div>
                     </div>
@@ -2160,7 +2164,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           {/* Team Info Inputs */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
             <div className="md:col-span-5">
-              <label className="text-[11px] text-slate-400 font-bold block mb-1">
+              <label className="text-[11px] text-[#9BA8AB] font-bold block mb-1">
                 {language === 'fr' ? 'Nom de l\'équipe :' : language === 'en' ? 'Team Name:' : 'اسم الفريق:'}
               </label>
               <input
@@ -2168,21 +2172,21 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 value={newTeamName}
                 onChange={(e) => setNewTeamName(e.target.value)}
                 placeholder={language === 'fr' ? 'Ex: Real Madrid, Manchester City...' : language === 'en' ? 'E.g., Real Madrid, Manchester City...' : 'مثال: ريال مدريد، مانشستر سيتي...'}
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-purple-400"
+                className="w-full bg-[#11212D] border border-[#253745] rounded-xl p-2.5 text-xs text-[#CCD0CF] placeholder-[#9BA8AB]/50 outline-none focus:border-[#4A5C6A] transition-all duration-200"
               />
             </div>
 
             <div className="md:col-span-5">
               <div className="flex items-center justify-between mb-1">
-                <label className="text-[11px] text-slate-400 font-bold">
+                <label className="text-[11px] text-[#9BA8AB] font-bold">
                   {language === 'fr' ? 'Lien de l\'image / Logo :' : language === 'en' ? 'Logo or Image URL:' : 'رابط الشعار أو الصورة:'}
                 </label>
-                <label className="flex items-center gap-1 text-[10px] text-cyan-400 font-bold cursor-pointer select-none">
+                <label className="flex items-center gap-1 text-[10px] text-[#CCD0CF] font-bold cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={autoRemoveBg}
                     onChange={(e) => setAutoRemoveBg(e.target.checked)}
-                    className="w-3.5 h-3.5 rounded accent-cyan-500 cursor-pointer"
+                    className="w-3.5 h-3.5 rounded accent-[#4A5C6A] cursor-pointer"
                   />
                   <span>{language === 'fr' ? 'Détourer auto' : language === 'en' ? 'Auto remove bg' : 'تفريغ الخلفية تلقائياً'}</span>
                 </label>
@@ -2194,12 +2198,12 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   value={newTeamLogo}
                   onChange={(e) => setNewTeamLogo(e.target.value)}
                   placeholder={language === 'fr' ? 'https://... ou importer ci-dessus' : language === 'en' ? 'https://... or upload above' : 'https://... أو استخدم زر الرفع أعلاه'}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none focus:border-purple-400 font-mono text-[11px] force-ltr"
+                  className="w-full bg-[#11212D] border border-[#253745] rounded-xl p-2.5 text-xs text-[#CCD0CF] placeholder-[#9BA8AB]/50 outline-none focus:border-[#4A5C6A] font-mono text-[11px] force-ltr transition-all duration-200"
                 />
                 {newTeamLogo && (
                   <div className="flex items-center gap-1.5 shrink-0">
                     <div 
-                      className="w-9 h-9 bg-slate-950 border border-slate-700 rounded-xl p-1 flex items-center justify-center overflow-hidden relative"
+                      className="w-9 h-9 bg-[#06141B] border border-[#253745] rounded-xl p-1 flex items-center justify-center overflow-hidden relative"
                       style={{
                         backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)',
                         backgroundSize: '6px 6px'
@@ -2212,7 +2216,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       type="button"
                       onClick={handleManualRemoveBackground}
                       disabled={isProcessingLogo}
-                      className="px-2 py-1.5 bg-cyan-950 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 rounded-xl transition cursor-pointer text-[11px] flex items-center gap-1 font-bold"
+                      className="px-2 py-1.5 bg-[#253745] hover:bg-[#4A5C6A] border border-[#253745] text-[#CCD0CF] rounded-xl transition cursor-pointer text-[11px] flex items-center gap-1 font-bold"
                       title={language === 'fr' ? 'Supprimer le fond' : language === 'en' ? 'Remove background' : 'إزالة خلفية هذه الصورة وجعلها شفافة'}
                     >
                       {isProcessingLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
@@ -2227,7 +2231,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               <button
                 type="button"
                 onClick={handleAddNewTeam}
-                className="w-full bg-purple-600 hover:bg-purple-500 text-white font-black text-xs py-2.5 px-3 rounded-xl transition cursor-pointer shadow-lg shadow-purple-600/20 flex items-center justify-center gap-1.5"
+                className="w-full bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold text-xs py-2.5 px-3 rounded-xl transition-all duration-200 cursor-pointer shadow flex items-center justify-center gap-1.5 active:scale-95"
               >
                 <PlusCircle className="w-4 h-4" />
                 <span>{language === 'fr' ? 'Enregistrer' : language === 'en' ? 'Register Team' : 'تسجيل الفريق'}</span>
@@ -2236,10 +2240,10 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           </div>
 
           {/* Optional Initial Squad Input */}
-          <div className="pt-2 border-t border-slate-800/80">
+          <div className="pt-2 border-t border-[#253745]">
             <div className="flex items-center justify-between mb-1">
-              <label className="text-[11px] text-slate-400 font-bold flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-blue-400" />
+              <label className="text-[11px] text-[#9BA8AB] font-bold flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-[#CCD0CF]" />
                 <span>
                   {language === 'fr' 
                     ? 'Effectif initial de l\'équipe (optionnel - détection automatique) :' 
@@ -2249,7 +2253,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 </span>
               </label>
               {detectedInitialSquad.length > 0 && (
-                <span className="text-[10px] font-black bg-blue-500/20 text-blue-300 border border-blue-500/40 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] px-2 py-0.5 rounded-full">
                   {language === 'fr' 
                     ? `(${detectedInitialSquad.length}) joueurs détectés` 
                     : language === 'en' 
@@ -2263,7 +2267,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               onChange={(e) => setNewTeamInitialSquad(e.target.value)}
               placeholder={language === 'fr' ? 'Collez la liste des joueurs ici (séparés par retours à la ligne ou virgules)...' : language === 'en' ? 'Paste or type squad players here (separated by newlines or commas)...' : 'الصق أو اكتب جميع اللاعبين دفعة واحدة هنا (يفصل بينهم بسطور، أو فواصل ، أو ترقيم 1. 2.)...'}
               rows={2}
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white outline-none focus:border-blue-400"
+              className="w-full bg-[#11212D] border border-[#253745] rounded-xl p-2 text-xs text-[#CCD0CF] placeholder-[#9BA8AB]/50 outline-none focus:border-[#4A5C6A] transition-all duration-200"
             />
           </div>
         </div>
@@ -2271,8 +2275,8 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
         {/* Manage Squad */}
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h4 className="text-sm font-bold text-blue-400 flex items-center gap-2">
-              <Users className="w-4 h-4" />
+            <h4 className="text-sm font-bold text-[#CCD0CF] flex items-center gap-2">
+              <Users className="w-4 h-4 text-[#CCD0CF]" />
               <span>
                 {language === 'fr' ? 'Gestion des joueurs :' : language === 'en' ? 'Manage Squad Players:' : 'إدارة لاعبي التشكيلة:'}
               </span>
@@ -2280,7 +2284,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           </div>
 
           {teamKeys.length === 0 ? (
-            <div className="p-6 bg-slate-900/40 rounded-2xl border border-slate-800 text-center text-xs text-slate-400">
+            <div className="p-6 bg-[#06141B] rounded-xl border border-[#253745] text-center text-xs text-[#9BA8AB]">
               {language === 'fr' 
                 ? 'Aucune équipe enregistrée pour le moment. Utilisez le formulaire ci-dessus pour ajouter une équipe.' 
                 : language === 'en' 
@@ -2290,15 +2294,15 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           ) : (
             <>
               {/* Registered Teams Visual Bar */}
-              <div className="p-3 bg-slate-950/60 rounded-2xl border border-slate-800/80 space-y-2">
+              <div className="p-3 bg-[#06141B] rounded-xl border border-[#253745] space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-300 flex items-center gap-1.5">
-                    <Shield className="w-3.5 h-3.5 text-yellow-400" />
+                  <span className="font-bold text-[#CCD0CF] flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-[#CCD0CF]" />
                     <span>
                       {language === 'fr' ? `Équipes enregistrées (${teamKeys.length}) :` : language === 'en' ? `Registered Teams (${teamKeys.length}):` : `الفرق المسجلة في البطولة (${teamKeys.length} فرق):`}
                     </span>
                   </span>
-                  <span className="text-[11px] text-slate-500">
+                  <span className="text-[11px] text-[#9BA8AB]">
                     {language === 'fr' ? 'Cliquez sur une équipe pour gérer ses joueurs' : language === 'en' ? 'Click on any team to manage squad' : 'اضغط على أي فريق لعرضه وإدارة لاعبيه'}
                   </span>
                 </div>
@@ -2311,20 +2315,20 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                         key={tKey}
                         type="button"
                         onClick={() => setSelectedManageTeam(tKey)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition cursor-pointer ${
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all duration-200 cursor-pointer ${
                           isSelected
-                            ? 'bg-blue-600/30 border-blue-400 text-white shadow-md shadow-blue-500/20'
-                            : 'bg-slate-900/90 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800/80'
+                            ? 'bg-[#253745] border-[#4A5C6A] text-[#CCD0CF] shadow'
+                            : 'bg-[#11212D] border-[#253745] text-[#9BA8AB] hover:border-[#4A5C6A] hover:bg-[#253745]/50'
                         }`}
                       >
                         {tObj?.logo ? (
-                          <img src={tObj.logo} alt="" className="w-5 h-5 object-contain rounded shrink-0 bg-slate-950 p-0.5" />
+                          <img src={tObj.logo} alt="" className="w-5 h-5 object-contain rounded shrink-0 bg-[#06141B] p-0.5" />
                         ) : (
-                          <Shield className="w-4 h-4 text-blue-400 shrink-0" />
+                          <Shield className="w-4 h-4 text-[#CCD0CF] shrink-0" />
                         )}
                         <span>{tKey}</span>
                         <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono ${
-                          isSelected ? 'bg-blue-500/40 text-blue-200' : 'bg-slate-800 text-slate-400'
+                          isSelected ? 'bg-[#4A5C6A] text-[#CCD0CF]' : 'bg-[#253745] text-[#9BA8AB]'
                         }`}>
                           {tObj?.squad?.length || 0} {language === 'fr' ? 'joueurs' : language === 'en' ? 'players' : 'لاعب'}
                         </span>
@@ -2335,11 +2339,11 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               </div>
 
               {/* Selected Team Header Bar */}
-              <div className="p-3 bg-slate-900/60 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+              <div className="p-3 bg-[#06141B] rounded-xl border border-[#253745] flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-3">
                   {teams[selectedManageTeam]?.logo && (
                     <div 
-                      className="w-9 h-9 shrink-0 rounded-xl p-1 bg-slate-950 border border-slate-700 flex items-center justify-center overflow-hidden"
+                      className="w-9 h-9 shrink-0 rounded-xl p-1 bg-[#11212D] border border-[#253745] flex items-center justify-center overflow-hidden"
                       style={{
                         backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)',
                         backgroundSize: '6px 6px'
@@ -2354,13 +2358,13 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     </div>
                   )}
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-400 font-bold">
+                    <span className="text-xs text-[#9BA8AB] font-bold">
                       {language === 'fr' ? 'Équipe sélectionnée :' : language === 'en' ? 'Selected Team:' : 'الفريق الحالي:'}
                     </span>
                     <select
                       value={selectedManageTeam}
                       onChange={(e) => setSelectedManageTeam(e.target.value)}
-                      className="bg-slate-950 border border-slate-700 rounded-xl p-2 text-xs text-white font-bold outline-none focus:border-blue-400"
+                      className="bg-[#11212D] border border-[#253745] rounded-xl p-2 text-xs text-[#CCD0CF] font-bold outline-none focus:border-[#4A5C6A] transition-all duration-200"
                     >
                       {teamKeys.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
@@ -2368,10 +2372,10 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
 
                   {/* Change Logo / Remove Bg for selected team */}
                   <label 
-                    className="p-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 select-none"
+                    className="p-2 bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] border border-[#253745] rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5 select-none"
                     title={language === 'fr' ? 'Changer le logo et détourer auto' : language === 'en' ? 'Upload new logo with auto-cutout' : 'رفع شعار جديد لهذا الفريق من الجهاز وتفريغ خلفيته تلقائياً'}
                   >
-                    {isProcessingLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 text-cyan-400" />}
+                    {isProcessingLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5 text-[#CCD0CF]" />}
                     <span>{language === 'fr' ? 'Changer le logo' : language === 'en' ? 'Change Logo' : 'تغيير الشعار من الجهاز (تفريغ تلقائي)'}</span>
                     <input
                       type="file"
@@ -2387,10 +2391,10 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       type="button"
                       onClick={handleRemoveExistingTeamLogoBg}
                       disabled={isProcessingLogo}
-                      className="p-2 bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-500/30 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                      className="p-2 bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] border border-[#253745] rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5"
                       title={language === 'fr' ? 'Détourer le logo actuel' : language === 'en' ? 'Remove current logo background' : 'إزالة خلفية الشعار الحالي لهذا الفريق وجعله شفافاً'}
                     >
-                      <Wand2 className="w-3.5 h-3.5 text-purple-400" />
+                      <Wand2 className="w-3.5 h-3.5 text-[#CCD0CF]" />
                       <span>{language === 'fr' ? 'Détourer le logo' : language === 'en' ? 'Cutout Logo' : 'إزالة خلفية الشعار'}</span>
                     </button>
                   )}
@@ -2400,7 +2404,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   <button
                     type="button"
                     onClick={() => setClearSquadConfirm(selectedManageTeam)}
-                    className="p-2 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                    className="p-2 bg-[#253745] hover:bg-amber-950/50 text-amber-300 border border-[#253745] rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5"
                     title={language === 'fr' ? 'Vider la liste des joueurs' : language === 'en' ? 'Clear squad player list' : 'مسح قائمة لاعبي هذا الفريق فقط'}
                   >
                     <span>{language === 'fr' ? 'Vider l\'effectif' : language === 'en' ? 'Clear Squad' : 'مسح تشكيلة الفريق'}</span>
@@ -2409,7 +2413,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   <button
                     type="button"
                     onClick={() => setDeleteTeamConfirm(selectedManageTeam)}
-                    className="p-2 bg-rose-950/70 hover:bg-rose-900 border border-rose-500/40 text-rose-300 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                    className="p-2 bg-[#253745] hover:bg-rose-950/60 border border-[#253745] text-rose-300 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1.5"
                     title={language === 'fr' ? 'Supprimer l\'équipe' : language === 'en' ? 'Delete this team' : 'حذف هذا الفريق بالكامل'}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -2418,12 +2422,12 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 </div>
               </div>
 
-              {/* Automatic Bulk Players Entry (User's primary request) */}
-              <div className="p-4 bg-gradient-to-r from-blue-950/40 to-slate-900/60 rounded-2xl border border-blue-500/30 space-y-3">
+              {/* Automatic Bulk Players Entry */}
+              <div className="p-4 bg-[#06141B] rounded-xl border border-[#253745] space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-blue-400" />
-                    <span className="text-xs font-black text-blue-300">
+                    <Layers className="w-4 h-4 text-[#CCD0CF]" />
+                    <span className="text-xs font-bold text-[#CCD0CF]">
                       {language === 'fr' 
                         ? `Ajout groupé de joueurs pour (${selectedManageTeam}) :` 
                         : language === 'en' 
@@ -2432,7 +2436,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     </span>
                   </div>
                   {detectedBulkPlayers.length > 0 && (
-                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-black px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] text-[11px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                       <span>
                         {language === 'fr' 
@@ -2445,7 +2449,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   )}
                 </div>
 
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-[#9BA8AB]">
                   {language === 'fr'
                     ? 'Collez ou tapez tous les noms des joueurs (séparés par des lignes, virgules ou chiffres). L\'application les séparera automatiquement.'
                     : language === 'en'
@@ -2462,26 +2466,26 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     ? `Type or paste player list here...\nExample:\nCourtois\nVinicius Junior\nKylian Mbappe\nJude Bellingham\nValverde\nRodrygo` 
                     : `اكتب أو الصق قائمة اللاعبين هنا دفعة واحدة...\nمثال:\nكورتوا\nفينيسيوس جونيور\nكيليان مبابي\nجود بيلينجهام\nفالفيردي\nرودريغو\n(أو مفصولين بفواصل: كورتوا، فينيسيوس، مبابي)`}
                   rows={4}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-400 placeholder:text-slate-600 leading-relaxed font-sans"
+                  className="w-full bg-[#11212D] border border-[#253745] rounded-xl p-3 text-xs text-[#CCD0CF] outline-none focus:border-[#4A5C6A] placeholder-[#9BA8AB]/50 leading-relaxed font-sans transition-all duration-200"
                 />
 
                 {/* Live Preview Chips if players are detected */}
                 {detectedBulkPlayers.length > 0 && (
-                  <div className="p-2.5 bg-slate-950/60 rounded-xl border border-slate-800 space-y-1.5">
-                    <span className="text-[10px] font-bold text-slate-400 block">
+                  <div className="p-2.5 bg-[#11212D] rounded-xl border border-[#253745] space-y-1.5">
+                    <span className="text-[10px] font-bold text-[#9BA8AB] block">
                       {language === 'fr' ? 'Aperçu avant ajout :' : language === 'en' ? 'Preview before adding:' : 'معاينة اللاعبين المكتشفين قبل الإضافة:'}
                     </span>
                     <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
                       {detectedBulkPlayers.slice(0, 15).map((p, idx) => (
                         <span
                           key={`${p}_${idx}`}
-                          className="bg-blue-950/60 border border-blue-500/30 text-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-lg"
+                          className="bg-[#253745] border border-[#4A5C6A] text-[#CCD0CF] text-[10px] font-bold px-2 py-0.5 rounded-lg"
                         >
                           {p}
                         </span>
                       ))}
                       {detectedBulkPlayers.length > 15 && (
-                        <span className="bg-slate-800 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded-lg">
+                        <span className="bg-[#253745] text-[#9BA8AB] text-[10px] font-bold px-2 py-0.5 rounded-lg">
                           +{detectedBulkPlayers.length - 15} {language === 'fr' ? 'autres' : language === 'en' ? 'others' : 'آخرين'}
                         </span>
                       )}
@@ -2494,10 +2498,10 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     type="button"
                     onClick={handleAddBulkPlayers}
                     disabled={detectedBulkPlayers.length === 0}
-                    className={`font-black text-xs py-2.5 px-5 rounded-xl transition flex items-center gap-2 cursor-pointer ${
+                    className={`font-bold text-xs py-2.5 px-5 rounded-xl transition-all duration-200 flex items-center gap-2 cursor-pointer ${
                       detectedBulkPlayers.length > 0
-                        ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30 active:scale-95'
-                        : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                        ? 'bg-[#CCD0CF] hover:bg-white text-[#06141B] shadow active:scale-95'
+                        : 'bg-[#253745] text-[#9BA8AB] cursor-not-allowed'
                     }`}
                   >
                     <UserPlus className="w-4 h-4" />
@@ -2512,7 +2516,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     <button
                       type="button"
                       onClick={() => setBulkSquadInput('')}
-                      className="text-xs text-slate-400 hover:text-rose-400 transition cursor-pointer font-bold px-2 py-1"
+                      className="text-xs text-[#9BA8AB] hover:text-rose-400 transition-all duration-150 cursor-pointer font-bold px-2 py-1"
                     >
                       {language === 'fr' ? 'Effacer le texte' : language === 'en' ? 'Clear text' : 'مسح النص'}
                     </button>
@@ -2521,8 +2525,8 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               </div>
 
               {/* Single Player Quick Add */}
-              <div className="p-3 bg-slate-900/40 rounded-2xl border border-slate-800 flex flex-wrap items-center gap-2">
-                <span className="text-xs text-slate-400 font-bold shrink-0">
+              <div className="p-3 bg-[#06141B] rounded-xl border border-[#253745] flex flex-wrap items-center gap-2">
+                <span className="text-xs text-[#9BA8AB] font-bold shrink-0">
                   {language === 'fr' ? 'Ou ajouter un joueur individuel :' : language === 'en' ? 'Or add individual player:' : 'أو إضافة لاعب فردي:'}
                 </span>
                 <input
@@ -2536,12 +2540,12 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     }
                   }}
                   placeholder={language === 'fr' ? 'Nom du joueur...' : language === 'en' ? 'Player name...' : 'اسم لاعب مفرد...'}
-                  className="bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-white outline-none focus:border-emerald-400 flex-1 min-w-[160px]"
+                  className="bg-[#11212D] border border-[#253745] rounded-xl p-2 text-xs text-[#CCD0CF] placeholder-[#9BA8AB]/50 outline-none focus:border-[#4A5C6A] flex-1 min-w-[160px] transition-all duration-200"
                 />
                 <button
                   type="button"
                   onClick={handleAddPlayer}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 px-3 rounded-xl transition cursor-pointer flex items-center gap-1 shrink-0"
+                  className="bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] hover:text-white font-bold text-xs py-2 px-3 rounded-xl transition-all duration-200 cursor-pointer flex items-center gap-1 shrink-0 border border-[#253745]"
                 >
                   <PlusCircle className="w-3.5 h-3.5" />
                   <span>{language === 'fr' ? 'Ajouter' : language === 'en' ? 'Add' : 'إضافة'}</span>
@@ -2549,21 +2553,21 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
               </div>
 
               {/* Current Squad Display */}
-              <div className="p-4 bg-slate-900/40 rounded-2xl border border-slate-800">
+              <div className="p-4 bg-[#06141B] rounded-xl border border-[#253745]">
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-xs font-bold text-slate-300">
+                  <span className="text-xs font-bold text-[#CCD0CF]">
                     {language === 'fr' 
                       ? `Effectif de (${selectedManageTeam}) :` 
                       : language === 'en' 
                       ? `Squad list of (${selectedManageTeam}):` 
                       : `قائمة لاعبي فريق (${selectedManageTeam}) حالياً:`}
                   </span>
-                  <span className="text-xs text-yellow-400 font-bold bg-yellow-500/10 border border-yellow-500/20 px-2.5 py-0.5 rounded-full">
+                  <span className="text-xs text-[#CCD0CF] font-bold bg-[#253745] border border-[#4A5C6A] px-2.5 py-0.5 rounded-full">
                     {teams[selectedManageTeam]?.squad?.length || 0} {language === 'fr' ? 'joueurs enregistrés' : language === 'en' ? 'players registered' : 'لاعبين مسجلين'}
                   </span>
                 </div>
                 {(!teams[selectedManageTeam]?.squad || teams[selectedManageTeam]?.squad.length === 0) ? (
-                  <p className="text-xs text-slate-500 text-center py-4 bg-slate-950/40 rounded-xl border border-slate-800/60">
+                  <p className="text-xs text-[#9BA8AB] text-center py-4 bg-[#11212D] rounded-xl border border-[#253745]">
                     {language === 'fr' 
                       ? 'Aucun joueur enregistré dans cette équipe pour le moment. Utilisez le formulaire d\'ajout groupé ci-dessus !' 
                       : language === 'en' 
@@ -2575,14 +2579,14 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     {teams[selectedManageTeam]?.squad?.map((player, idx) => (
                       <div
                         key={`${player}_${idx}`}
-                        className="bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs font-bold text-slate-200 transition"
+                        className="bg-[#11212D] border border-[#253745] hover:border-[#4A5C6A] rounded-xl px-3 py-1.5 flex items-center gap-2 text-xs font-bold text-[#CCD0CF] transition-all duration-150"
                       >
-                        <span className="text-[10px] text-slate-500 font-mono" dir="ltr">{idx + 1}.</span>
+                        <span className="text-[10px] text-[#9BA8AB] font-mono" dir="ltr">{idx + 1}.</span>
                         <span>{player}</span>
                         <button
                           type="button"
                           onClick={() => handleDeletePlayer(selectedManageTeam, idx)}
-                          className="text-rose-500 hover:text-rose-400 font-bold cursor-pointer transition p-0.5 hover:bg-rose-950/50 rounded"
+                          className="text-rose-400 hover:text-rose-300 font-bold cursor-pointer transition p-0.5 hover:bg-rose-950/50 rounded"
                           title={language === 'fr' ? 'Supprimer ce joueur' : language === 'en' ? 'Delete this player' : 'حذف هذا اللاعب'}
                         >
                           <X className="w-3.5 h-3.5" />
@@ -2601,21 +2605,21 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
 
       {/* 8. Database Maintenance & Complete Reset (Admin Only) */}
       {onResetDatabase && (
-        <div className="ucl-card rounded-3xl border border-rose-500/40 shadow-xl overflow-hidden transition-all duration-200">
+        <div className="ucl-card rounded-2xl border border-rose-500/40 bg-[#11212D] shadow-xl overflow-hidden transition-all duration-200">
           <button
             type="button"
             onClick={() => toggleSection('resetDb')}
-            className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-slate-800/30 transition cursor-pointer select-none ${
+            className={`w-full p-5 sm:p-6 flex items-center justify-between gap-3 hover:bg-[#253745]/40 transition-all duration-200 cursor-pointer select-none ${
               isRtl ? 'text-right' : 'text-left'
             }`}
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-[#06141B] border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
                 <Trash2 className="w-5 h-5" />
               </div>
               <div className={`min-w-0 ${isRtl ? 'text-right' : 'text-left'}`}>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-base sm:text-lg font-black text-rose-400">
+                  <h3 className="text-base sm:text-lg font-bold text-rose-300">
                     {language === 'fr' 
                       ? 'Réinitialisation & maintenance de la base' 
                       : language === 'en' 
@@ -2630,7 +2634,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       : 'إجراء حساس (خاص بالآدمن)'}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5 truncate hidden sm:block">
+                <p className="text-xs text-[#9BA8AB] mt-0.5 truncate hidden sm:block">
                   {language === 'fr'
                     ? 'Réinitialiser la base de données et démarrer une nouvelle saison.'
                     : language === 'en'
@@ -2641,22 +2645,22 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs text-slate-400 font-bold hidden md:inline">
+              <span className="text-xs text-[#9BA8AB] font-semibold hidden md:inline">
                 {expandedSections.resetDb 
                   ? (language === 'fr' ? 'Masquer' : language === 'en' ? 'Hide' : 'إخفاء') 
                   : (language === 'fr' ? 'Voir détails' : language === 'en' ? 'Show details' : 'عرض التفاصيل')}
               </span>
-              <div className={`w-8 h-8 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center text-slate-300 transition-transform duration-200 ${expandedSections.resetDb ? 'rotate-180 bg-rose-500/20 text-rose-300 border-rose-500/40' : 'hover:border-rose-400/50'}`}>
+              <div className={`w-8 h-8 rounded-xl bg-[#253745] border border-[#253745] flex items-center justify-center text-[#CCD0CF] transition-transform duration-200 ${expandedSections.resetDb ? 'rotate-180 bg-rose-950/60 text-rose-300 border-rose-500/40' : 'hover:border-rose-400/50'}`}>
                 <ChevronDown className="w-4 h-4" />
               </div>
             </div>
           </button>
 
           {expandedSections.resetDb && (
-            <div className="p-5 sm:p-6 pt-0 border-t border-slate-800/80 mt-1">
+            <div className="p-5 sm:p-6 pt-0 border-t border-[#253745] mt-1">
               <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
                 <div>
-                  <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                  <p className="text-xs text-[#9BA8AB] max-w-2xl leading-relaxed">
                     {language === 'fr'
                       ? 'Cette option permet à l\'administrateur de réinitialiser la base de données pour préparer une nouvelle compétition ou saison.'
                       : language === 'en'
@@ -2668,7 +2672,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 <button
                   type="button"
                   onClick={onResetDatabase}
-                  className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black px-5 py-3 rounded-2xl transition shadow-lg text-xs sm:text-sm cursor-pointer flex items-center gap-2 active:scale-95 shrink-0"
+                  className="bg-[#253745] hover:bg-rose-950/80 text-rose-300 border border-rose-500/40 font-bold px-5 py-3 rounded-xl transition-all duration-200 text-xs sm:text-sm cursor-pointer flex items-center gap-2 active:scale-95 shrink-0"
                   title={language === 'fr' ? 'Réinitialiser la base' : language === 'en' ? 'Reset database' : 'إعادة ضبط قاعدة البيانات'}
                 >
                   <Trash2 className="w-4 h-4" />

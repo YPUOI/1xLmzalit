@@ -15,6 +15,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
   predictions = {} 
 }) => {
   const { t, isRtl } = useLanguage();
+
   // Calculate statistics per user (exact score count, correct MVP count, and correct Scorers count)
   const userStats = useMemo(() => {
     const stats: Record<string, { exactScoreCount: number; correctMvpCount: number; correctScorersCount: number }> = {};
@@ -87,34 +88,34 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
   }, [users, userStats]);
 
   return (
-    <div className="ucl-card p-4 sm:p-6 rounded-3xl ucl-gold-glow border border-yellow-500/20 space-y-6" dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className="bg-[#11212D] p-4 sm:p-6 rounded-2xl border border-[#253745] space-y-5 shadow-xl" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Header */}
-      <div className="flex flex-wrap justify-between items-center pb-4 border-b border-slate-800 gap-3">
+      <div className="flex flex-wrap justify-between items-center pb-4 border-b border-[#253745] gap-3">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-yellow-400 flex items-center gap-2.5">
-            <Crown className="w-6 h-6 sm:w-7 sm:h-7 text-amber-400 fill-amber-400 shrink-0" />
+          <h2 className="text-lg sm:text-xl font-bold text-[#CCD0CF] flex items-center gap-2.5">
+            <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-[#CCD0CF] shrink-0" />
             <span>{t('leaderboardTitle')}</span>
           </h2>
-          <p className="text-xs text-[#94A3B8] mt-1">
+          <p className="text-xs text-[#9BA8AB] mt-1">
             {t('leaderboardDesc')}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs bg-yellow-500/10 text-yellow-300 border border-yellow-500/30 px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+          <span className="text-xs bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-[#CCD0CF]" />
             <span>{t('tabLeaderboardShort')}</span>
           </span>
         </div>
       </div>
 
       {approvedUsers.length === 0 ? (
-        <div className="p-8 text-center text-xs text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800">
+        <div className="p-8 text-center text-xs text-[#9BA8AB] bg-[#06141B] rounded-xl border border-[#253745]">
           {t('noApprovedUsers')}
         </div>
       ) : (
         <>
-          {/* MOBILE VIEW: Touch-optimized Cards (sm:hidden) */}
-          <div className="space-y-3 sm:hidden">
+          {/* MOBILE VIEW: Cards (sm:hidden) */}
+          <div className="space-y-2.5 sm:hidden">
             {approvedUsers.map((user, index) => {
               const isFirst = index === 0;
               const isSecond = index === 1;
@@ -124,52 +125,48 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
               return (
                 <div 
                   key={user.username}
-                  className={`p-3.5 rounded-2xl border transition flex flex-col gap-2.5 ${
+                  className={`p-3.5 rounded-xl border transition-all duration-200 flex flex-col gap-2.5 ${
                     isFirst 
-                      ? 'bg-gradient-to-r from-yellow-500/15 via-amber-500/10 to-slate-900 border-yellow-500/40 shadow-lg shadow-yellow-500/10'
+                      ? 'bg-[#11212D] border-[#4A5C6A]'
                       : isSecond
-                      ? 'bg-slate-900/80 border-slate-600/50'
+                      ? 'bg-[#11212D] border-[#253745]'
                       : isThird
-                      ? 'bg-slate-900/80 border-amber-700/50'
-                      : 'bg-slate-900/50 border-slate-800'
+                      ? 'bg-[#11212D] border-[#253745]'
+                      : 'bg-[#06141B] border-[#253745]'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       {/* Rank Badge */}
-                      <div className="shrink-0 flex items-center justify-center w-8">
+                      <div className="shrink-0 flex items-center justify-center w-7">
                         {isFirst ? (
-                          <div className="w-8 h-8 rounded-xl bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 flex items-center justify-center font-black text-sm">
-                            <Crown className="w-4 h-4 fill-amber-400 text-amber-400" />
+                          <div className="w-7 h-7 rounded-lg bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] flex items-center justify-center">
+                            <Crown className="w-3.5 h-3.5 text-[#CCD0CF]" />
                           </div>
                         ) : isSecond ? (
-                          <div className="w-8 h-8 rounded-xl bg-slate-700/30 text-slate-200 border border-slate-500/30 flex items-center justify-center font-black text-xs">
-                            <Medal className="w-4 h-4 text-slate-300" />
+                          <div className="w-7 h-7 rounded-lg bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] flex items-center justify-center">
+                            <Medal className="w-3.5 h-3.5 text-[#CCD0CF]" />
                           </div>
                         ) : isThird ? (
-                          <div className="w-8 h-8 rounded-xl bg-amber-900/30 text-amber-500 border border-amber-600/30 flex items-center justify-center font-black text-xs">
-                            <Medal className="w-4 h-4 text-amber-600" />
+                          <div className="w-7 h-7 rounded-lg bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] flex items-center justify-center">
+                            <Medal className="w-3.5 h-3.5 text-[#CCD0CF]" />
                           </div>
                         ) : (
-                          <span className="text-slate-400 font-bold text-xs">#{index + 1}</span>
+                          <span className="text-[#9BA8AB] font-mono text-xs font-semibold">#{index + 1}</span>
                         )}
                       </div>
 
                       {/* User Avatar & Name */}
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
-                          isFirst 
-                            ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' 
-                            : 'bg-slate-800 text-slate-300 border border-slate-700'
-                        }`}>
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A]">
                           {user.username.slice(0, 1).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <span className="font-black text-sm text-white truncate block">
+                          <span className="font-bold text-xs sm:text-sm text-[#CCD0CF] truncate block">
                             {user.username}
                           </span>
-                          <span className="text-[10px] text-blue-300 flex items-center gap-1">
-                            <UserCheck className="w-3 h-3 text-blue-400" />
+                          <span className="text-[10px] text-[#9BA8AB] flex items-center gap-1">
+                            <UserCheck className="w-3 h-3 text-[#9BA8AB]" />
                             {t('memberBadge')}
                           </span>
                         </div>
@@ -177,25 +174,25 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                     </div>
 
                     {/* Points Badge */}
-                    <div className="shrink-0 flex items-center gap-1 bg-slate-950/80 border border-yellow-500/30 px-3 py-1.5 rounded-xl font-black text-amber-300 text-sm">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span>{user.points || 0}</span>
+                    <div className="shrink-0 flex items-center gap-1.5 bg-[#253745] border border-[#4A5C6A] px-2.5 py-1 rounded-lg font-mono font-bold text-[#CCD0CF] text-xs sm:text-sm">
+                      <Star className="w-3.5 h-3.5 text-[#CCD0CF]" />
+                      <span>{user.points || 0} pts</span>
                     </div>
                   </div>
 
                   {/* Tie-Breaker Sub-Stats */}
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
+                  <div className="flex items-center justify-between pt-2 border-t border-[#253745] text-[10px] text-[#9BA8AB]">
                     <span className="flex items-center gap-1">
-                      <Target className="w-3 h-3 text-yellow-400" />
-                      <span>{t('exactScoresCount')}: <strong className="text-yellow-300 font-bold">{stats.exactScoreCount}</strong></span>
+                      <Target className="w-3 h-3 text-[#9BA8AB]" />
+                      <span>{t('exactScoresCount')}: <strong className="text-[#CCD0CF] font-mono font-medium">{stats.exactScoreCount}</strong></span>
                     </span>
                     <span className="flex items-center gap-1">
-                      <Award className="w-3 h-3 text-purple-400" />
-                      <span>MVP: <strong className="text-purple-300 font-bold">{stats.correctMvpCount}</strong></span>
+                      <Award className="w-3 h-3 text-[#9BA8AB]" />
+                      <span>MVP: <strong className="text-[#CCD0CF] font-mono font-medium">{stats.correctMvpCount}</strong></span>
                     </span>
                     <span className="flex items-center gap-1">
-                      <Flame className="w-3 h-3 text-emerald-400" />
-                      <span>{t('scorersCount')}: <strong className="text-emerald-300 font-bold">{stats.correctScorersCount}</strong></span>
+                      <Flame className="w-3 h-3 text-[#9BA8AB]" />
+                      <span>{t('scorersCount')}: <strong className="text-[#CCD0CF] font-mono font-medium">{stats.correctScorersCount}</strong></span>
                     </span>
                   </div>
                 </div>
@@ -203,21 +200,21 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
             })}
           </div>
 
-          {/* TABLET & DESKTOP VIEW: Full Data Table (hidden sm:block) */}
+          {/* TABLET & DESKTOP VIEW: Clean Table */}
           <div className="hidden sm:block overflow-x-auto">
             <table className={`w-full ${isRtl ? 'text-right' : 'text-left'} border-collapse`}>
               <thead>
-                <tr className="border-b border-slate-800 text-slate-400 text-xs uppercase">
-                  <th className="p-4">{t('rank')}</th>
-                  <th className="p-4">{t('member')}</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4 text-center">{t('exactScoresCount')}</th>
-                  <th className="p-4 text-center">{t('mvpCount')}</th>
-                  <th className="p-4 text-center">{t('scorersCount')}</th>
-                  <th className="p-4 text-center">{t('totalPoints')}</th>
+                <tr className="border-b border-[#253745] text-[#9BA8AB] text-xs font-semibold uppercase tracking-wider">
+                  <th className="py-3 px-4">{t('rank')}</th>
+                  <th className="py-3 px-4">{t('member')}</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-center">{t('exactScoresCount')}</th>
+                  <th className="py-3 px-4 text-center">{t('mvpCount')}</th>
+                  <th className="py-3 px-4 text-center">{t('scorersCount')}</th>
+                  <th className="py-3 px-4 text-center">{t('totalPoints')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-[#253745]">
                 {approvedUsers.map((user, index) => {
                   const isFirst = index === 0;
                   const isSecond = index === 1;
@@ -227,73 +224,68 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                   return (
                     <tr 
                       key={user.username} 
-                      className="hover:bg-slate-900/50 transition group"
+                      className="hover:bg-[#253745]/40 transition-colors group text-xs sm:text-sm"
                     >
-                      <td className="p-4 font-black">
+                      <td className="py-3 px-4 font-bold font-mono">
                         {isFirst ? (
-                          <span className="inline-flex items-center gap-1.5 text-amber-300 text-base">
-                            <Crown className="w-4 h-4 fill-amber-400 text-amber-400" />
+                          <span className="inline-flex items-center gap-1.5 text-[#CCD0CF]">
+                            <Crown className="w-4 h-4 text-[#CCD0CF]" />
                             <span>#1</span>
                           </span>
                         ) : isSecond ? (
-                          <span className="inline-flex items-center gap-1.5 text-slate-200">
-                            <Medal className="w-4 h-4 text-slate-300" />
+                          <span className="inline-flex items-center gap-1.5 text-[#CCD0CF]">
+                            <Medal className="w-4 h-4 text-[#CCD0CF]" />
                             <span>#2</span>
                           </span>
                         ) : isThird ? (
-                          <span className="inline-flex items-center gap-1.5 text-amber-600">
-                            <Medal className="w-4 h-4 text-amber-600" />
+                          <span className="inline-flex items-center gap-1.5 text-[#CCD0CF]">
+                            <Medal className="w-4 h-4 text-[#CCD0CF]" />
                             <span>#3</span>
                           </span>
                         ) : (
-                          <span className="text-slate-400">#{index + 1}</span>
+                          <span className="text-[#9BA8AB]">#{index + 1}</span>
                         )}
                       </td>
 
-                      <td className="p-4 font-bold text-white flex items-center gap-2.5">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs ${
-                          isFirst ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' : 'bg-slate-900 text-slate-400 border border-slate-800'
-                        }`}>
+                      <td className="py-3 px-4 font-semibold text-[#CCD0CF] flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A]">
                           {user.username.slice(0, 1).toUpperCase()}
                         </div>
-                        <span className="group-hover:text-yellow-300 transition">{user.username}</span>
+                        <span className="group-hover:text-white transition-colors">{user.username}</span>
                       </td>
 
-                      <td className="p-4 text-xs font-semibold text-slate-400">
-                        <span className="inline-flex items-center gap-1 bg-blue-950/60 text-blue-300 border border-blue-500/30 px-2.5 py-1 rounded-lg">
-                          <UserCheck className="w-3 h-3 text-blue-400" />
+                      <td className="py-3 px-4 text-xs font-normal text-[#9BA8AB]">
+                        <span className="inline-flex items-center gap-1 bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] px-2 py-0.5 rounded">
+                          <UserCheck className="w-3 h-3 text-[#9BA8AB]" />
                           <span>{t('memberBadge')}</span>
                         </span>
                       </td>
 
                       {/* Exact Scores column */}
-                      <td className="p-4 text-center">
-                        <span className="inline-flex items-center gap-1 bg-yellow-950/40 text-yellow-300 border border-yellow-800/40 px-2.5 py-1 rounded-lg text-xs font-bold font-mono">
-                          <Target className="w-3.5 h-3.5 text-yellow-400" />
-                          <span>{stats.exactScoreCount}</span>
+                      <td className="py-3 px-4 text-center font-mono">
+                        <span className="text-[#CCD0CF]">
+                          {stats.exactScoreCount}
                         </span>
                       </td>
 
                       {/* MVP Tie-breaker column */}
-                      <td className="p-4 text-center">
-                        <span className="inline-flex items-center gap-1 bg-purple-950/40 text-purple-300 border border-purple-800/40 px-2.5 py-1 rounded-lg text-xs font-bold font-mono">
-                          <Award className="w-3.5 h-3.5 text-purple-400" />
-                          <span>{stats.correctMvpCount}</span>
+                      <td className="py-3 px-4 text-center font-mono">
+                        <span className="text-[#CCD0CF]">
+                          {stats.correctMvpCount}
                         </span>
                       </td>
 
                       {/* Scorers Tie-breaker column */}
-                      <td className="p-4 text-center">
-                        <span className="inline-flex items-center gap-1 bg-emerald-950/40 text-emerald-300 border border-emerald-800/40 px-2.5 py-1 rounded-lg text-xs font-bold font-mono">
-                          <Flame className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>{stats.correctScorersCount}</span>
+                      <td className="py-3 px-4 text-center font-mono">
+                        <span className="text-[#CCD0CF]">
+                          {stats.correctScorersCount}
                         </span>
                       </td>
 
                       {/* Total Points */}
-                      <td className="p-4 text-center font-black text-amber-400 text-lg">
-                        <div className="flex items-center justify-center gap-1.5 bg-yellow-500/10 border border-yellow-500/30 py-1 px-3 rounded-xl mx-auto w-fit">
-                          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                      <td className="py-3 px-4 text-center font-bold text-[#CCD0CF]">
+                        <div className="flex items-center justify-center gap-1.5 bg-[#253745] border border-[#4A5C6A] py-1 px-3 rounded-lg mx-auto w-fit font-mono">
+                          <Star className="w-3.5 h-3.5 text-[#CCD0CF]" />
                           <span>{user.points || 0}</span>
                         </div>
                       </td>

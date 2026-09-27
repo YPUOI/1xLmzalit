@@ -3,16 +3,12 @@ import {
   Users, 
   Lock, 
   Clock, 
-  CheckCircle2, 
-  Award, 
-  Flame, 
-  ShieldCheck, 
   Search, 
-  Trophy, 
   ChevronDown,
-  Sparkles,
-  AlertCircle,
-  Download
+  Flame,
+  Award,
+  Download,
+  ShieldCheck
 } from 'lucide-react';
 import { Match, Team, Prediction, AppUser } from '../types';
 import { PredictionCardModal } from './PredictionCardModal';
@@ -122,49 +118,47 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
   };
 
   return (
-    <div className="space-y-6" dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className="space-y-5" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Slide Header */}
-      <div className="ucl-card p-5 sm:p-6 rounded-3xl border border-cyan-500/30 ucl-card-glow relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-        
+      <div className="bg-[#11212D] p-4 sm:p-6 rounded-2xl border border-[#253745] relative overflow-hidden shadow-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#080C19] border border-[#00E5FF]/40 text-xs font-black text-[#00E5FF] mb-2">
-              <ShieldCheck className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[#9BA8AB] mb-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#CCD0CF]" />
               <span>{t('brandName')}</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5">
-              <Users className="w-6 h-6 text-[#00E5FF]" />
+            <h2 className="text-lg sm:text-xl font-bold text-[#CCD0CF] flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#CCD0CF]" />
               <span>{t('membersPredTitle')}</span>
             </h2>
-            <p className="text-xs sm:text-sm text-[#94A3B8] mt-1.5 max-w-2xl leading-relaxed">
+            <p className="text-xs text-[#9BA8AB] mt-1 max-w-2xl leading-relaxed">
               {t('membersPredDesc')}
             </p>
           </div>
 
-          <div className="flex items-center gap-2 bg-[#080C19] p-2.5 rounded-2xl border border-slate-800 self-start md:self-auto">
-            <div className={`text-center px-3 ${isRtl ? 'border-l' : 'border-r'} border-slate-800`}>
-              <span className="block text-[10px] text-slate-400 font-bold">{t('settledMatches')}</span>
-              <span className="text-base font-black text-[#00E5FF]">{lockedMatches.length}</span>
+          <div className="flex items-center gap-2 bg-[#06141B] p-2 rounded-xl border border-[#253745] self-start md:self-auto">
+            <div className={`text-center px-3 ${isRtl ? 'border-l' : 'border-r'} border-[#253745]`}>
+              <span className="block text-[10px] text-[#9BA8AB] font-medium">{t('settledMatches')}</span>
+              <span className="text-sm font-bold text-[#CCD0CF] font-mono">{lockedMatches.length}</span>
             </div>
             <div className="text-center px-3">
-              <span className="block text-[10px] text-slate-400 font-bold">{t('upcomingMatches')}</span>
-              <span className="text-base font-black text-yellow-400">{upcomingMatches.length}</span>
+              <span className="block text-[10px] text-[#9BA8AB] font-medium">{t('upcomingMatches')}</span>
+              <span className="text-sm font-bold text-[#CCD0CF] font-mono">{upcomingMatches.length}</span>
             </div>
           </div>
         </div>
 
         {/* Search and Match Filter Bar */}
-        <div className="mt-5 pt-4 border-t border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 relative z-10">
+        <div className="mt-4 pt-3.5 border-t border-[#253745] flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 relative z-10">
           {/* Search by member name */}
           <div className="relative flex-1">
-            <Search className={`w-4 h-4 text-slate-400 absolute ${isRtl ? 'right-3.5' : 'left-3.5'} top-1/2 -translate-y-1/2 pointer-events-none`} />
+            <Search className={`w-3.5 h-3.5 text-[#9BA8AB] absolute ${isRtl ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 pointer-events-none`} />
             <input
               type="text"
               value={searchMember}
               onChange={(e) => setSearchMember(e.target.value)}
               placeholder={t('filterByUser')}
-              className={`w-full bg-[#080C19] border border-slate-700/80 rounded-xl ${isRtl ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2.5 text-xs text-white placeholder-slate-500 outline-none focus:border-[#00E5FF] transition`}
+              className={`w-full bg-[#06141B] border border-[#253745] rounded-xl ${isRtl ? 'pr-9 pl-3' : 'pl-9 pr-3'} py-2 text-xs text-[#CCD0CF] placeholder-[#9BA8AB] outline-none focus:border-[#4A5C6A] transition-all duration-200`}
             />
           </div>
 
@@ -174,7 +168,7 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
               <select
                 value={selectedMatchId}
                 onChange={(e) => setSelectedMatchId(e.target.value)}
-                className="w-full bg-[#080C19] border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[#00E5FF] appearance-none cursor-pointer"
+                className="w-full bg-[#06141B] border border-[#253745] rounded-xl px-3 py-2 text-xs text-[#CCD0CF] outline-none focus:border-[#4A5C6A] appearance-none cursor-pointer transition-all duration-200"
               >
                 <option value="ALL">{t('allMatches')} ({lockedMatches.length})</option>
                 {lockedMatches.map(m => (
@@ -183,7 +177,7 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
                   </option>
                 ))}
               </select>
-              <ChevronDown className={`w-4 h-4 text-slate-400 absolute ${isRtl ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 pointer-events-none`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-[#9BA8AB] absolute ${isRtl ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 pointer-events-none`} />
             </div>
           )}
         </div>
@@ -191,28 +185,28 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
 
       {/* When NO matches have reached their deadline yet */}
       {lockedMatches.length === 0 && (
-        <div className="ucl-card p-8 rounded-3xl border border-slate-800 text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-[#00E5FF] mx-auto">
-            <Lock className="w-8 h-8" />
+        <div className="bg-[#11212D] p-8 rounded-2xl border border-[#253745] text-center space-y-3">
+          <div className="w-12 h-12 rounded-xl bg-[#253745] border border-[#4A5C6A] flex items-center justify-center text-[#CCD0CF] mx-auto">
+            <Lock className="w-6 h-6" />
           </div>
           <div className="max-w-md mx-auto">
-            <h3 className="text-base font-black text-white">{t('predictionsStillOpenTitle')}</h3>
-            <p className="text-xs text-[#94A3B8] mt-1.5 leading-relaxed">
+            <h3 className="text-sm font-bold text-[#CCD0CF]">{t('predictionsStillOpenTitle')}</h3>
+            <p className="text-xs text-[#9BA8AB] mt-1 leading-relaxed">
               {t('predictionsStillOpenDesc')}
             </p>
           </div>
 
           {upcomingMatches.length > 0 && (
-            <div className="pt-4 border-t border-slate-800/80 max-w-xl mx-auto text-left">
-              <h4 className="text-xs font-bold text-slate-300 mb-2.5 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#00E5FF]" />
+            <div className="pt-3 border-t border-[#253745] max-w-lg mx-auto text-left">
+              <h4 className="text-xs font-semibold text-[#CCD0CF] mb-2 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#CCD0CF]" />
                 <span>{t('upcomingDeadlinesTitle')}</span>
               </h4>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {upcomingMatches.map(m => (
-                  <div key={m.id} className="p-3 bg-[#080C19] border border-slate-800/80 rounded-xl flex items-center justify-between text-xs">
-                    <span className="font-black text-white">{getTeamEnglishName(m.homeTeam)} × {getTeamEnglishName(m.awayTeam)}</span>
-                    <span className="text-cyan-400 font-mono text-[11px]">
+                  <div key={m.id} className="p-2.5 bg-[#06141B] border border-[#253745] rounded-xl flex items-center justify-between text-xs">
+                    <span className="font-semibold text-[#CCD0CF]">{getTeamEnglishName(m.homeTeam)} × {getTeamEnglishName(m.awayTeam)}</span>
+                    <span className="text-[#9BA8AB] font-mono text-[11px]">
                       {t('deadlinePrefix')} {new Date(m.deadline).toLocaleString(dateLocale, { dateStyle: 'short', timeStyle: 'short' })}
                     </span>
                   </div>
@@ -227,8 +221,6 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
       {displayedMatches.map(match => {
         const homeEnglishName = getTeamEnglishName(match.homeTeam);
         const awayEnglishName = getTeamEnglishName(match.awayTeam);
-        const home = teams[match.homeTeam] || { name: match.homeTeam, logo: '', squad: [] };
-        const away = teams[match.awayTeam] || { name: match.awayTeam, logo: '', squad: [] };
 
         // Collect all predictions for this match
         const matchPreds = Object.values(predictions)
@@ -236,27 +228,23 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
           .filter(p => !searchMember.trim() || p.username.toLowerCase().includes(searchMember.trim().toLowerCase()));
 
         return (
-          <div key={match.id} className="ucl-card p-5 sm:p-6 rounded-3xl border border-slate-800/80 space-y-5">
+          <div key={match.id} className="bg-[#11212D] p-4 sm:p-5 rounded-2xl border border-[#253745] space-y-4 shadow-xl">
             {/* Match Header Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-300">
-                  <Lock className="w-4 h-4 text-cyan-400" />
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#253745]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#06141B] border border-[#253745] flex items-center justify-center text-[#CCD0CF]">
+                  <Lock className="w-3.5 h-3.5 text-[#CCD0CF]" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-base sm:text-lg font-black text-white">
+                    <h3 className="text-sm sm:text-base font-bold text-[#CCD0CF]">
                       {homeEnglishName} × {awayEnglishName}
                     </h3>
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
-                      match.status === 'SETTLED'
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                    }`}>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A]">
                       {match.status === 'SETTLED' ? t('matchStatusSettled') : t('matchStatusClosed')}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-[11px] text-[#9BA8AB] mt-0.5">
                     {t('deadlineTimeLabel')} {new Date(match.deadline).toLocaleString(dateLocale, { dateStyle: 'medium', timeStyle: 'short' })}
                   </p>
                 </div>
@@ -264,13 +252,13 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
 
               {/* Match Result if settled */}
               {match.status === 'SETTLED' && match.result && (
-                <div className="bg-[#080C19] border border-yellow-500/30 px-4 py-2 rounded-2xl flex items-center gap-3">
-                  <span className="text-xs font-bold text-slate-400">{t('finalResultLabel')}</span>
-                  <span className="text-lg font-black text-yellow-400 font-mono">
+                <div className="bg-[#06141B] border border-[#253745] px-3 py-1.5 rounded-xl flex items-center gap-2.5">
+                  <span className="text-xs text-[#9BA8AB]">{t('finalResultLabel')}</span>
+                  <span className="text-base font-bold text-[#CCD0CF] font-mono">
                     {match.result.homeScore} - {match.result.awayScore}
                   </span>
                   {match.result.mvp && (
-                    <span className="text-[10px] text-purple-300 bg-purple-950/60 border border-purple-800 px-2 py-0.5 rounded-md font-bold">
+                    <span className="text-[10px] text-[#CCD0CF] bg-[#253745] border border-[#4A5C6A] px-1.5 py-0.5 rounded font-medium">
                       MVP: {match.result.mvp}
                     </span>
                   )}
@@ -280,32 +268,32 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
 
             {/* List of Predictions for this match */}
             {matchPreds.length === 0 ? (
-              <div className="p-6 text-center text-xs text-slate-500 bg-[#080C19]/50 rounded-2xl border border-slate-800/60">
+              <div className="p-6 text-center text-xs text-[#9BA8AB] bg-[#06141B] rounded-xl border border-[#253745]">
                 {searchMember.trim() 
                   ? `${t('noPredsFoundSearch')} "${searchMember}".` 
                   : t('noPredsSubmitted')}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {matchPreds.map(pred => {
                   const ptsInfo = getPredictionPoints(pred, match);
                   return (
                     <div 
                       key={pred.username}
-                      className="bg-[#080C19]/90 border border-slate-800 hover:border-slate-700 rounded-2xl p-4 transition space-y-3 relative overflow-hidden"
+                      className="bg-[#06141B] border border-[#253745] hover:border-[#4A5C6A] rounded-xl p-3.5 transition-all duration-200 space-y-2.5"
                     >
                       {/* Member Info & Score Banner */}
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center font-black text-xs text-slate-950 shrink-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-7 h-7 rounded-lg bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] flex items-center justify-center font-bold text-xs shrink-0">
                             {pred.username.charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <span className="text-xs font-bold text-white block truncate">
+                            <span className="text-xs font-semibold text-[#CCD0CF] block truncate">
                               {pred.username}
                             </span>
                             {pred.updatedAt && (
-                              <span className="text-[9px] text-slate-500 block font-mono">
+                              <span className="text-[10px] text-[#9BA8AB] block font-mono">
                                 {new Date(pred.updatedAt).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             )}
@@ -313,22 +301,22 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
                         </div>
 
                         {/* Predicted Score Badge */}
-                        <div className="bg-[#10172A] border border-[#00E5FF]/40 px-3 py-1.5 rounded-xl text-center shrink-0">
-                          <span className="text-[10px] text-slate-400 block font-bold leading-none mb-0.5">{t('predictedScoreLabel')}</span>
-                          <span className="text-sm font-black text-[#00E5FF] font-mono leading-none">
+                        <div className="bg-[#11212D] border border-[#253745] px-2.5 py-1 rounded-lg text-center shrink-0">
+                          <span className="text-[9px] text-[#9BA8AB] block font-medium leading-none mb-0.5">{t('predictedScoreLabel')}</span>
+                          <span className="text-xs sm:text-sm font-bold text-[#CCD0CF] font-mono leading-none">
                             {pred.homeScore} - {pred.awayScore}
                           </span>
                         </div>
                       </div>
 
                       {/* Scorers & MVP Details */}
-                      <div className="space-y-1.5 pt-2 border-t border-slate-800/80 text-[11px]">
+                      <div className="space-y-1 pt-2 border-t border-[#253745] text-[11px]">
                         {/* Home Scorers */}
                         {pred.homeScore > 0 && (
-                          <div className="flex items-start gap-1.5 text-slate-300">
-                            <Flame className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
-                            <span className="text-slate-400 text-[10px] shrink-0">{t('goalsOf')} {homeEnglishName}:</span>
-                            <span className="font-semibold text-white truncate">
+                          <div className="flex items-start gap-1.5 text-[#CCD0CF]">
+                            <Flame className="w-3 h-3 text-[#CCD0CF] shrink-0 mt-0.5" />
+                            <span className="text-[#9BA8AB] text-[10px] shrink-0">{t('goalsOf')} {homeEnglishName}:</span>
+                            <span className="font-medium text-[#CCD0CF] truncate">
                               {(pred.homeScorers || []).join(', ') || t('notSpecified')}
                             </span>
                           </div>
@@ -336,10 +324,10 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
 
                         {/* Away Scorers */}
                         {pred.awayScore > 0 && (
-                          <div className="flex items-start gap-1.5 text-slate-300">
-                            <Flame className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
-                            <span className="text-slate-400 text-[10px] shrink-0">{t('goalsOf')} {awayEnglishName}:</span>
-                            <span className="font-semibold text-white truncate">
+                          <div className="flex items-start gap-1.5 text-[#CCD0CF]">
+                            <Flame className="w-3 h-3 text-[#CCD0CF] shrink-0 mt-0.5" />
+                            <span className="text-[#9BA8AB] text-[10px] shrink-0">{t('goalsOf')} {awayEnglishName}:</span>
+                            <span className="font-medium text-[#CCD0CF] truncate">
                               {(pred.awayScorers || []).join(', ') || t('notSpecified')}
                             </span>
                           </div>
@@ -347,54 +335,54 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
 
                         {/* MVP */}
                         {pred.mvp && (
-                          <div className="flex items-center gap-1.5 text-slate-300">
-                            <Award className="w-3 h-3 text-purple-400 shrink-0" />
-                            <span className="text-slate-400 text-[10px] shrink-0">{t('motmShort')}</span>
-                            <span className="font-bold text-purple-300 truncate">{pred.mvp}</span>
+                          <div className="flex items-center gap-1.5 text-[#CCD0CF]">
+                            <Award className="w-3 h-3 text-[#CCD0CF] shrink-0" />
+                            <span className="text-[#9BA8AB] text-[10px] shrink-0">{t('motmShort')}</span>
+                            <span className="font-semibold text-[#CCD0CF] truncate">{pred.mvp}</span>
                           </div>
                         )}
                       </div>
 
                       {/* Settled Points Breakdown if Match is Settled */}
                       {ptsInfo && (
-                        <div className="pt-2.5 border-t border-slate-800 flex items-center justify-between">
-                          <span className="text-[10px] text-slate-400 font-bold">{t('pointsEarnedColon')}</span>
-                          <div className="flex items-center gap-1.5">
+                        <div className="pt-2 border-t border-[#253745] flex items-center justify-between">
+                          <span className="text-[10px] text-[#9BA8AB] font-medium">{t('pointsEarnedColon')}</span>
+                          <div className="flex items-center gap-1">
                             {ptsInfo.exactScore && (
-                              <span className="text-[9px] bg-yellow-500/20 border border-yellow-500/40 text-yellow-300 px-1.5 py-0.5 rounded font-bold">
+                              <span className="text-[9px] bg-[#253745] border border-[#4A5C6A] text-[#CCD0CF] px-1.5 py-0.5 rounded font-medium">
                                 {t('exactScoreBadge')}
                               </span>
                             )}
                             {ptsInfo.correctMvp && (
-                              <span className="text-[9px] bg-purple-500/20 border border-purple-500/40 text-purple-200 px-1.5 py-0.5 rounded font-bold">
+                              <span className="text-[9px] bg-[#253745] border border-[#4A5C6A] text-[#CCD0CF] px-1.5 py-0.5 rounded font-medium">
                                 {t('mvpBadge')}
                               </span>
                             )}
                             {ptsInfo.scorersCount > 0 && (
-                              <span className="text-[9px] bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 px-1.5 py-0.5 rounded font-bold">
-                                {t('scorersBadge')} (+{ptsInfo.scorersCount})
+                              <span className="text-[9px] bg-[#253745] border border-[#4A5C6A] text-[#CCD0CF] px-1.5 py-0.5 rounded font-medium">
+                                +{ptsInfo.scorersCount}
                               </span>
                             )}
-                            <span className="text-xs font-black text-yellow-400 bg-yellow-950/60 border border-yellow-800/80 px-2 py-0.5 rounded-lg">
-                              +{ptsInfo.total} {language === 'fr' ? 'pts' : language === 'en' ? 'pts' : 'نقطة'}
+                            <span className="text-xs font-bold font-mono text-[#CCD0CF] bg-[#253745] border border-[#4A5C6A] px-1.5 py-0.5 rounded">
+                              +{ptsInfo.total} pts
                             </span>
                           </div>
                         </div>
                       )}
 
-                      {/* Download Prediction Card Button: only available before real score is launched */}
+                      {/* Download Prediction Card Button */}
                       {!match.result && match.status !== 'SETTLED' ? (
                         <button
                           type="button"
                           onClick={() => openPredictionCard(match, pred)}
-                          className="mt-2.5 w-full py-1.5 px-2 bg-slate-900/90 hover:bg-slate-850 border border-cyan-500/30 text-cyan-300 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 transition cursor-pointer hover:border-cyan-400 select-none"
+                          className="mt-2 w-full py-1.5 px-2 bg-[#253745] hover:bg-[#4A5C6A] border border-[#253745] text-[#CCD0CF] rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer select-none active:scale-[0.98]"
                           title={t('downloadPredCard')}
                         >
-                          <Download className="w-3 h-3 text-cyan-400" />
+                          <Download className="w-3 h-3 text-[#CCD0CF]" />
                           <span>{t('downloadPredCard')}</span>
                         </button>
                       ) : (
-                        <div className="mt-2 text-center text-[10px] text-slate-500 font-medium">
+                        <div className="mt-1.5 text-center text-[10px] text-[#9BA8AB]">
                           {t('cardDownloadExpired')}
                         </div>
                       )}
