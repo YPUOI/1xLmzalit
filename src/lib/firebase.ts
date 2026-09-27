@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { 
   getFirestore, 
+  initializeFirestore,
   doc, 
   getDoc,
   getDocFromServer,
@@ -11,7 +12,7 @@ import {
   deleteDoc
 } from 'firebase/firestore';
 import firebaseAppletConfig from '../../firebase-applet-config.json';
-import { Match, Team, Prediction, AppUser } from '../types';
+import { Match, Team, Prediction, AppUser, ArchivedSeason } from '../types';
 
 const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId,
@@ -24,7 +25,17 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId); /* CRITICAL: The app will break without this line */
+
+let firestoreInstance;
+try {
+  firestoreInstance = initializeFirestore(app, {
+    experimentalAutoDetectLongPolling: true,
+  }, firebaseConfig.firestoreDatabaseId);
+} catch {
+  firestoreInstance = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+}
+
+export const db = firestoreInstance; /* CRITICAL: The app will break without this line */
 export const auth = getAuth(app);
 
 export enum OperationType {
@@ -79,14 +90,20 @@ export async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration.");
+    if (error instanceof Error) {
+      if (error.message.includes('the client is offline') || (error as any).code === 'unavailable') {
+        console.warn("Firestore: Client is operating in offline mode.");
+      }
     }
   }
 }
 
-// Execute connection test
-testConnection();
+// Execute connection test deferred after startup
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    testConnection().catch(() => {});
+  }, 2000);
+}
 
 // Real-time Firestore synchronizers
 
@@ -110,6 +127,10 @@ export const subscribeTeams = (onUpdate: (teams: Record<string, Team>) => void) 
       onUpdate(teams);
     },
     (error) => {
+      if (error && ((error as any).code === 'unavailable' || error.message?.includes('unavailable') || error.message?.includes('offline'))) {
+        console.warn(`Firestore [${path}] snapshot operating in offline mode.`);
+        return;
+      }
       handleFirestoreError(error, OperationType.GET, path);
     }
   );
@@ -148,6 +169,10 @@ export const subscribeMatches = (onUpdate: (matches: Match[]) => void) => {
       onUpdate(matches);
     },
     (error) => {
+      if (error && ((error as any).code === 'unavailable' || error.message?.includes('unavailable') || error.message?.includes('offline'))) {
+        console.warn(`Firestore [${path}] snapshot operating in offline mode.`);
+        return;
+      }
       handleFirestoreError(error, OperationType.GET, path);
     }
   );
@@ -184,6 +209,10 @@ export const subscribePredictions = (onUpdate: (predictions: Record<string, Pred
       onUpdate(predictions);
     },
     (error) => {
+      if (error && ((error as any).code === 'unavailable' || error.message?.includes('unavailable') || error.message?.includes('offline'))) {
+        console.warn(`Firestore [${path}] snapshot operating in offline mode.`);
+        return;
+      }
       handleFirestoreError(error, OperationType.GET, path);
     }
   );
@@ -221,6 +250,10 @@ export const subscribeUsers = (onUpdate: (users: AppUser[]) => void) => {
       onUpdate(users);
     },
     (error) => {
+      if (error && ((error as any).code === 'unavailable' || error.message?.includes('unavailable') || error.message?.includes('offline'))) {
+        console.warn(`Firestore [${path}] snapshot operating in offline mode.`);
+        return;
+      }
       handleFirestoreError(error, OperationType.GET, path);
     }
   );
@@ -286,5 +319,80 @@ export const syncSaveSecurityConfig = async (friendPassword: string) => {
     });
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
+// 6. Archived Seasons (Past Seasons Leaderboards)
+export const subscribeArchivedSeasons = (onUpdate: (seasons: ArchivedSeason[]) => void) => {
+  const path = 'archived_seasons';
+  return onSnapshot(
+    collection(db, path),
+    (snapshot) => {
+      const seasons: ArchivedSeason[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as ArchivedSeason;
+        seasons.push({
+          ...data,
+          id: docSnap.id,
+        });
+      });
+      // Sort by seasonDate or archivedAt descending
+      seasons.sort((a, b) => {
+        return (b.seasonDate || '').localeCompare(a.seasonDate || '');
+      });
+      onUpdate(seasons);
+    },
+    (error) => {
+      if (error && ((error as any).code === 'unavailable' || error.message?.includes('unavailable') || error.message?.includes('offline'))) {
+        console.warn(`Firestore [${path}] snapshot operating in offline mode.`);
+        return;
+      }
+      handleFirestoreError(error, OperationType.GET, path);
+    }
+  );
+};
+
+export const syncSaveArchivedSeason = async (season: ArchivedSeason) => {
+  const safeId = season.id.replace(/[^a-zA-Z0-9_\-\.]/g, '_');
+  const path = `archived_seasons/${safeId}`;
+  
+  const cleanDoc: Record<string, any> = {
+    id: safeId,
+    seasonDate: season.seasonDate || '',
+    archivedAt: season.archivedAt || new Date().toISOString(),
+    totalParticipants: season.totalParticipants ?? (season.entries ? season.entries.length : 0),
+    entries: (season.entries || []).map((e, idx) => ({
+      rank: Number(e.rank) || idx + 1,
+      playerName: String(e.playerName || '').trim(),
+      points: Number(e.points) || 0,
+      badge: String(e.badge || '').trim(),
+      notes: String(e.notes || '').trim()
+    }))
+  };
+
+  if (season.title && typeof season.title === 'string' && season.title.trim()) {
+    cleanDoc.title = season.title.trim();
+  }
+  if (season.notes && typeof season.notes === 'string' && season.notes.trim()) {
+    cleanDoc.notes = season.notes.trim();
+  }
+  if (season.archivedBy && typeof season.archivedBy === 'string' && season.archivedBy.trim()) {
+    cleanDoc.archivedBy = season.archivedBy.trim();
+  }
+
+  try {
+    await setDoc(doc(db, 'archived_seasons', safeId), cleanDoc);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+};
+
+export const syncDeleteArchivedSeason = async (seasonId: string) => {
+  const safeId = seasonId.replace(/[^a-zA-Z0-9_\-\.]/g, '_');
+  const path = `archived_seasons/${safeId}`;
+  try {
+    await deleteDoc(doc(db, 'archived_seasons', safeId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
   }
 };

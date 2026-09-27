@@ -114,7 +114,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
           ref={buttonRef}
           type="button"
           onClick={handleToggle}
-          className="h-[32px] px-2 bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] border border-[#253745] hover:border-[#4A5C6A] rounded-xl flex items-center gap-1 text-[11px] font-bold transition-all duration-200 cursor-pointer select-none shrink-0 active:scale-95"
+          className="h-[30px] sm:h-[32px] px-1.5 sm:px-2 bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] border border-[#253745] hover:border-[#4A5C6A] rounded-xl flex items-center gap-1 text-[11px] font-bold transition-all duration-200 cursor-pointer select-none shrink-0 active:scale-95"
           title="Select Language / اختيار اللغة"
           aria-label="Select Language"
         >

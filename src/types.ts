@@ -49,3 +49,22 @@ export interface SecurityConfig {
   biometricCredentialId?: string;
   biometricUserLabel?: string;
 }
+
+export interface ArchivedSeasonEntry {
+  rank: number;
+  playerName: string;
+  points?: number;
+  badge?: string;
+  notes?: string;
+}
+
+export interface ArchivedSeason {
+  id: string;
+  seasonDate: string; // e.g. "2026/2027", "2025/2026"
+  title?: string;
+  archivedAt: string;
+  archivedBy?: string;
+  totalParticipants?: number;
+  entries: ArchivedSeasonEntry[];
+  notes?: string;
+}

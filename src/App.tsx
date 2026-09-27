@@ -11,7 +11,7 @@ import {
   Sparkles,
   FileText
 } from 'lucide-react';
-import { Team, Match, Prediction, AppUser } from './types';
+import { Team, Match, Prediction, AppUser, ArchivedSeason } from './types';
 import { DEFAULT_TEAMS, INITIAL_MATCHES } from './data/defaultData';
 import { setFriendAuthenticated, applySyncedFriendPassword, isFriendAuthenticated } from './utils/security';
 import { 
@@ -26,7 +26,10 @@ import {
   syncDeletePrediction, 
   subscribeUsers, 
   syncSaveUser,
-  subscribeSecurityConfig
+  subscribeSecurityConfig,
+  subscribeArchivedSeasons,
+  syncSaveArchivedSeason,
+  syncDeleteArchivedSeason
 } from './lib/firebase';
 import { SecurityGate } from './components/SecurityGate';
 import { UclHeader } from './components/UclHeader';
@@ -59,6 +62,14 @@ export default function App() {
   const [predictions, setPredictions] = useState<Record<string, Prediction>>({});
   const [users, setUsers] = useState<AppUser[]>([]);
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+  const [archivedSeasons, setArchivedSeasons] = useState<ArchivedSeason[]>(() => {
+    try {
+      const saved = localStorage.getItem('cl_archived_seasons');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Modals & Toast State
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
@@ -184,12 +195,20 @@ export default function App() {
       }
     });
 
+    const unsubSeasons = subscribeArchivedSeasons((cloudSeasons) => {
+      if (cloudSeasons) {
+        setArchivedSeasons(cloudSeasons);
+        localStorage.setItem('cl_archived_seasons', JSON.stringify(cloudSeasons));
+      }
+    });
+
     return () => {
       unsubTeams();
       unsubMatches();
       unsubPreds();
       unsubUsers();
       unsubSecurity();
+      unsubSeasons();
     };
   }, []);
 
@@ -216,6 +235,67 @@ export default function App() {
         }
         sessionStorage.setItem('cl_session_logged_user', JSON.stringify(updatedCurrent));
       }
+    }
+  };
+
+  // Archived Seasons Handlers
+  const handleSaveArchivedSeason = async (season: ArchivedSeason) => {
+    try {
+      await syncSaveArchivedSeason(season);
+      setArchivedSeasons(prev => {
+        const existingIdx = prev.findIndex(s => s.id === season.id);
+        const next = existingIdx >= 0 ? prev.map(s => s.id === season.id ? season : s) : [season, ...prev];
+        next.sort((a, b) => (b.seasonDate || '').localeCompare(a.seasonDate || ''));
+        localStorage.setItem('cl_archived_seasons', JSON.stringify(next));
+        return next;
+      });
+      addToast(t('seasonSavedSuccess'), 'success');
+    } catch (err) {
+      console.error("Save archived season error:", err);
+      addToast('Error saving season to archive', 'error');
+      throw err;
+    }
+  };
+
+  const handleDeleteArchivedSeason = async (seasonId: string) => {
+    try {
+      await syncDeleteArchivedSeason(seasonId);
+      setArchivedSeasons(prev => {
+        const next = prev.filter(s => s.id !== seasonId);
+        localStorage.setItem('cl_archived_seasons', JSON.stringify(next));
+        return next;
+      });
+      addToast(t('seasonDeletedSuccess'), 'success');
+    } catch (err) {
+      console.error("Delete archived season error:", err);
+      addToast('Error deleting archived season', 'error');
+      throw err;
+    }
+  };
+
+  const handleFinishCurrentSeason = async (season: ArchivedSeason, shouldResetPoints: boolean) => {
+    try {
+      await syncSaveArchivedSeason(season);
+      setArchivedSeasons(prev => {
+        const next = [season, ...prev.filter(s => s.id !== season.id)];
+        next.sort((a, b) => (b.seasonDate || '').localeCompare(a.seasonDate || ''));
+        localStorage.setItem('cl_archived_seasons', JSON.stringify(next));
+        return next;
+      });
+
+      if (shouldResetPoints) {
+        const resetUsers = users.map(u => ({
+          ...u,
+          points: 0,
+        }));
+        handleUpdateUsers(resetUsers);
+      }
+
+      addToast(t('seasonSavedSuccess'), 'success');
+    } catch (err) {
+      console.error("Finish current season error:", err);
+      addToast('Error finalizing current season', 'error');
+      throw err;
     }
   };
 
@@ -862,6 +942,11 @@ export default function App() {
                     users={users}
                     matches={matches}
                     predictions={predictions}
+                    currentUser={currentUser}
+                    archivedSeasons={archivedSeasons}
+                    onSaveArchivedSeason={handleSaveArchivedSeason}
+                    onDeleteArchivedSeason={handleDeleteArchivedSeason}
+                    onFinishCurrentSeason={handleFinishCurrentSeason}
                   />
                 )}
 

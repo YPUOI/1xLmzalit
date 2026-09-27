@@ -1,20 +1,53 @@
-import React, { useMemo } from 'react';
-import { Crown, Medal, UserCheck, Star, Trophy, Award, Flame, Target, Sparkles } from 'lucide-react';
-import { AppUser, Match, Prediction } from '../types';
+import React, { useMemo, useState } from 'react';
+import { 
+  Crown, 
+  Medal, 
+  UserCheck, 
+  Star, 
+  Trophy, 
+  Award, 
+  Flame, 
+  Target, 
+  Sparkles,
+  Archive,
+  Save,
+  Plus
+} from 'lucide-react';
+import { AppUser, Match, Prediction, ArchivedSeason } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
+import { LeaderboardArchiveModal } from './LeaderboardArchiveModal';
+import { FinishCurrentSeasonModal } from './FinishCurrentSeasonModal';
+import { AddPastSeasonModal } from './AddPastSeasonModal';
 
 interface LeaderboardSectionProps {
   users: AppUser[];
   matches?: Match[];
   predictions?: Record<string, Prediction>;
+  currentUser?: AppUser | null;
+  archivedSeasons?: ArchivedSeason[];
+  onSaveArchivedSeason?: (season: ArchivedSeason) => Promise<void>;
+  onDeleteArchivedSeason?: (seasonId: string) => Promise<void>;
+  onFinishCurrentSeason?: (season: ArchivedSeason, shouldResetPoints: boolean) => Promise<void>;
 }
 
 export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({ 
   users, 
   matches = [], 
-  predictions = {} 
+  predictions = {},
+  currentUser,
+  archivedSeasons = [],
+  onSaveArchivedSeason,
+  onDeleteArchivedSeason,
+  onFinishCurrentSeason,
 }) => {
   const { t, isRtl } = useLanguage();
+  const isAdmin = currentUser?.role === 'admin';
+
+  // Modals state
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+  const [isFinishSeasonOpen, setIsFinishSeasonOpen] = useState(false);
+  const [isAddPastSeasonOpen, setIsAddPastSeasonOpen] = useState(false);
+  const [editingSeason, setEditingSeason] = useState<ArchivedSeason | null>(null);
 
   // Calculate statistics per user (exact score count, correct MVP count, and correct Scorers count)
   const userStats = useMemo(() => {
@@ -100,9 +133,38 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
             {t('leaderboardDesc')}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-[#CCD0CF]" />
+        <div className="flex items-center flex-wrap gap-2">
+          {/* Archive Button */}
+          <button
+            onClick={() => setIsArchiveOpen(true)}
+            className="text-xs bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] border border-[#4A5C6A] px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer"
+            title={t('archiveBtn')}
+          >
+            <Archive className="w-3.5 h-3.5 text-[#CCD0CF]" />
+            <span>{t('archiveBtn')}</span>
+            {archivedSeasons.length > 0 && (
+              <span className="bg-[#11212D] text-[10px] px-1.5 py-0.2 rounded-full border border-[#4A5C6A] font-mono">
+                {archivedSeasons.length}
+              </span>
+            )}
+          </button>
+
+          {/* Admin Finish and Save Season Button */}
+          {isAdmin && onFinishCurrentSeason && (
+            <button
+              onClick={() => setIsFinishSeasonOpen(true)}
+              disabled={approvedUsers.length === 0}
+              className="text-xs bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer disabled:opacity-50"
+              title={t('finishCurrentSeasonBtn')}
+            >
+              <Save className="w-3.5 h-3.5 text-[#06141B]" />
+              <span className="hidden sm:inline">{t('finishCurrentSeasonBtn')}</span>
+              <span className="sm:hidden">{t('finishCurrentSeasonBtn')}</span>
+            </button>
+          )}
+
+          <span className="hidden md:flex text-xs bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A] px-2.5 py-1.5 rounded-lg font-medium items-center gap-1">
+            <Sparkles className="w-3 h-3 text-[#CCD0CF]" />
             <span>{t('tabLeaderboardShort')}</span>
           </span>
         </div>
@@ -296,6 +358,59 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
             </table>
           </div>
         </>
+      )}
+
+      {/* 1. Main Past Seasons Archive Modal */}
+      <LeaderboardArchiveModal
+        isOpen={isArchiveOpen}
+        onClose={() => setIsArchiveOpen(false)}
+        seasons={archivedSeasons}
+        currentUser={currentUser || null}
+        onOpenAddPastSeason={() => {
+          setEditingSeason(null);
+          setIsAddPastSeasonOpen(true);
+        }}
+        onEditSeason={(season) => {
+          setEditingSeason(season);
+          setIsAddPastSeasonOpen(true);
+        }}
+        onDeleteSeason={async (seasonId) => {
+          if (onDeleteArchivedSeason) {
+            await onDeleteArchivedSeason(seasonId);
+          }
+        }}
+      />
+
+      {/* 2. Admin Finish & Archive Current Season Modal */}
+      {isAdmin && onFinishCurrentSeason && (
+        <FinishCurrentSeasonModal
+          isOpen={isFinishSeasonOpen}
+          onClose={() => setIsFinishSeasonOpen(false)}
+          approvedUsers={approvedUsers}
+          onConfirmFinish={async (season, shouldResetPoints) => {
+            await onFinishCurrentSeason(season, shouldResetPoints);
+            setIsFinishSeasonOpen(false);
+            setIsArchiveOpen(true);
+          }}
+        />
+      )}
+
+      {/* 3. Admin Add / Edit Past Season Modal */}
+      {isAdmin && onSaveArchivedSeason && (
+        <AddPastSeasonModal
+          isOpen={isAddPastSeasonOpen}
+          onClose={() => {
+            setIsAddPastSeasonOpen(false);
+            setEditingSeason(null);
+          }}
+          initialSeason={editingSeason}
+          onSave={async (season) => {
+            await onSaveArchivedSeason(season);
+            setIsAddPastSeasonOpen(false);
+            setEditingSeason(null);
+            setIsArchiveOpen(true);
+          }}
+        />
       )}
     </div>
   );

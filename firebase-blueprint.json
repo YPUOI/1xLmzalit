@@ -62,6 +62,21 @@
         "updatedAt": { "type": "string", "maxLength": 50 }
       },
       "required": ["friendPassword"]
+    },
+    "ArchivedSeason": {
+      "title": "ArchivedSeason",
+      "description": "Historical past season leaderboard and rankings",
+      "type": "object",
+      "properties": {
+        "seasonDate": { "type": "string", "maxLength": 50 },
+        "title": { "type": "string", "maxLength": 100 },
+        "archivedAt": { "type": "string", "maxLength": 50 },
+        "archivedBy": { "type": "string", "maxLength": 100 },
+        "entries": { "type": "array" },
+        "totalParticipants": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 500 }
+      },
+      "required": ["seasonDate", "archivedAt", "entries"]
     }
   },
   "firestore": {
@@ -84,6 +99,10 @@
     "/settings/{settingId}": {
       "schema": { "$ref": "#/entities/Setting" },
       "description": "Collection of application settings such as security"
+    },
+    "/archived_seasons/{seasonId}": {
+      "schema": { "$ref": "#/entities/ArchivedSeason" },
+      "description": "Collection of past seasons' archived leaderboards"
     }
   }
 }

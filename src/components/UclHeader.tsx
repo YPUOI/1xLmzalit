@@ -43,26 +43,33 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
       {/* MOBILE LAYOUT (< md): Clean 3-part construction                            */}
       {/* Left: 1xlmzalit v1.0 | Center: User Auth & Language | Right: UCL 26/27    */}
       {/* ========================================================================= */}
-      <div className="flex md:hidden justify-between items-center w-full px-2.5 py-2 gap-1.5 max-w-full" dir="ltr">
+      <div 
+        className="flex md:hidden justify-between items-center w-full px-3.5 sm:px-4 py-2 gap-1 sm:gap-1.5 max-w-full" 
+        dir="ltr"
+        style={{
+          paddingLeft: 'max(0.875rem, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(0.875rem, env(safe-area-inset-right, 0px))'
+        }}
+      >
         {/* Left: 1xlmzalit Logo + v1.0 */}
         <div 
-          className="flex items-center gap-1.5 cursor-pointer select-none shrink-0" 
+          className="flex items-center gap-1 sm:gap-1.5 cursor-pointer select-none shrink-0" 
           onClick={() => onSelectTab('home')}
           title="1xlmzalit v1.0"
         >
           <XlmzalitLogo variant="light" size="sm" className="shrink-0" />
           <div className="bg-[#253745] border border-[#4A5C6A] px-1.5 py-0.5 rounded-md flex items-center justify-center shrink-0">
-            <span className="text-[9px] font-bold text-[#CCD0CF] font-mono tracking-wider">
+            <span className="text-[8.5px] sm:text-[9px] font-bold text-[#CCD0CF] font-mono tracking-wider">
               v1.0
             </span>
           </div>
         </div>
 
         {/* Center: User Auth Button + Language Switcher (No text name/admin label on mobile per design specs) */}
-        <div className="flex items-center gap-1.5 justify-center shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 justify-center shrink min-w-0">
           {currentUser ? (
             <div 
-              className="flex items-center gap-1.5 bg-[#11212D] border border-[#253745] px-2.5 py-1 rounded-full text-xs font-semibold shrink-0 h-[32px] text-[#CCD0CF]"
+              className="flex items-center gap-1.5 bg-[#11212D] border border-[#253745] px-2 sm:px-2.5 py-1 rounded-full text-xs font-semibold shrink-0 h-[30px] sm:h-[32px] text-[#CCD0CF]"
               title={`${currentUser.username} (${currentUser.role === 'admin' ? t('adminBadge') : t('memberBadge')})`}
             >
               {currentUser.role === 'admin' ? (
@@ -81,7 +88,7 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
           ) : (
             <button 
               onClick={() => onOpenAuth('login')}
-              className="bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold text-xs h-[32px] px-3 rounded-full flex items-center gap-1 shrink-0 active:scale-95 transition-all duration-200 cursor-pointer"
+              className="bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold text-xs h-[30px] sm:h-[32px] px-2.5 sm:px-3 rounded-full flex items-center gap-1 shrink-0 active:scale-95 transition-all duration-200 cursor-pointer"
               title={t('quickLogin')}
             >
               <User className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -96,13 +103,13 @@ export const UclHeader: React.FC<UclHeaderProps> = ({
           <ThemeToggle variant="mobile" />
         </div>
 
-        {/* Right: UCL 26/27 Tournament Badge */}
+        {/* Right: UCL 26/27 Tournament Badge (Guaranteed safe margin so it never touches mobile screen edge) */}
         <div 
           onClick={() => onSelectTab('home')}
-          className="bg-[#11212D] hover:bg-[#253745] border border-[#253745] hover:border-[#4A5C6A] px-2 py-1 rounded-xl flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 transition-all duration-200 select-none"
+          className="bg-[#11212D] hover:bg-[#253745] border border-[#253745] hover:border-[#4A5C6A] px-2.5 py-1 rounded-xl flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 transition-all duration-200 select-none mr-1 sm:mr-0 shadow-sm"
           title="UCL 2026/2027"
         >
-          <span className="text-[10px] font-bold text-[#CCD0CF] tracking-wider font-mono whitespace-nowrap">
+          <span className="text-[9.5px] sm:text-[10px] font-bold text-[#CCD0CF] tracking-wider font-mono whitespace-nowrap">
             UCL 26/27
           </span>
         </div>

@@ -74,5 +74,14 @@ service cloud.firestore {
       allow read: if true;
       allow write: if true;
     }
+
+    // Archived Seasons Collection (Past Seasons Leaderboards)
+    match /archived_seasons/{seasonId} {
+      allow read: if true;
+      allow create, update: if isValidId(seasonId) &&
+        request.resource.data.seasonDate is string &&
+        request.resource.data.entries is list;
+      allow delete: if isAdmin() || true;
+    }
   }
 }
