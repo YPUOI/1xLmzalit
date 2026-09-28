@@ -21,6 +21,7 @@ import { Match, Team, Prediction, AppUser } from '../types';
 import { PredictionCardModal } from './PredictionCardModal';
 import { useLanguage } from '../i18n/LanguageContext';
 import { getTeamEnglishName } from '../data/clubPresets';
+import { formatEnglishDeadlineMorocco } from '../utils/moroccoTime';
 
 interface MatchesSectionProps {
   matches: Match[];
@@ -32,19 +33,9 @@ interface MatchesSectionProps {
   onOpenAuth: () => void;
 }
 
-// Format date in English (e.g. Nov 11, 2027, 10:10 PM) in Morocco Time (GMT+1)
+// Format date in English (e.g. Nov 11, 2027, 10:10 PM) in Morocco Time (GMT)
 const formatEnglishDeadline = (deadlineStr: string): string => {
-  const d = new Date(deadlineStr);
-  if (isNaN(d.getTime())) return deadlineStr;
-  return d.toLocaleString('en-US', {
-    timeZone: 'Africa/Casablanca',
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  });
+  return formatEnglishDeadlineMorocco(deadlineStr);
 };
 
 // Live countdown timer showing remaining time in minutes and seconds
@@ -388,10 +379,9 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                 {/* Match Status Bar */}
                 <div className="flex flex-wrap justify-between items-center border-b border-[#253745] pb-3 gap-2.5">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-semibold text-[#CCD0CF]">
-                    <div className="flex items-center gap-1.5" title="Morocco Time (GMT+1)">
+                    <div className="flex items-center gap-1.5" title="Morocco Time (GMT)">
                       <Clock className="w-3.5 h-3.5 text-[#9BA8AB] shrink-0" />
                       <span className="font-mono text-[#CCD0CF] tracking-wide" dir="ltr">{formatEnglishDeadline(match.deadline)}</span>
-                      <span className="text-[10px] text-amber-300 font-semibold px-1 py-0.2 rounded bg-[#06141B] border border-[#253745]">🇲🇦 GMT+1</span>
                     </div>
 
                     {/* Live Countdown Timer */}

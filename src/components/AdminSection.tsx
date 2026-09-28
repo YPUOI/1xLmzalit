@@ -48,7 +48,9 @@ import {
   parseMoroccoDateTime, 
   formatMoroccoInput, 
   getMoroccoCurrentTimeFormatted,
-  formatEnglishDeadlineMorocco 
+  formatEnglishDeadlineMorocco,
+  getStoredMoroccoOffset,
+  setStoredMoroccoOffset 
 } from '../utils/moroccoTime';
 
 interface AdminSectionProps {
@@ -104,14 +106,22 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   const [newAwayTeam, setNewAwayTeam] = useState<string>(teamKeys[1] || teamKeys[0] || '');
   const [newDeadline, setNewDeadline] = useState<string>('');
 
+  // Morocco Time settings (Default: GMT / UTC+0 officially matching Morocco phone time)
+  const [moroccoOffset, setMoroccoOffset] = useState<number>(() => getStoredMoroccoOffset());
+  const handleOffsetChange = (offset: number) => {
+    setMoroccoOffset(offset);
+    setStoredMoroccoOffset(offset);
+    notify(language === 'fr' ? `Fuseau horaire configuré : GMT${offset === 0 ? '' : '+' + offset}` : language === 'en' ? `Timezone configured: GMT${offset === 0 ? '' : '+' + offset}` : `تم ضبط التوقيت: GMT${offset === 0 ? '' : '+' + offset}`, 'info');
+  };
+
   // Live Morocco Time for fixture scheduling
-  const [moroccoNowTime, setMoroccoNowTime] = useState<string>(() => getMoroccoCurrentTimeFormatted(true));
+  const [moroccoNowTime, setMoroccoNowTime] = useState<string>(() => getMoroccoCurrentTimeFormatted(true, moroccoOffset));
   useEffect(() => {
     const timer = setInterval(() => {
-      setMoroccoNowTime(getMoroccoCurrentTimeFormatted(true));
+      setMoroccoNowTime(getMoroccoCurrentTimeFormatted(true, moroccoOffset));
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [moroccoOffset]);
 
   // Match editing & settlement state
   const [editDeadlines, setEditDeadlines] = useState<Record<string, string>>({});
@@ -305,12 +315,12 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       return;
     }
     if (!newDeadline) {
-      notify(language === 'fr' ? 'Veuillez définir la date et l\'heure (Heure du Maroc GMT+1) !' : language === 'en' ? 'Please specify date and time (Morocco Time GMT+1)!' : 'الرجاء تحديد موعد المباراة ووقت إغلاق التوقع (بتوقيت المغرب GMT+1)!', 'error');
+      notify(language === 'fr' ? 'Veuillez définir la date et l\'heure (Heure du Maroc) !' : language === 'en' ? 'Please specify date and time (Morocco Time)!' : 'الرجاء تحديد موعد المباراة ووقت إغلاق التوقع (بتوقيت المغرب)!', 'error');
       return;
     }
 
-    // Convert admin's input to ISO string strictly in Morocco's timezone (Africa/Casablanca)
-    const isoDeadline = parseMoroccoDateTime(newDeadline);
+    // Convert admin's input to ISO string strictly in Morocco's timezone
+    const isoDeadline = parseMoroccoDateTime(newDeadline, moroccoOffset);
 
     const newMatch: Match = {
       id: `m_${Date.now()}`,
@@ -322,7 +332,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     };
 
     onUpdateMatches([...matches, newMatch]);
-    notify(language === 'fr' ? 'Match ajouté et programmé selon l\'heure du Maroc (GMT+1) !' : language === 'en' ? 'Match scheduled successfully according to Morocco Time (GMT+1)!' : 'تمت إضافة المباراة وبرمجتها وفق توقيت المغرب (GMT+1) بنجاح!', 'success');
+    notify(language === 'fr' ? `Match ajouté et programmé à l'heure du Maroc (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}) !` : language === 'en' ? `Match scheduled successfully according to Morocco Time (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset})!` : `تمت إضافة المباراة وبرمجتها وفق توقيت المغرب (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}) بنجاح!`, 'success');
     setNewDeadline('');
   };
 
@@ -333,10 +343,22 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       return;
     }
     // Convert admin's edited time in Morocco timezone to ISO string
-    const isoDeadline = parseMoroccoDateTime(dl);
+    const isoDeadline = parseMoroccoDateTime(dl, moroccoOffset);
     const next = matches.map(m => m.id === matchId ? { ...m, deadline: isoDeadline } : m);
     onUpdateMatches(next);
-    notify(language === 'fr' ? 'Horaire mis à jour selon l\'heure du Maroc (GMT+1) !' : language === 'en' ? 'Deadline updated according to Morocco Time (GMT+1)!' : 'تم تحديث موعد المباراة بنجاح بتوقيت المغرب (GMT+1)!', 'success');
+    notify(language === 'fr' ? `Horaire mis à jour selon l'heure du Maroc (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}) !` : language === 'en' ? `Deadline updated according to Morocco Time (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset})!` : `تم تحديث موعد المباراة بنجاح بتوقيت المغرب (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset})!`, 'success');
+  };
+
+  const handleQuickExtendDeadline = (matchId: string, addMinutes: number) => {
+    const match = matches.find(m => m.id === matchId);
+    if (!match) return;
+    const currentMs = new Date(match.deadline).getTime();
+    const baseMs = Math.max(Date.now(), isNaN(currentMs) ? Date.now() : currentMs);
+    const newIso = new Date(baseMs + addMinutes * 60000).toISOString();
+    const next = matches.map(m => m.id === matchId ? { ...m, deadline: newIso } : m);
+    onUpdateMatches(next);
+    setEditDeadlines(prev => ({ ...prev, [matchId]: formatMoroccoInput(newIso, moroccoOffset) }));
+    notify(language === 'fr' ? `Délai prolongé de +${addMinutes} min (Heure du Maroc) !` : language === 'en' ? `Deadline extended by +${addMinutes} min (Morocco Time)!` : `تم تمديد موعد المباراة بـ +${addMinutes} دقيقة!`, 'success');
   };
 
   const handleDeleteMatchClick = (match: Match) => {
@@ -1767,19 +1789,55 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 </div>
 
                 <div>
-                  <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
-                    <label className="block text-xs font-semibold text-[#CCD0CF]">
-                      {language === 'fr' 
-                        ? 'Date & heure du match (🇲🇦 Heure du Maroc - GMT+1)' 
-                        : language === 'en' 
-                        ? 'Kickoff date/time & deadline (🇲🇦 Morocco Time - GMT+1)' 
-                        : 'موعد المباراة ووقت إغلاق التوقع (🇲🇦 بتوقيت المغرب - GMT+1)'}
-                    </label>
-                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-[#06141B] px-2 py-0.5 rounded-lg border border-[#253745]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                      <span>🇲🇦 {language === 'fr' ? 'Heure au Maroc :' : language === 'en' ? 'Morocco Time:' : 'الوقت في المغرب:'} {moroccoNowTime}</span>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#CCD0CF]">
+                        {language === 'fr' 
+                          ? `Date & heure du match (🇲🇦 Heure du Maroc - GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset})` 
+                          : language === 'en' 
+                          ? `Kickoff date/time & deadline (🇲🇦 Morocco Time - GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset})` 
+                          : `موعد المباراة ووقت إغلاق التوقع (🇲🇦 بتوقيت المغرب - GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset})`}
+                      </label>
+                      <span className="text-[11px] text-[#9BA8AB]">
+                        {language === 'fr' ? 'Conforme à l\'heure de votre téléphone au Maroc' : language === 'en' ? 'Matches your phone\'s time in Morocco' : 'يطابق توقيت هاتفك في المغرب تماماً'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 bg-[#06141B] p-0.5 rounded-lg border border-[#253745] text-[10px]">
+                        <button
+                          type="button"
+                          onClick={() => handleOffsetChange(0)}
+                          className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
+                            moroccoOffset === 0 
+                              ? 'bg-emerald-600 text-white shadow-sm' 
+                              : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
+                          }`}
+                          title="Morocco Official GMT (UTC+0)"
+                        >
+                          GMT (Officiel)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOffsetChange(1)}
+                          className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
+                            moroccoOffset === 1 
+                              ? 'bg-emerald-600 text-white shadow-sm' 
+                              : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
+                          }`}
+                          title="GMT+1"
+                        >
+                          GMT+1
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-[#06141B] px-2.5 py-1 rounded-lg border border-[#253745] shadow-inner">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>🇲🇦 {moroccoNowTime}</span>
+                      </div>
                     </div>
                   </div>
+
                   <input
                     type="datetime-local"
                     value={newDeadline}
@@ -1791,10 +1849,10 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     <span className="text-amber-400">🇲🇦</span>
                     <span>
                       {language === 'fr' 
-                        ? 'L\'heure saisie est automatiquement interprétée et enregistrée selon l\'heure légale du Maroc (GMT+1).' 
+                        ? `L'heure saisie est enregistrée selon le fuseau sélectionné (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}) et reste synchronisée avec l'heure réelle de votre téléphone.` 
                         : language === 'en' 
-                        ? 'The entered time is automatically interpreted and saved according to Morocco\'s official time (GMT+1).' 
-                        : 'يتم احتساب وتخزين الوقت المدخل تلقائياً وفق التوقيت الرسمي للمملكة المغربية (GMT+1).'}
+                        ? `The entered time is saved according to the selected timezone (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}) and matches your phone's real-time clock.` 
+                        : `يتم تسجيل الوقت وفق التوقيت المختار (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}) ليتطابق مع ساعة هاتفك.`}
                     </span>
                   </p>
                 </div>
@@ -1907,34 +1965,67 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   </div>
 
                   {/* Edit Deadline */}
-                  <div className="p-3 bg-[#11212D] rounded-xl border border-[#253745] flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <div className="w-full">
-                      <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
-                        <label className="block text-[11px] font-semibold text-[#CCD0CF]">
-                          {language === 'fr' 
-                            ? 'Modifier la clôture (🇲🇦 Heure du Maroc - GMT+1) :' 
-                            : language === 'en' 
-                            ? 'Edit deadline (🇲🇦 Morocco Time - GMT+1):' 
-                            : 'تعديل موعد ووقت إغلاق التوقع (🇲🇦 بتوقيت المغرب - GMT+1):'}
-                        </label>
-                        <span className="text-[10px] text-amber-300 font-mono">
-                          🇲🇦 {formatEnglishDeadlineMorocco(match.deadline)}
-                        </span>
+                  <div className="p-3 bg-[#11212D] rounded-xl border border-[#253745] space-y-2.5">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                      <div className="w-full">
+                        <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
+                          <label className="block text-[11px] font-semibold text-[#CCD0CF]">
+                            {language === 'fr' 
+                              ? `Modifier la clôture (🇲🇦 GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}) :` 
+                              : language === 'en' 
+                              ? `Edit deadline (🇲🇦 GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}):` 
+                              : `تعديل موعد ووقت إغلاق التوقع (🇲🇦 GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}):`}
+                          </label>
+                          <span className="text-[10px] text-amber-300 font-mono">
+                            {formatEnglishDeadlineMorocco(match.deadline, moroccoOffset)}
+                          </span>
+                        </div>
+                        <input
+                          type="datetime-local"
+                          value={editDeadlines[match.id] !== undefined ? editDeadlines[match.id] : formatMoroccoInput(match.deadline, moroccoOffset)}
+                          onChange={(e) => setEditDeadlines({ ...editDeadlines, [match.id]: e.target.value })}
+                          className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-2 text-xs text-[#CCD0CF] font-semibold outline-none focus:border-[#4A5C6A] font-mono transition-all duration-200"
+                        />
                       </div>
-                      <input
-                        type="datetime-local"
-                        value={editDeadlines[match.id] !== undefined ? editDeadlines[match.id] : formatMoroccoInput(match.deadline)}
-                        onChange={(e) => setEditDeadlines({ ...editDeadlines, [match.id]: e.target.value })}
-                        className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-2 text-xs text-[#CCD0CF] font-semibold outline-none focus:border-[#4A5C6A] font-mono transition-all duration-200"
-                      />
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateDeadline(match.id)}
+                        className="w-full sm:w-auto bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] hover:text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all duration-200 shrink-0 cursor-pointer border border-[#253745] active:scale-95"
+                      >
+                        {language === 'fr' ? 'Enregistrer' : language === 'en' ? 'Save Time' : 'حفظ الوقت الجديد'}
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateDeadline(match.id)}
-                      className="w-full sm:w-auto bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] hover:text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all duration-200 shrink-0 cursor-pointer border border-[#253745] active:scale-95"
-                    >
-                      {language === 'fr' ? 'Enregistrer' : language === 'en' ? 'Save Time' : 'حفظ الوقت الجديد'}
-                    </button>
+
+                    {/* Quick Reopen / Extend Buttons for Admin convenience */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-[#253745]/60 text-[10px]">
+                      <span className="text-[#9BA8AB] font-semibold">
+                        {language === 'fr' ? 'Prolonger / Réouvrir :' : language === 'en' ? 'Quick Extend / Reopen:' : 'تمديد سريع / إعادة فتح:'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickExtendDeadline(match.id, 30)}
+                        className="px-2 py-0.5 rounded-md bg-[#06141B] hover:bg-[#253745] text-amber-300 border border-[#253745] font-semibold cursor-pointer active:scale-95"
+                        title="Add 30 minutes from now or deadline"
+                      >
+                        +30 min
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickExtendDeadline(match.id, 60)}
+                        className="px-2 py-0.5 rounded-md bg-[#06141B] hover:bg-[#253745] text-emerald-300 border border-[#253745] font-semibold cursor-pointer active:scale-95"
+                        title="Add 1 hour from now or deadline"
+                      >
+                        +1 Hour
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickExtendDeadline(match.id, 120)}
+                        className="px-2 py-0.5 rounded-md bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 border border-emerald-500/40 font-bold cursor-pointer active:scale-95"
+                        title="Reopen match with deadline 2 hours from now"
+                      >
+                        ⚡ {language === 'fr' ? 'Réouvrir (+2h)' : language === 'en' ? 'Reopen (+2h)' : 'إعادة فتح (+ساعتين)'}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Settlement Inputs (If not settled) */}

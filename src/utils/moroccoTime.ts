@@ -1,15 +1,79 @@
 /**
- * Utility functions for handling Moroccan Time (Africa/Casablanca, GMT+1)
- * Ensures that admin fixture scheduling and prediction deadlines strictly adhere to Morocco's official time.
+ * Morocco Time Utility
+ * 
+ * Official Decree: As of September 20, 2026, Morocco permanently observes Greenwich Mean Time (GMT / UTC+0).
+ * Since older IANA tzdata tables in Node/browsers still assume GMT+1 for 'Africa/Casablanca',
+ * using system 'Africa/Casablanca' erroneously advanced clocks by +1 hour (e.g. 12:05 instead of 11:05),
+ * causing matches set for 11:xx to immediately expire while the user's phone in Morocco is still 11:xx!
+ * 
+ * This module explicitly enforces the real Moroccan GMT (UTC+0) standard (with optional GMT+1 toggle support).
  */
 
-export const MOROCCO_TIMEZONE = 'Africa/Casablanca';
+export const MOROCCO_DEFAULT_OFFSET_HOURS = 0; // GMT (UTC+0)
+
+export function getStoredMoroccoOffset(): number {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('morocco_time_offset');
+    if (saved !== null) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed)) return parsed;
+    }
+  }
+  return MOROCCO_DEFAULT_OFFSET_HOURS;
+}
+
+export function setStoredMoroccoOffset(offsetHours: number): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('morocco_time_offset', String(offsetHours));
+  }
+}
+
+/**
+ * Returns formatted live time in Morocco (e.g. "11:05" or "11:05:30")
+ * Strictly matching the user's phone in Morocco (GMT / UTC+0).
+ */
+export function getMoroccoCurrentTimeFormatted(includeSeconds = false, offsetHours = getStoredMoroccoOffset()): string {
+  const now = new Date();
+  const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const moroccoDate = new Date(utcMs + (offsetHours * 3600000));
+  
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const h = pad(moroccoDate.getHours());
+  const m = pad(moroccoDate.getMinutes());
+  if (includeSeconds) {
+    const s = pad(moroccoDate.getSeconds());
+    return `${h}:${m}:${s}`;
+  }
+  return `${h}:${m}`;
+}
+
+/**
+ * Formats any ISO string or Date into "YYYY-MM-DDTHH:mm" in Morocco's timezone (GMT).
+ * Suitable for pre-filling or editing `<input type="datetime-local" />`.
+ */
+export function formatMoroccoInput(isoOrDateStr: string, offsetHours = getStoredMoroccoOffset()): string {
+  if (!isoOrDateStr) return '';
+  const d = new Date(isoOrDateStr);
+  if (isNaN(d.getTime())) return '';
+
+  const utcMs = d.getTime() + (d.getTimezoneOffset() * 60000);
+  const moroccoDate = new Date(utcMs + (offsetHours * 3600000));
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const y = moroccoDate.getFullYear();
+  const m = pad(moroccoDate.getMonth() + 1);
+  const day = pad(moroccoDate.getDate());
+  const h = pad(moroccoDate.getHours());
+  const min = pad(moroccoDate.getMinutes());
+
+  return `${y}-${m}-${day}T${h}:${min}`;
+}
 
 /**
  * Parses a datetime string entered by the admin in Morocco time (YYYY-MM-DDTHH:mm)
- * and returns the exact ISO 8601 UTC string (e.g. 2026-10-15T20:00:00.000Z).
+ * and returns the exact ISO 8601 UTC string.
  */
-export function parseMoroccoDateTime(dateStr: string): string {
+export function parseMoroccoDateTime(dateStr: string, offsetHours = getStoredMoroccoOffset()): string {
   if (!dateStr) return '';
   const clean = dateStr.replace(' ', 'T').slice(0, 16);
   const [datePart, timePart] = clean.split('T');
@@ -21,94 +85,36 @@ export function parseMoroccoDateTime(dateStr: string): string {
   const [y, m, d] = datePart.split('-').map(Number);
   const [h, min] = timePart.split(':').map(Number);
 
-  let guess = new Date(Date.UTC(y, m - 1, d, h, min));
-
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: MOROCCO_TIMEZONE,
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric',
-    hour12: false
-  });
-
-  for (let i = 0; i < 3; i++) {
-    const parts = formatter.formatToParts(guess);
-    const getPart = (type: string) => Number(parts.find(p => p.type === type)?.value || 0);
-    const casaH = getPart('hour') === 24 ? 0 : getPart('hour');
-    const casaMin = getPart('minute');
-    const casaD = getPart('day');
-    const casaM = getPart('month');
-    const casaY = getPart('year');
-
-    const casaTime = Date.UTC(casaY, casaM - 1, casaD, casaH, casaMin);
-    const targetTime = Date.UTC(y, m - 1, d, h, min);
-    const diff = targetTime - casaTime;
-    if (diff === 0) break;
-    guess = new Date(guess.getTime() + diff);
-  }
-
-  return guess.toISOString();
-}
-
-/**
- * Formats any ISO string or Date into "YYYY-MM-DDTHH:mm" in Morocco's timezone.
- * Suitable for pre-filling or editing `<input type="datetime-local" />`.
- */
-export function formatMoroccoInput(isoOrDateStr: string): string {
-  if (!isoOrDateStr) return '';
-  const d = new Date(isoOrDateStr);
-  if (isNaN(d.getTime())) return '';
-
-  const str = new Intl.DateTimeFormat('sv-SE', {
-    timeZone: MOROCCO_TIMEZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  }).format(d);
-
-  return str.replace(' ', 'T');
-}
-
-/**
- * Returns the current date and time in Morocco as "YYYY-MM-DDTHH:mm".
- */
-export function getMoroccoNowInputString(): string {
-  return formatMoroccoInput(new Date().toISOString());
-}
-
-/**
- * Returns formatted live time in Morocco (e.g. "12:00" or "12:00:30")
- */
-export function getMoroccoCurrentTimeFormatted(includeSeconds = false): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    timeZone: MOROCCO_TIMEZONE,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: includeSeconds ? '2-digit' : undefined,
-    hour12: false
-  }).format(new Date());
+  // Time is entered in Morocco time (UTC + offsetHours)
+  // To get UTC: subtract offsetHours
+  const utcTime = Date.UTC(y, m - 1, d, h - offsetHours, min);
+  return new Date(utcTime).toISOString();
 }
 
 /**
  * Formats a deadline into a clear English string in Morocco time
- * e.g. "Nov 11, 2026, 09:00 PM"
+ * e.g. "Sep 28, 2026, 11:30 AM (🇲🇦 GMT)"
  */
-export function formatEnglishDeadlineMorocco(deadlineStr: string): string {
+export function formatEnglishDeadlineMorocco(deadlineStr: string, offsetHours = getStoredMoroccoOffset()): string {
   const d = new Date(deadlineStr);
   if (isNaN(d.getTime())) return deadlineStr;
-  return d.toLocaleString('en-US', {
-    timeZone: MOROCCO_TIMEZONE,
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  });
+
+  const utcMs = d.getTime() + (d.getTimezoneOffset() * 60000);
+  const moroccoDate = new Date(utcMs + (offsetHours * 3600000));
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = months[moroccoDate.getMonth()];
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const day = pad(moroccoDate.getDate());
+  const year = moroccoDate.getFullYear();
+
+  let hours = moroccoDate.getHours();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; // 0 becomes 12
+  const formattedHours = pad(hours);
+  const minutes = pad(moroccoDate.getMinutes());
+
+  const offsetTag = offsetHours === 0 ? 'GMT' : `GMT+${offsetHours}`;
+  return `${month} ${day}, ${year}, ${formattedHours}:${minutes} ${ampm} (🇲🇦 ${offsetTag})`;
 }
