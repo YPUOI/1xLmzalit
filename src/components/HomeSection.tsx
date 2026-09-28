@@ -179,25 +179,37 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
                 {approvedUsers.slice(0, 5).map((u, idx) => (
                   <div
                     key={u.username}
-                    className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#06141B] border border-[#253745] text-xs"
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs border transition-all ${
+                      idx === 0 
+                        ? 'bg-amber-500/10 border-amber-400/50 text-[#CCD0CF]' 
+                        : idx === 1 
+                        ? 'bg-slate-400/10 border-slate-300/40 text-[#CCD0CF]' 
+                        : idx === 2
+                        ? 'bg-amber-800/15 border-amber-700/40 text-[#CCD0CF]'
+                        : 'bg-cyan-950/20 border-cyan-500/30 text-[#CCD0CF]'
+                    }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                      <span className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-mono font-black shrink-0 shadow-sm ${
                         idx === 0 
-                          ? 'bg-[#CCD0CF] text-[#06141B]' 
+                          ? 'bg-gradient-to-br from-amber-400 to-yellow-500 text-[#06141B] ring-1 ring-amber-300' 
                           : idx === 1 
-                          ? 'bg-[#4A5C6A] text-[#CCD0CF]' 
+                          ? 'bg-gradient-to-br from-slate-200 to-slate-300 text-[#06141B] ring-1 ring-slate-200' 
                           : idx === 2
-                          ? 'bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A]'
-                          : 'bg-[#11212D] text-[#9BA8AB]'
+                          ? 'bg-gradient-to-br from-amber-600 to-orange-500 text-white ring-1 ring-amber-500'
+                          : 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50'
                       }`}>
                         {idx + 1}
                       </span>
-                      <span className="text-[#CCD0CF] font-semibold truncate max-w-[140px]">
+                      <span className={`font-semibold truncate max-w-[140px] ${
+                        idx === 0 ? 'text-amber-200 font-bold' : idx === 1 ? 'text-slate-100' : idx === 2 ? 'text-amber-300' : 'text-[#CCD0CF]'
+                      }`}>
                         {u.username}
                       </span>
                     </div>
-                    <span className="font-mono font-bold text-[#CCD0CF] shrink-0">
+                    <span className={`font-mono font-bold shrink-0 ${
+                      idx === 0 ? 'text-amber-300' : idx === 1 ? 'text-slate-200' : idx === 2 ? 'text-amber-400' : 'text-[#CCD0CF]'
+                    }`}>
                       {u.points || 0} pts
                     </span>
                   </div>
