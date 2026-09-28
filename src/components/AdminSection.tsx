@@ -44,6 +44,12 @@ import { getTeamEnglishName } from '../data/clubPresets';
 import { POPULAR_CLUB_PRESETS, parsePlayersText, generateFallbackLogo, ClubPreset } from '../data/clubPresets';
 import { removeImageBackground } from '../utils/removeBackground';
 import { useLanguage } from '../i18n/LanguageContext';
+import { 
+  parseMoroccoDateTime, 
+  formatMoroccoInput, 
+  getMoroccoCurrentTimeFormatted,
+  formatEnglishDeadlineMorocco 
+} from '../utils/moroccoTime';
 
 interface AdminSectionProps {
   matches: Match[];
@@ -97,6 +103,15 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   const [newHomeTeam, setNewHomeTeam] = useState<string>(teamKeys[0] || '');
   const [newAwayTeam, setNewAwayTeam] = useState<string>(teamKeys[1] || teamKeys[0] || '');
   const [newDeadline, setNewDeadline] = useState<string>('');
+
+  // Live Morocco Time for fixture scheduling
+  const [moroccoNowTime, setMoroccoNowTime] = useState<string>(() => getMoroccoCurrentTimeFormatted(true));
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setMoroccoNowTime(getMoroccoCurrentTimeFormatted(true));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Match editing & settlement state
   const [editDeadlines, setEditDeadlines] = useState<Record<string, string>>({});
@@ -286,37 +301,42 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   const handleCreateMatch = (e: React.FormEvent) => {
     e.preventDefault();
     if (newHomeTeam === newAwayTeam) {
-      notify('لا يمكن اختيار نفس الفريق للمواجهة!', 'error');
+      notify(language === 'fr' ? 'Impossible de choisir la même équipe !' : language === 'en' ? 'Cannot choose the same team!' : 'لا يمكن اختيار نفس الفريق للمواجهة!', 'error');
       return;
     }
     if (!newDeadline) {
-      notify('الرجاء تحديد موعد المباراة ووقت إغلاق التوقع!', 'error');
+      notify(language === 'fr' ? 'Veuillez définir la date et l\'heure (Heure du Maroc GMT+1) !' : language === 'en' ? 'Please specify date and time (Morocco Time GMT+1)!' : 'الرجاء تحديد موعد المباراة ووقت إغلاق التوقع (بتوقيت المغرب GMT+1)!', 'error');
       return;
     }
+
+    // Convert admin's input to ISO string strictly in Morocco's timezone (Africa/Casablanca)
+    const isoDeadline = parseMoroccoDateTime(newDeadline);
 
     const newMatch: Match = {
       id: `m_${Date.now()}`,
       homeTeam: newHomeTeam,
       awayTeam: newAwayTeam,
-      deadline: newDeadline,
+      deadline: isoDeadline,
       status: 'OPEN',
       result: null
     };
 
     onUpdateMatches([...matches, newMatch]);
-    notify('تمت إضافة المباراة ونشرها بنجاح!', 'success');
+    notify(language === 'fr' ? 'Match ajouté et programmé selon l\'heure du Maroc (GMT+1) !' : language === 'en' ? 'Match scheduled successfully according to Morocco Time (GMT+1)!' : 'تمت إضافة المباراة وبرمجتها وفق توقيت المغرب (GMT+1) بنجاح!', 'success');
     setNewDeadline('');
   };
 
   const handleUpdateDeadline = (matchId: string) => {
     const dl = editDeadlines[matchId];
     if (!dl) {
-      notify('الرجاء اختيار وقت صحيح!', 'error');
+      notify(language === 'fr' ? 'Veuillez entrer une date/heure valide !' : language === 'en' ? 'Please enter a valid date/time!' : 'الرجاء اختيار وقت صحيح!', 'error');
       return;
     }
-    const next = matches.map(m => m.id === matchId ? { ...m, deadline: dl } : m);
+    // Convert admin's edited time in Morocco timezone to ISO string
+    const isoDeadline = parseMoroccoDateTime(dl);
+    const next = matches.map(m => m.id === matchId ? { ...m, deadline: isoDeadline } : m);
     onUpdateMatches(next);
-    notify('تم تحديث موعد المباراة بنجاح!', 'success');
+    notify(language === 'fr' ? 'Horaire mis à jour selon l\'heure du Maroc (GMT+1) !' : language === 'en' ? 'Deadline updated according to Morocco Time (GMT+1)!' : 'تم تحديث موعد المباراة بنجاح بتوقيت المغرب (GMT+1)!', 'success');
   };
 
   const handleDeleteMatchClick = (match: Match) => {
@@ -1747,9 +1767,19 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#CCD0CF] mb-1.5">
-                    {language === 'fr' ? 'Date & heure du match / Clôture des pronostics' : language === 'en' ? 'Kickoff date/time & deadline' : 'موعد المباراة ووقت إغلاق التوقع (Deadline)'}
-                  </label>
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5">
+                    <label className="block text-xs font-semibold text-[#CCD0CF]">
+                      {language === 'fr' 
+                        ? 'Date & heure du match (🇲🇦 Heure du Maroc - GMT+1)' 
+                        : language === 'en' 
+                        ? 'Kickoff date/time & deadline (🇲🇦 Morocco Time - GMT+1)' 
+                        : 'موعد المباراة ووقت إغلاق التوقع (🇲🇦 بتوقيت المغرب - GMT+1)'}
+                    </label>
+                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-[#06141B] px-2 py-0.5 rounded-lg border border-[#253745]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      <span>🇲🇦 {language === 'fr' ? 'Heure au Maroc :' : language === 'en' ? 'Morocco Time:' : 'الوقت في المغرب:'} {moroccoNowTime}</span>
+                    </div>
+                  </div>
                   <input
                     type="datetime-local"
                     value={newDeadline}
@@ -1757,6 +1787,16 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-[#CCD0CF] font-semibold focus:border-[#4A5C6A] outline-none text-xs font-mono transition-all duration-200"
                     required
                   />
+                  <p className="text-[11px] text-[#9BA8AB] mt-1.5 flex items-center gap-1.5">
+                    <span className="text-amber-400">🇲🇦</span>
+                    <span>
+                      {language === 'fr' 
+                        ? 'L\'heure saisie est automatiquement interprétée et enregistrée selon l\'heure légale du Maroc (GMT+1).' 
+                        : language === 'en' 
+                        ? 'The entered time is automatically interpreted and saved according to Morocco\'s official time (GMT+1).' 
+                        : 'يتم احتساب وتخزين الوقت المدخل تلقائياً وفق التوقيت الرسمي للمملكة المغربية (GMT+1).'}
+                    </span>
+                  </p>
                 </div>
 
                 <button
@@ -1869,12 +1909,21 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   {/* Edit Deadline */}
                   <div className="p-3 bg-[#11212D] rounded-xl border border-[#253745] flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div className="w-full">
-                      <label className="block text-[10px] text-[#9BA8AB] mb-1">
-                        {language === 'fr' ? 'Modifier la clôture :' : language === 'en' ? 'Edit deadline:' : 'تعديل موعد ووقت إغلاق التوقع:'}
-                      </label>
+                      <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
+                        <label className="block text-[11px] font-semibold text-[#CCD0CF]">
+                          {language === 'fr' 
+                            ? 'Modifier la clôture (🇲🇦 Heure du Maroc - GMT+1) :' 
+                            : language === 'en' 
+                            ? 'Edit deadline (🇲🇦 Morocco Time - GMT+1):' 
+                            : 'تعديل موعد ووقت إغلاق التوقع (🇲🇦 بتوقيت المغرب - GMT+1):'}
+                        </label>
+                        <span className="text-[10px] text-amber-300 font-mono">
+                          🇲🇦 {formatEnglishDeadlineMorocco(match.deadline)}
+                        </span>
+                      </div>
                       <input
                         type="datetime-local"
-                        value={editDeadlines[match.id] || (match.deadline ? match.deadline.slice(0, 16) : '')}
+                        value={editDeadlines[match.id] !== undefined ? editDeadlines[match.id] : formatMoroccoInput(match.deadline)}
                         onChange={(e) => setEditDeadlines({ ...editDeadlines, [match.id]: e.target.value })}
                         className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-2 text-xs text-[#CCD0CF] font-semibold outline-none focus:border-[#4A5C6A] font-mono transition-all duration-200"
                       />

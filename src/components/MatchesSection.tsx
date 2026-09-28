@@ -11,6 +11,7 @@ import {
   Plus,
   Minus,
   AlertCircle,
+  AlertTriangle,
   Timer,
   Flame,
   Download,
@@ -31,11 +32,12 @@ interface MatchesSectionProps {
   onOpenAuth: () => void;
 }
 
-// Format date in English (e.g. Nov 11, 2027, 10:10 AM)
+// Format date in English (e.g. Nov 11, 2027, 10:10 PM) in Morocco Time (GMT+1)
 const formatEnglishDeadline = (deadlineStr: string): string => {
   const d = new Date(deadlineStr);
   if (isNaN(d.getTime())) return deadlineStr;
   return d.toLocaleString('en-US', {
+    timeZone: 'Africa/Casablanca',
     month: 'short',
     day: '2-digit',
     year: 'numeric',
@@ -50,7 +52,7 @@ export const MatchCountdown: React.FC<{
   deadline: string;
   status: 'OPEN' | 'SETTLED';
 }> = ({ deadline, status }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [now, setNow] = useState<number>(() => Date.now());
 
   useEffect(() => {
@@ -75,6 +77,7 @@ export const MatchCountdown: React.FC<{
   }
 
   const isUnderOneHour = diffMs < 60 * 60 * 1000;
+  const isUnderOneMinute = diffMs < 60 * 1000;
   const totalSeconds = Math.floor(diffMs / 1000);
   const days = Math.floor(totalSeconds / 86400);
   const hours = Math.floor((totalSeconds % 86400) / 3600);
@@ -84,17 +87,29 @@ export const MatchCountdown: React.FC<{
   const pad = (n: number) => String(n).padStart(2, '0');
 
   if (isUnderOneHour) {
+    const alertLabel = language === 'fr' ? 'ALERTE' : language === 'en' ? 'ALERT' : 'تنبيه';
+    const underLabel = isUnderOneMinute
+      ? (language === 'fr' ? '< 1 min !' : language === 'en' ? '< 1 min!' : '< 1 دقيقة!')
+      : (language === 'fr' ? '< 1 heure !' : language === 'en' ? '< 1 hour!' : '< 1 ساعة!');
+
     return (
       <div 
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#253745] border border-rose-500/40 text-rose-300 text-xs font-semibold shrink-0"
-        title="< 1h!"
+        className="flex items-center gap-2 px-3 py-1 rounded-xl bg-red-950/80 border-2 border-red-500 text-red-200 text-xs font-semibold shrink-0 shadow-[0_0_15px_rgba(239,68,68,0.45)] animate-pulse"
+        title={language === 'fr' ? 'Alerte : clôture imminente (< 1h) !' : language === 'en' ? 'Alert: Deadline imminent (< 1 hour)!' : 'تنبيه: اقتراب موعد إغلاق المباراة (أقل من ساعة)!'}
       >
-        <Flame className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-        <span className="text-[11px] text-rose-200/90 hidden xs:inline">{t('timeLeft')}:</span>
-        <span className="font-mono text-[#CCD0CF] text-xs font-bold tracking-wider bg-[#06141B] px-1.5 py-0.5 rounded border border-rose-500/40" dir="ltr">
+        <div className="relative flex items-center justify-center">
+          <span className="animate-ping absolute inline-flex h-2.5 w-2.5 rounded-full bg-red-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+        </div>
+        <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+        <span className="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase shadow-sm">
+          {alertLabel}
+        </span>
+        <span className="text-[11px] text-red-200 font-bold hidden xs:inline">{t('timeLeft')}:</span>
+        <span className="font-mono text-white text-xs font-black tracking-wider bg-red-900/90 px-2 py-0.5 rounded border border-red-400/80 shadow-inner" dir="ltr">
           {pad(minutes)}:{pad(seconds)}
         </span>
-        <span className="text-[10px] text-rose-300/80 font-medium hidden sm:inline">(&lt; 1h)</span>
+        <span className="text-[10px] text-red-300 font-bold hidden sm:inline font-mono">({underLabel})</span>
       </div>
     );
   }
@@ -358,6 +373,8 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
             const away = teams[match.awayTeam] || { name: match.awayTeam, logo: 'https://placehold.co/100x100?text=Away', squad: [] };
 
             const isLocked = new Date() > new Date(match.deadline) || match.status === 'SETTLED';
+            const matchDiffMs = new Date(match.deadline).getTime() - Date.now();
+            const isMatchUnderOneHour = matchDiffMs > 0 && matchDiffMs < 3600000 && match.status !== 'SETTLED';
             const userPredKey = currentUser ? `${currentUser.username}_${match.id}` : null;
             const userPred = userPredKey ? predictions[userPredKey] : null;
             const draft = getDraft(match);
@@ -365,15 +382,16 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
             return (
               <div 
                 key={match.id} 
-                className="bg-[#11212D] p-4 sm:p-6 rounded-2xl border border-[#253745] space-y-5 relative overflow-hidden transition-all duration-200 hover:border-[#4A5C6A] shadow-xl"
+                className={`bg-[#11212D] p-4 sm:p-6 rounded-2xl border ${isMatchUnderOneHour ? 'border-red-500/80 shadow-[0_0_20px_rgba(239,68,68,0.2)] ring-1 ring-red-500/40' : 'border-[#253745]'} space-y-5 relative overflow-hidden transition-all duration-200 hover:border-[#4A5C6A] shadow-xl`}
                 dir={isRtl ? 'rtl' : 'ltr'}
               >
                 {/* Match Status Bar */}
                 <div className="flex flex-wrap justify-between items-center border-b border-[#253745] pb-3 gap-2.5">
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-semibold text-[#CCD0CF]">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5" title="Morocco Time (GMT+1)">
                       <Clock className="w-3.5 h-3.5 text-[#9BA8AB] shrink-0" />
                       <span className="font-mono text-[#CCD0CF] tracking-wide" dir="ltr">{formatEnglishDeadline(match.deadline)}</span>
+                      <span className="text-[10px] text-amber-300 font-semibold px-1 py-0.2 rounded bg-[#06141B] border border-[#253745]">🇲🇦 GMT+1</span>
                     </div>
 
                     {/* Live Countdown Timer */}
@@ -398,9 +416,11 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         ? 'bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A]'
                         : isLocked
                         ? 'bg-[#253745] text-rose-300 border border-rose-500/30'
+                        : isMatchUnderOneHour
+                        ? 'bg-red-950 text-red-200 border-2 border-red-500 font-bold shadow-[0_0_10px_rgba(239,68,68,0.35)] animate-pulse'
                         : 'bg-[#253745] text-emerald-300 border border-emerald-500/30'
                     }`}>
-                      {match.status === 'SETTLED' ? t('settledStatus') : isLocked ? t('predictionLocked') : t('openForPrediction')}
+                      {match.status === 'SETTLED' ? t('settledStatus') : isLocked ? t('predictionLocked') : isMatchUnderOneHour ? (language === 'fr' ? '⚠️ Clôture < 1h' : language === 'en' ? '⚠️ Deadline < 1h' : '⚠️ إغلاق < ساعة') : t('openForPrediction')}
                     </span>
                   </div>
                 </div>
@@ -500,11 +520,16 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                       {new Date(match.deadline).getTime() - Date.now() < 3600000 && 
                        new Date(match.deadline).getTime() - Date.now() > 0 && 
                        match.status !== 'SETTLED' && (
-                        <div className="p-3 rounded-xl bg-[#253745] border border-rose-500/40 text-rose-200 text-xs font-medium flex items-center gap-2.5">
-                          <Flame className="w-4 h-4 text-rose-400 shrink-0" />
-                          <span>
-                            {language === 'fr' ? 'Alerte urgente : fermeture du match imminente (< 1 heure) ! Confirmez votre pronostic dès maintenant.' : language === 'en' ? 'Urgent notice: match deadline approaching (< 1 hour)! Finalize your prediction now.' : 'تنبيه عاجل: اقترب موعد إغلاق المباراة (أقل من ساعة واحدة)! احرص على إكمال وتثبيت توقعك الآن.'}
-                          </span>
+                        <div className="p-3.5 rounded-xl bg-red-950/80 border-2 border-red-500 text-red-100 text-xs font-semibold flex items-center gap-2.5 shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-pulse">
+                          <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
+                          <div className="flex-1">
+                            <span className="font-bold text-red-200">
+                              {language === 'fr' ? 'Alerte urgente : fermeture imminente (< 1 heure) ! ' : language === 'en' ? 'Urgent Alert: deadline approaching (< 1 hour)! ' : 'تنبيه عاجل: إغلاق المباراة وشيك (أقل من ساعة واحدة)! '}
+                            </span>
+                            <span className="text-red-300 font-normal">
+                              {language === 'fr' ? 'Confirmez et enregistrez votre pronostic dès maintenant.' : language === 'en' ? 'Confirm and save your prediction now.' : 'احرص على إكمال وتثبيت توقعك فوراً.'}
+                            </span>
+                          </div>
                         </div>
                       )}
 

@@ -20,6 +20,7 @@ export interface CardGenerationOptions {
  */
 export function formatDateTimeEn(dateInput: string | number | Date | undefined): string {
   if (!dateInput) return new Date().toLocaleString('en-US', {
+    timeZone: 'Africa/Casablanca',
     month: 'short',
     day: '2-digit',
     year: 'numeric',
@@ -32,6 +33,7 @@ export function formatDateTimeEn(dateInput: string | number | Date | undefined):
   if (isNaN(d.getTime())) return String(dateInput);
 
   return d.toLocaleString('en-US', {
+    timeZone: 'Africa/Casablanca',
     weekday: 'short',
     month: 'short',
     day: '2-digit',

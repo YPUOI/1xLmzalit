@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Trophy, 
   Award, 
@@ -9,7 +9,8 @@ import {
   ExternalLink,
   ChevronRight,
   ShieldCheck,
-  CheckCircle2
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-react';
 import { Match, AppUser, Prediction } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -33,10 +34,18 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
   onOpenAuth
 }) => {
   const { t, isRtl, language } = useLanguage();
+  const [now, setNow] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // 1. Available matches to predict (just time left and teams)
   const openMatches = matches
-    .filter(m => m.status === 'OPEN' && new Date(m.deadline) > new Date())
+    .filter(m => m.status === 'OPEN' && new Date(m.deadline).getTime() > now)
     .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
 
   // 2. Leaderboard with just standings (rank, member, points)
@@ -45,7 +54,7 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
     .sort((a, b) => (b.points || 0) - (a.points || 0));
 
   // 3. Closed/Settled matches for "latest prediction for each member (after deadline)"
-  const closedMatches = matches.filter(m => m.status === 'SETTLED' || new Date(m.deadline) <= new Date());
+  const closedMatches = matches.filter(m => m.status === 'SETTLED' || new Date(m.deadline).getTime() <= now);
   const closedMatchIds = new Set(closedMatches.map(m => m.id));
 
   // Filter predictions belonging to closed matches
@@ -65,10 +74,13 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
 
   // Helper to format remaining time
   const formatTimeRemaining = (deadlineStr: string) => {
-    const diffMs = new Date(deadlineStr).getTime() - Date.now();
+    const diffMs = new Date(deadlineStr).getTime() - now;
     if (diffMs <= 0) return language === 'fr' ? 'Expiré' : language === 'en' ? 'Expired' : 'انتهى';
     const hours = Math.floor(diffMs / (1000 * 60 * 60));
     const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+    const pad = (n: number) => String(n).padStart(2, '0');
+
     if (hours > 24) {
       const days = Math.floor(hours / 24);
       return language === 'fr' ? `${days}j restants` : language === 'en' ? `${days}d left` : `${days} يوم`;
@@ -76,7 +88,8 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
     if (hours > 0) {
       return language === 'fr' ? `${hours}h ${mins}m` : language === 'en' ? `${hours}h ${mins}m` : `${hours} س ${mins} د`;
     }
-    return language === 'fr' ? `${mins} min` : language === 'en' ? `${mins}m left` : `${mins} دقيقة`;
+    // Under 1 hour - live MM:SS
+    return `${pad(mins)}:${pad(secs)}`;
   };
 
   return (
@@ -254,23 +267,50 @@ export const HomeSection: React.FC<HomeSectionProps> = ({
               </div>
             ) : (
               <div className="space-y-1.5">
-                {openMatches.slice(0, 4).map((m) => (
-                  <div
-                    key={m.id}
-                    className="flex items-center justify-between px-3 py-2 rounded-xl bg-[#06141B] border border-[#253745] text-xs gap-2"
-                  >
-                    <div className="text-[#CCD0CF] font-semibold truncate flex items-center gap-1.5 min-w-0">
-                      <span className="truncate">{getTeamEnglishName(m.homeTeam)}</span>
-                      <span className="text-[#9BA8AB] font-normal text-[10px] px-0.5">vs</span>
-                      <span className="truncate">{getTeamEnglishName(m.awayTeam)}</span>
-                    </div>
+                {openMatches.slice(0, 4).map((m) => {
+                  const diffMs = new Date(m.deadline).getTime() - now;
+                  const isUnderHour = diffMs < 3600000 && diffMs > 0;
+                  return (
+                    <div
+                      key={m.id}
+                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs gap-2 transition-all ${
+                        isUnderHour
+                          ? 'bg-red-950/40 border border-red-500/70 shadow-[0_0_12px_rgba(239,68,68,0.2)]'
+                          : 'bg-[#06141B] border border-[#253745]'
+                      }`}
+                    >
+                      <div className="text-[#CCD0CF] font-semibold truncate flex items-center gap-1.5 min-w-0">
+                        <span className="truncate">{getTeamEnglishName(m.homeTeam)}</span>
+                        <span className="text-[#9BA8AB] font-normal text-[10px] px-0.5">vs</span>
+                        <span className="truncate">{getTeamEnglishName(m.awayTeam)}</span>
+                      </div>
 
-                    <div className="flex items-center gap-1 text-[11px] font-mono font-medium text-[#CCD0CF] shrink-0 bg-[#253745] px-2 py-0.5 rounded border border-[#4A5C6A]">
-                      <Clock className="w-3 h-3 text-[#CCD0CF]" />
-                      <span>{formatTimeRemaining(m.deadline)}</span>
+                      {isUnderHour ? (
+                        <div 
+                          className="flex items-center gap-1.5 text-[11px] font-mono font-bold text-red-100 shrink-0 bg-red-950/90 px-2 py-0.5 rounded-lg border-2 border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.4)] animate-pulse"
+                          title="< 1h!"
+                        >
+                          <div className="relative flex items-center justify-center">
+                            <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
+                          </div>
+                          <AlertTriangle className="w-3 h-3 text-red-400 shrink-0" />
+                          <span className="bg-red-600 text-white text-[9px] font-black px-1 rounded uppercase tracking-wider">
+                            {language === 'fr' ? 'ALERTE' : language === 'en' ? 'ALERT' : 'تنبيه'}
+                          </span>
+                          <span className="text-white font-extrabold bg-red-900/90 px-1 py-0.2 rounded border border-red-400/60" dir="ltr">
+                            {formatTimeRemaining(m.deadline)}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 text-[11px] font-mono font-medium text-[#CCD0CF] shrink-0 bg-[#253745] px-2 py-0.5 rounded border border-[#4A5C6A]">
+                          <Clock className="w-3 h-3 text-[#CCD0CF]" />
+                          <span>{formatTimeRemaining(m.deadline)}</span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
