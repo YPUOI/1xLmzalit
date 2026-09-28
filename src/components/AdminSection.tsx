@@ -32,12 +32,14 @@ import {
   Flame,
   Award,
   Filter,
-  Loader2
+  Loader2,
+  Edit3
 } from 'lucide-react';
 import { Match, Team, AppUser, Prediction, SecurityConfig } from '../types';
 import { getSecurityConfig, saveSecurityConfig } from '../utils/security';
 import { subscribeSecurityConfig, syncSaveSecurityConfig } from '../lib/firebase';
 import { ConfirmDialog } from './ConfirmDialog';
+import { EditMemberNameModal } from './EditMemberNameModal';
 import { getTeamEnglishName } from '../data/clubPresets';
 import { POPULAR_CLUB_PRESETS, parsePlayersText, generateFallbackLogo, ClubPreset } from '../data/clubPresets';
 import { removeImageBackground } from '../utils/removeBackground';
@@ -57,6 +59,7 @@ interface AdminSectionProps {
   onAdminAuthenticated?: (adminUser: AppUser) => void;
   onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
   onRequestDeleteMatch?: (match: Match) => void;
+  onRenameUser?: (oldUsername: string, newUsername: string) => Promise<void>;
 }
 
 export const AdminSection: React.FC<AdminSectionProps> = ({
@@ -72,13 +75,17 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   onResetDatabase,
   onAdminAuthenticated,
   onShowToast,
-  onRequestDeleteMatch
+  onRequestDeleteMatch,
+  onRenameUser
 }) => {
   const { t, isRtl, language } = useLanguage();
 
   // Admin passcode challenge state if accessed directly
   const [adminGatePasscode, setAdminGatePasscode] = useState('');
   const [adminGateError, setAdminGateError] = useState<string | null>(null);
+
+  // Edit member name modal state
+  const [editingMember, setEditingMember] = useState<AppUser | null>(null);
 
   // Point correction state
   const [selectedUserForPoints, setSelectedUserForPoints] = useState<string>('');
@@ -1172,6 +1179,11 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       <div key={u.username} className="p-3 bg-[#11212D] rounded-xl border border-[#253745] flex items-center justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <span className="font-bold text-xs text-[#CCD0CF] block truncate">{u.username}</span>
+                          {u.originalUsername && u.originalUsername.toLowerCase() !== u.username.toLowerCase() && (
+                            <span className="text-[10px] text-amber-400/90 font-mono block truncate">
+                              {language === 'ar' ? 'الاسم الأصلي:' : language === 'fr' ? 'Nom d\'origine :' : 'Original:'} {u.originalUsername}
+                            </span>
+                          )}
                           {u.email && (
                             <span className="text-[10px] text-[#9BA8AB] font-mono block truncate" dir="ltr">
                               {u.email}
@@ -1182,6 +1194,16 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
+                          {onRenameUser && (
+                            <button
+                              type="button"
+                              onClick={() => setEditingMember(u)}
+                              className="bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] hover:text-white p-1.5 rounded-lg transition-all duration-200 cursor-pointer active:scale-95 border border-[#4A5C6A]/50"
+                              title={t('changeMemberName')}
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           <button
                             onClick={() => handleApproveUser(u.username)}
                             className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition-all duration-200 cursor-pointer active:scale-95"
@@ -1221,6 +1243,11 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       <div key={u.username} className="p-3 bg-[#11212D] rounded-xl border border-[#253745] flex items-center justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <span className="font-bold text-xs text-[#CCD0CF] block truncate">{u.username}</span>
+                          {u.originalUsername && u.originalUsername.toLowerCase() !== u.username.toLowerCase() && (
+                            <span className="text-[10px] text-amber-400/90 font-mono block truncate">
+                              {language === 'ar' ? 'الاسم الأصلي:' : language === 'fr' ? 'Nom d\'origine :' : 'Original:'} {u.originalUsername}
+                            </span>
+                          )}
                           {u.email && (
                             <span className="text-[10px] text-[#9BA8AB] font-mono block truncate" dir="ltr">
                               {u.email}
@@ -1228,12 +1255,25 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                           )}
                           <span className="text-[10px] text-[#9BA8AB] font-semibold">{u.points || 0} {language === 'ar' ? 'نقطة' : 'pts'}</span>
                         </div>
-                        <button
-                          onClick={() => handleRevokeUser(u.username)}
-                          className="bg-[#253745] hover:bg-rose-900/60 text-rose-300 border border-[#253745] text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer shrink-0 active:scale-95"
-                        >
-                          {language === 'fr' ? 'Suspendre' : language === 'en' ? 'Suspend' : 'تعليق'}
-                        </button>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {onRenameUser && (
+                            <button
+                              type="button"
+                              onClick={() => setEditingMember(u)}
+                              className="bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] hover:text-white text-[10px] font-bold px-2 py-1 rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-1 active:scale-95 border border-[#4A5C6A]/50"
+                              title={t('changeMemberName')}
+                            >
+                              <Edit3 className="w-3 h-3 text-[#CCD0CF]" />
+                              <span>{language === 'fr' ? 'Renommer' : language === 'en' ? 'Rename' : 'تعديل الاسم'}</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleRevokeUser(u.username)}
+                            className="bg-[#253745] hover:bg-rose-900/60 text-rose-300 border border-[#253745] text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all duration-200 cursor-pointer shrink-0 active:scale-95"
+                          >
+                            {language === 'fr' ? 'Suspendre' : language === 'en' ? 'Suspend' : 'تعليق'}
+                          </button>
+                        </div>
                       </div>
                     ))
                   )}
@@ -2761,6 +2801,21 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
         onConfirm={handleClearSquadConfirmed}
         onCancel={() => setClearSquadConfirm(null)}
       />
+
+      {/* Edit Member Name Modal */}
+      {editingMember && (
+        <EditMemberNameModal
+          isOpen={Boolean(editingMember)}
+          onClose={() => setEditingMember(null)}
+          targetUser={editingMember}
+          existingUsers={users}
+          onRenameUser={async (oldName, newName) => {
+            if (onRenameUser) {
+              await onRenameUser(oldName, newName);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

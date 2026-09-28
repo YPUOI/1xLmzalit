@@ -11,13 +11,15 @@ import {
   Sparkles,
   Archive,
   Save,
-  Plus
+  Plus,
+  Edit3
 } from 'lucide-react';
 import { AppUser, Match, Prediction, ArchivedSeason } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
 import { LeaderboardArchiveModal } from './LeaderboardArchiveModal';
 import { FinishCurrentSeasonModal } from './FinishCurrentSeasonModal';
 import { AddPastSeasonModal } from './AddPastSeasonModal';
+import { EditMemberNameModal } from './EditMemberNameModal';
 
 interface LeaderboardSectionProps {
   users: AppUser[];
@@ -28,6 +30,7 @@ interface LeaderboardSectionProps {
   onSaveArchivedSeason?: (season: ArchivedSeason) => Promise<void>;
   onDeleteArchivedSeason?: (seasonId: string) => Promise<void>;
   onFinishCurrentSeason?: (season: ArchivedSeason, shouldResetPoints: boolean) => Promise<void>;
+  onRenameUser?: (oldUsername: string, newUsername: string) => Promise<void>;
 }
 
 export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({ 
@@ -39,6 +42,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
   onSaveArchivedSeason,
   onDeleteArchivedSeason,
   onFinishCurrentSeason,
+  onRenameUser,
 }) => {
   const { t, isRtl } = useLanguage();
   const isAdmin = currentUser?.role === 'admin';
@@ -48,6 +52,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
   const [isFinishSeasonOpen, setIsFinishSeasonOpen] = useState(false);
   const [isAddPastSeasonOpen, setIsAddPastSeasonOpen] = useState(false);
   const [editingSeason, setEditingSeason] = useState<ArchivedSeason | null>(null);
+  const [editingMember, setEditingMember] = useState<AppUser | null>(null);
 
   // Calculate statistics per user (exact score count, correct MVP count, and correct Scorers count)
   const userStats = useMemo(() => {
@@ -224,9 +229,24 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                           {user.username.slice(0, 1).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <span className="font-bold text-xs sm:text-sm text-[#CCD0CF] truncate block">
-                            {user.username}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-xs sm:text-sm text-[#CCD0CF] truncate block">
+                              {user.username}
+                            </span>
+                            {isAdmin && onRenameUser && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingMember(user);
+                                }}
+                                className="text-[#9BA8AB] hover:text-white p-0.5 rounded transition-colors cursor-pointer"
+                                title={t('changeMemberName')}
+                              >
+                                <Edit3 className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
                           <span className="text-[10px] text-[#9BA8AB] flex items-center gap-1">
                             <UserCheck className="w-3 h-3 text-[#9BA8AB]" />
                             {t('memberBadge')}
@@ -313,7 +333,19 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                         <div className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs bg-[#253745] text-[#CCD0CF] border border-[#4A5C6A]">
                           {user.username.slice(0, 1).toUpperCase()}
                         </div>
-                        <span className="group-hover:text-white transition-colors">{user.username}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="group-hover:text-white transition-colors">{user.username}</span>
+                          {isAdmin && onRenameUser && (
+                            <button
+                              type="button"
+                              onClick={() => setEditingMember(user)}
+                              className="text-[#9BA8AB] hover:text-white p-1 rounded-md hover:bg-[#253745] transition-colors cursor-pointer"
+                              title={t('changeMemberName')}
+                            >
+                              <Edit3 className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
                       </td>
 
                       <td className="py-3 px-4 text-xs font-normal text-[#9BA8AB]">
@@ -409,6 +441,19 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
             setIsAddPastSeasonOpen(false);
             setEditingSeason(null);
             setIsArchiveOpen(true);
+          }}
+        />
+      )}
+
+      {/* 4. Admin Edit Member Name Modal */}
+      {isAdmin && editingMember && onRenameUser && (
+        <EditMemberNameModal
+          isOpen={Boolean(editingMember)}
+          onClose={() => setEditingMember(null)}
+          targetUser={editingMember}
+          existingUsers={users}
+          onRenameUser={async (oldName, newName) => {
+            await onRenameUser(oldName, newName);
           }}
         />
       )}

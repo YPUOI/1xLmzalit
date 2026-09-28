@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
 import { 
   getFirestore, 
   initializeFirestore,
@@ -277,6 +277,27 @@ export const syncDeleteUser = async (username: string) => {
   }
 };
 
+export const syncRenameUser = async (
+  oldUsername: string,
+  newUsername: string,
+  user: AppUser,
+  predictionsToMigrate: Prediction[]
+) => {
+  // 1. Save new user document
+  await syncSaveUser({ ...user, username: newUsername });
+
+  // 2. Migrate existing predictions to new username
+  for (const pred of predictionsToMigrate) {
+    const updatedPred = { ...pred, username: newUsername };
+    await syncSavePrediction(updatedPred);
+    const oldDocId = `${oldUsername}_${pred.matchId}`;
+    await syncDeletePrediction(oldDocId);
+  }
+
+  // 3. Delete old user document
+  await syncDeleteUser(oldUsername);
+};
+
 // 5. Settings / Security Config Synchronization
 export const subscribeSecurityConfig = (onUpdate: (data: { friendPassword?: string }) => void) => {
   const docRef = doc(db, 'settings', 'security');
@@ -394,5 +415,24 @@ export const syncDeleteArchivedSeason = async (seasonId: string) => {
     await deleteDoc(doc(db, 'archived_seasons', safeId));
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, path);
+  }
+};
+
+// 7. Password Recovery via Firebase Authentication
+export const requestPasswordReset = async (email: string): Promise<{ success: boolean; dispatchedToFirebaseAuth: boolean }> => {
+  const cleanEmail = email.trim();
+  try {
+    await sendPasswordResetEmail(auth, cleanEmail);
+    return { success: true, dispatchedToFirebaseAuth: true };
+  } catch (error: any) {
+    console.warn("Firebase Auth sendPasswordResetEmail notice:", error?.code, error?.message);
+    if (error?.code === 'auth/invalid-email') {
+      throw new Error('invalid-email');
+    }
+    if (error?.code === 'auth/user-not-found') {
+      throw new Error('user-not-found');
+    }
+    // Return success or fallback safely
+    return { success: true, dispatchedToFirebaseAuth: false };
   }
 };

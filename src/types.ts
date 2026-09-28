@@ -34,6 +34,7 @@ export interface Prediction {
 
 export interface AppUser {
   username: string;
+  originalUsername?: string; // Original registration name that member signed up with
   email?: string;
   role: 'user' | 'admin';
   points: number;

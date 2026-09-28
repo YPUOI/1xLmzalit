@@ -18,7 +18,7 @@ import { ThemeToggle } from './ThemeToggle';
 
 interface UclHeaderProps {
   currentUser: AppUser | null;
-  onOpenAuth: (roleOrTab: 'user' | 'admin' | 'login' | 'signup') => void;
+  onOpenAuth: (roleOrTab: 'user' | 'admin' | 'login' | 'signup' | 'forgot') => void;
   onLogout: () => void;
   onLockApp?: () => void;
   onOpenSecurityModal: () => void;

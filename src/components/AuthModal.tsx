@@ -15,13 +15,19 @@ import {
   UserPlus,
   LogIn,
   Info,
-  BookmarkCheck
+  BookmarkCheck,
+  Send,
+  Loader2,
+  ArrowLeft,
+  ArrowRight,
+  MailCheck
 } from 'lucide-react';
 import { AppUser } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { syncSaveUser } from '../lib/firebase';
 
-export type AuthSlide = 'login' | 'signup' | 'admin';
+export type AuthSlide = 'login' | 'signup' | 'admin' | 'forgot';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -31,6 +37,7 @@ interface AuthModalProps {
   onClose: () => void;
   onLoginSuccess: (user: AppUser, remember?: boolean) => void;
   onRegisterUser: (newUser: AppUser) => void;
+  onUpdateUserPassword?: (username: string, newPassword: string) => Promise<void> | void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -40,11 +47,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   users,
   onClose,
   onLoginSuccess,
-  onRegisterUser
+  onRegisterUser,
+  onUpdateUserPassword
 }) => {
   const { t, isRtl, language } = useLanguage();
   
-  // Current active slide: 'login' | 'signup' | 'admin'
+  // Current active slide: 'login' | 'signup' | 'admin' | 'forgot'
   const [activeSlide, setActiveSlide] = useState<AuthSlide>(
     initialTab || (initialRole === 'admin' ? 'admin' : 'login')
   );
@@ -91,6 +99,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [adminPasscode, setAdminPasscode] = useState('');
   const [showAdminPasscode, setShowAdminPasscode] = useState(false);
 
+  // Direct Password Recovery states ('email' -> 'password' -> 'success')
+  const [recoveryStep, setRecoveryStep] = useState<'email' | 'password' | 'success'>('email');
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [targetRecoveryUser, setTargetRecoveryUser] = useState<AppUser | null>(null);
+  const [newRecoveryPassword, setNewRecoveryPassword] = useState('');
+  const [confirmRecoveryPassword, setConfirmRecoveryPassword] = useState('');
+  const [showNewRecoveryPassword, setShowNewRecoveryPassword] = useState(false);
+  const [showConfirmRecoveryPassword, setShowConfirmRecoveryPassword] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
   // Notification / Alert message
   const [statusAlert, setStatusAlert] = useState<{ type: 'error' | 'success' | 'info'; text: string } | null>(null);
 
@@ -108,6 +126,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setSignupPassword('');
     setSignupConfirmPassword('');
     setAdminPasscode('');
+    setRecoveryEmail('');
+    setRecoveryStep('email');
+    setTargetRecoveryUser(null);
+    setNewRecoveryPassword('');
+    setConfirmRecoveryPassword('');
+    setShowNewRecoveryPassword(false);
+    setShowConfirmRecoveryPassword(false);
+    setIsUpdatingPassword(false);
     setShowLoginPassword(false);
     setShowSignupPassword(false);
     setShowSignupConfirmPassword(false);
@@ -115,6 +141,125 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   }, [initialRole, initialTab, isOpen]);
 
   if (!isOpen) return null;
+
+  // Step 1: Check if email exists in records/state and immediately advance to "Set New Password"
+  const handleContinueRecoveryEmail = (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatusAlert(null);
+
+    const cleanEmail = recoveryEmail.trim().toLowerCase();
+    if (!cleanEmail) {
+      setStatusAlert({
+        type: 'error',
+        text: t('errorInvalidRecoveryEmail')
+      });
+      return;
+    }
+
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i;
+    if (!emailPattern.test(cleanEmail)) {
+      setStatusAlert({
+        type: 'error',
+        text: t('errorInvalidRecoveryEmail')
+      });
+      return;
+    }
+
+    // Check if account exists with this email or username
+    const matchingUser = users.find(u => 
+      (u.email && u.email.toLowerCase() === cleanEmail) ||
+      u.username.toLowerCase() === cleanEmail ||
+      (u.originalUsername && u.originalUsername.toLowerCase() === cleanEmail)
+    );
+
+    if (!matchingUser) {
+      setStatusAlert({
+        type: 'error',
+        text: t('errorAccountNotFoundWithEmail')
+      });
+      return;
+    }
+
+    // Email exists in records: advance immediately to Set New Password
+    setTargetRecoveryUser(matchingUser);
+    setRecoveryStep('password');
+    setStatusAlert(null);
+  };
+
+  // Step 2: Directly update password for that account
+  const handleSetNewPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatusAlert(null);
+
+    if (!targetRecoveryUser) {
+      setRecoveryStep('email');
+      return;
+    }
+
+    const cleanPassword = newRecoveryPassword.trim();
+    const cleanConfirm = confirmRecoveryPassword.trim();
+
+    if (!cleanPassword) {
+      setStatusAlert({
+        type: 'error',
+        text: t('authMustEnterPassword')
+      });
+      return;
+    }
+
+    if (cleanPassword.length < 3) {
+      setStatusAlert({
+        type: 'error',
+        text: language === 'ar' 
+          ? 'كلمة المرور يجب أن تتكون من 3 خانات أو أكثر لحماية حسابك.' 
+          : language === 'fr' 
+          ? 'Le mot de passe doit comporter au moins 3 caractères.' 
+          : 'Password must be at least 3 characters.'
+      });
+      return;
+    }
+
+    if (cleanPassword !== cleanConfirm) {
+      setStatusAlert({
+        type: 'error',
+        text: t('authPasswordMismatch')
+      });
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      if (onUpdateUserPassword) {
+        await onUpdateUserPassword(targetRecoveryUser.username, cleanPassword);
+      } else {
+        await syncSaveUser({ ...targetRecoveryUser, password: cleanPassword });
+      }
+
+      // Update local storage remembered credentials if this user was remembered
+      try {
+        const rememberedUser = localStorage.getItem('cl_remembered_username');
+        if (
+          rememberedUser && 
+          (rememberedUser.toLowerCase() === targetRecoveryUser.username.toLowerCase() || 
+           (targetRecoveryUser.originalUsername && rememberedUser.toLowerCase() === targetRecoveryUser.originalUsername.toLowerCase()))
+        ) {
+          localStorage.setItem('cl_remembered_password', cleanPassword);
+        }
+      } catch {
+        // Ignore storage access error
+      }
+
+      setRecoveryStep('success');
+      setStatusAlert(null);
+    } catch (err: any) {
+      setStatusAlert({
+        type: 'error',
+        text: err?.message || 'Error updating password. Please try again.'
+      });
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
 
   // Handle Login submission
   const handleLoginSubmit = (e: React.FormEvent) => {
@@ -158,7 +303,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
 
     const cleanPassword = loginPassword.trim();
-    const existingUser = users.find(u => u.username.toLowerCase() === lowerName);
+    // Allow login with:
+    // 1. Current username
+    // 2. Old original name put in the first place (originalUsername)
+    // 3. Registered Gmail address
+    const existingUser = users.find(u => 
+      u.username.toLowerCase() === lowerName || 
+      (u.originalUsername && u.originalUsername.toLowerCase() === lowerName) ||
+      (u.email && u.email.toLowerCase() === lowerName)
+    );
 
     if (!existingUser) {
       setStatusAlert({
@@ -307,6 +460,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     // Register new member
     const newUser: AppUser = {
       username: cleanUsername,
+      originalUsername: cleanUsername,
       email: cleanGmail,
       password: cleanPassword,
       role: 'user',
@@ -376,50 +530,70 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </button>
         </div>
 
-        {/* Auth Mode Toggle Bar (Login | Sign Up | Admin) */}
-        <div className="flex p-1 bg-[#06141B] rounded-xl border border-[#253745] mb-4 gap-1">
-          {/* Slide 1: Login */}
-          <button 
-            type="button" 
-            onClick={() => { setActiveSlide('login'); setStatusAlert(null); }}
-            className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer select-none ${
-              activeSlide === 'login' 
-                ? 'bg-[#4A5C6A] text-[#CCD0CF] border border-[#253745]' 
-                : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
-            }`}
-          >
-            <LogIn className="w-3.5 h-3.5 shrink-0" />
-            <span>{t('tabLogin')}</span>
-          </button>
+        {/* Auth Mode Toggle Bar (Login | Sign Up | Admin | Forgot) */}
+        {activeSlide === 'forgot' ? (
+          <div className="flex items-center justify-between p-2 bg-[#06141B] rounded-xl border border-[#253745] mb-4">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveSlide('login');
+                setStatusAlert(null);
+                setRecoveryStep('email');
+              }}
+              className="text-xs text-[#CCD0CF] hover:text-white font-semibold flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#253745] hover:bg-[#4A5C6A] transition-colors cursor-pointer"
+            >
+              {isRtl ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
+              <span>{t('backToLoginBtn')}</span>
+            </button>
+            <span className="text-[11px] text-[#9BA8AB] font-mono px-2">
+              {recoveryStep === 'password' ? t('setNewPasswordTitle') : t('forgotPasswordTitle')}
+            </span>
+          </div>
+        ) : (
+          <div className="flex p-1 bg-[#06141B] rounded-xl border border-[#253745] mb-4 gap-1">
+            {/* Slide 1: Login */}
+            <button 
+              type="button" 
+              onClick={() => { setActiveSlide('login'); setStatusAlert(null); }}
+              className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer select-none ${
+                activeSlide === 'login' 
+                  ? 'bg-[#4A5C6A] text-[#CCD0CF] border border-[#253745]' 
+                  : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
+              }`}
+            >
+              <LogIn className="w-3.5 h-3.5 shrink-0" />
+              <span>{t('tabLogin')}</span>
+            </button>
 
-          {/* Slide 2: Sign Up */}
-          <button 
-            type="button" 
-            onClick={() => { setActiveSlide('signup'); setStatusAlert(null); }}
-            className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer select-none ${
-              activeSlide === 'signup' 
-                ? 'bg-[#4A5C6A] text-[#CCD0CF] border border-[#253745]' 
-                : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
-            }`}
-          >
-            <UserPlus className="w-3.5 h-3.5 shrink-0" />
-            <span>{t('tabSignup')}</span>
-          </button>
+            {/* Slide 2: Sign Up */}
+            <button 
+              type="button" 
+              onClick={() => { setActiveSlide('signup'); setStatusAlert(null); }}
+              className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer select-none ${
+                activeSlide === 'signup' 
+                  ? 'bg-[#4A5C6A] text-[#CCD0CF] border border-[#253745]' 
+                  : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
+              }`}
+            >
+              <UserPlus className="w-3.5 h-3.5 shrink-0" />
+              <span>{t('tabSignup')}</span>
+            </button>
 
-          {/* Slide 3: Admin */}
-          <button 
-            type="button" 
-            onClick={() => { setActiveSlide('admin'); setStatusAlert(null); }}
-            className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer select-none ${
-              activeSlide === 'admin' 
-                ? 'bg-[#4A5C6A] text-[#CCD0CF] border border-[#253745]' 
-                : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
-            }`}
-          >
-            <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-            <span>{t('tabAdminPortal')}</span>
-          </button>
-        </div>
+            {/* Slide 3: Admin */}
+            <button 
+              type="button" 
+              onClick={() => { setActiveSlide('admin'); setStatusAlert(null); }}
+              className={`flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer select-none ${
+                activeSlide === 'admin' 
+                  ? 'bg-[#4A5C6A] text-[#CCD0CF] border border-[#253745]' 
+                  : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
+              }`}
+            >
+              <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+              <span>{t('tabAdminPortal')}</span>
+            </button>
+          </div>
+        )}
 
         {/* Slide Header Titles */}
         <div className="mb-4">
@@ -448,6 +622,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </span>
               </>
             )}
+            {activeSlide === 'forgot' && (
+              <>
+                <KeyRound className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>
+                  {recoveryStep === 'password' ? t('setNewPasswordTitle') : t('forgotPasswordTitle')}
+                </span>
+              </>
+            )}
           </h3>
 
           <p className="text-xs text-[#9BA8AB] leading-relaxed">
@@ -465,6 +647,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               language === 'ar' ? 'أدخل رمز سر الآدمن المعتمد حصراً للوصول المباشر إلى لوحة التحكم.' :
               language === 'fr' ? 'Saisissez le code secret administrateur pour accéder au panneau.' :
               'Enter the admin passcode to access tournament settings and match controls.'
+            )}
+            {activeSlide === 'forgot' && (
+              recoveryStep === 'password' ? t('setNewPasswordDesc') : t('forgotPasswordDesc')
             )}
           </p>
         </div>
@@ -507,13 +692,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 autoFocus
                 className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-[#CCD0CF] text-xs sm:text-sm outline-none focus:border-[#4A5C6A] focus:ring-1 focus:ring-[#4A5C6A] transition-all duration-200 placeholder:text-[#9BA8AB]/50 force-ltr text-left font-mono"
               />
+              <span className="text-[10.5px] text-[#9BA8AB] mt-1 block">
+                {isRtl 
+                  ? '💡 يمكنك تسجيل الدخول باسمك الحالي أو بالاسم القديم الذي وضعته أول مرة' 
+                  : language === 'fr'
+                  ? '💡 Vous pouvez vous connecter avec votre nom actuel ou votre nom d\'inscription d\'origine'
+                  : '💡 You can log in with your current name or original registration name'}
+              </span>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#CCD0CF] mb-1 flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-[#9BA8AB]" />
-                <span>{t('password')}</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-[#CCD0CF] flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-[#9BA8AB]" />
+                  <span>{t('password')}</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveSlide('forgot');
+                    setStatusAlert(null);
+                    setRecoveryStep('email');
+                  }}
+                  className="text-[11px] text-[#CCD0CF] hover:text-white font-medium hover:underline transition-colors cursor-pointer"
+                >
+                  {t('forgotPassword')}
+                </button>
+              </div>
               <div className="relative" dir="ltr">
                 <input
                   type={showLoginPassword ? 'text' : 'password'}
@@ -586,6 +791,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 className="text-xs text-[#CCD0CF] hover:underline cursor-pointer font-semibold inline-flex items-center gap-1"
               >
                 <span>{t('tabSignup')}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSlide('forgot');
+                  setStatusAlert(null);
+                  setRecoveryStep('email');
+                }}
+                className="text-xs text-[#9BA8AB] hover:text-[#CCD0CF] hover:underline cursor-pointer font-medium inline-flex items-center gap-1.5 py-1 px-3 rounded-lg hover:bg-[#253745]/60 transition-colors"
+              >
+                <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+                <span>{t('forgotPassword')}</span>
               </button>
 
               <button
@@ -750,6 +968,224 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {t('submitAdmin')}
             </button>
           </form>
+        )}
+
+        {/* SLIDE 4: FORGOT PASSWORD / DIRECT RECOVERY (BYPASS EMAIL DISPATCH) */}
+        {activeSlide === 'forgot' && (
+          <div className="space-y-4">
+            {/* Step 1: Input registered email address & Continue */}
+            {recoveryStep === 'email' && (
+              <form onSubmit={handleContinueRecoveryEmail} className="space-y-4">
+                <div className="bg-[#06141B] p-3.5 rounded-xl border border-[#253745] flex items-start gap-2.5">
+                  <KeyRound className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-[#9BA8AB] leading-relaxed">
+                    <strong className="text-white block font-semibold mb-0.5">{t('forgotPasswordTitle')}</strong>
+                    {t('forgotPasswordDesc')}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#CCD0CF] mb-1.5 flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-[#9BA8AB]" />
+                    <span>{t('recoveryEmailLabel')}</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    dir="ltr"
+                    value={recoveryEmail}
+                    onChange={(e) => {
+                      setRecoveryEmail(e.target.value);
+                      if (statusAlert) setStatusAlert(null);
+                    }}
+                    placeholder={t('recoveryEmailPlaceholder')}
+                    autoFocus
+                    className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-[#CCD0CF] text-xs sm:text-sm outline-none focus:border-[#4A5C6A] focus:ring-1 focus:ring-[#4A5C6A] transition-all duration-200 placeholder:text-[#9BA8AB]/50 force-ltr text-left font-mono"
+                  />
+                  <span className="text-[10px] text-[#9BA8AB] mt-1 block">
+                    {t('gmailHint')}
+                  </span>
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  <button
+                    type="submit"
+                    disabled={!recoveryEmail.trim()}
+                    className="w-full bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold py-3 rounded-xl transition-all duration-200 text-xs sm:text-sm cursor-pointer active:scale-[0.98] flex items-center justify-center gap-2 shadow disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    <span>{t('continueBtn')}</span>
+                    {isRtl ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveSlide('login');
+                      setStatusAlert(null);
+                      setRecoveryStep('email');
+                    }}
+                    className="w-full py-2.5 px-3 text-xs text-[#9BA8AB] hover:text-white rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    {isRtl ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
+                    <span>{t('backToLoginBtn')}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Step 2: Set New Password Form */}
+            {recoveryStep === 'password' && targetRecoveryUser && (
+              <form onSubmit={handleSetNewPasswordSubmit} className="space-y-3.5">
+                <div className="bg-[#06141B] p-3 rounded-xl border border-[#253745] flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-[#CCD0CF]" />
+                    <div className="text-xs">
+                      <span className="text-[#9BA8AB] block text-[10px]">{t('updatingForAccount')}</span>
+                      <span className="font-bold text-white font-mono">{targetRecoveryUser.username}</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono text-[#9BA8AB] bg-[#253745] px-2 py-0.5 rounded">
+                    {targetRecoveryUser.email}
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#CCD0CF] mb-1.5 flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-[#9BA8AB]" />
+                    <span>{t('newPasswordLabel')}</span>
+                  </label>
+                  <div className="relative" dir="ltr">
+                    <input
+                      type={showNewRecoveryPassword ? 'text' : 'password'}
+                      required
+                      dir="ltr"
+                      autoFocus
+                      value={newRecoveryPassword}
+                      onChange={(e) => {
+                        setNewRecoveryPassword(e.target.value);
+                        if (statusAlert) setStatusAlert(null);
+                      }}
+                      placeholder={t('newPasswordPlaceholder')}
+                      className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 pr-10 pl-3 text-[#CCD0CF] text-xs sm:text-sm outline-none focus:border-[#4A5C6A] focus:ring-1 focus:ring-[#4A5C6A] transition-all duration-200 placeholder:text-[#9BA8AB]/50 force-ltr text-left font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewRecoveryPassword(!showNewRecoveryPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9BA8AB] hover:text-[#CCD0CF] transition p-1.5 cursor-pointer"
+                      title={showNewRecoveryPassword ? 'Hide' : 'Show'}
+                    >
+                      {showNewRecoveryPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-[#9BA8AB]" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#CCD0CF] mb-1.5 flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-[#9BA8AB]" />
+                    <span>{t('confirmNewPasswordLabel')}</span>
+                  </label>
+                  <div className="relative" dir="ltr">
+                    <input
+                      type={showConfirmRecoveryPassword ? 'text' : 'password'}
+                      required
+                      dir="ltr"
+                      value={confirmRecoveryPassword}
+                      onChange={(e) => {
+                        setConfirmRecoveryPassword(e.target.value);
+                        if (statusAlert) setStatusAlert(null);
+                      }}
+                      placeholder={t('confirmNewPasswordPlaceholder')}
+                      className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 pr-10 pl-3 text-[#CCD0CF] text-xs sm:text-sm outline-none focus:border-[#4A5C6A] focus:ring-1 focus:ring-[#4A5C6A] transition-all duration-200 placeholder:text-[#9BA8AB]/50 force-ltr text-left font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmRecoveryPassword(!showConfirmRecoveryPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9BA8AB] hover:text-[#CCD0CF] transition p-1.5 cursor-pointer"
+                      title={showConfirmRecoveryPassword ? 'Hide' : 'Show'}
+                    >
+                      {showConfirmRecoveryPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-[#9BA8AB]" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  <button
+                    type="submit"
+                    disabled={isUpdatingPassword || !newRecoveryPassword.trim() || !confirmRecoveryPassword.trim()}
+                    className="w-full bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold py-3 rounded-xl transition-all duration-200 text-xs sm:text-sm cursor-pointer active:scale-[0.98] flex items-center justify-center gap-2 shadow disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    {isUpdatingPassword ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>{t('updatingPassword')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <KeyRound className="w-4 h-4" />
+                        <span>{t('updatePasswordBtn')}</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveSlide('login');
+                      setStatusAlert(null);
+                      setRecoveryStep('email');
+                    }}
+                    className="w-full py-2.5 px-3 text-xs text-[#9BA8AB] hover:text-white rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    {isRtl ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
+                    <span>{t('backToLoginBtn')}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Step 3: Success Confirmation State */}
+            {recoveryStep === 'success' && (
+              <div className="space-y-4 py-2 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-950/60 border border-emerald-500/50 flex items-center justify-center text-emerald-400 mx-auto shadow-lg shadow-emerald-500/10">
+                  <CheckCircle2 className="w-7 h-7" />
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-white mb-1.5">
+                    {t('resetLinkSentTitle')}
+                  </h4>
+                  <p className="text-xs text-[#9BA8AB] leading-relaxed max-w-sm mx-auto">
+                    {t('passwordUpdatedSuccess')}
+                  </p>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (targetRecoveryUser) {
+                        setLoginUsername(targetRecoveryUser.username);
+                        setLoginPassword(newRecoveryPassword);
+                      }
+                      setActiveSlide('login');
+                      setStatusAlert({
+                        type: 'success',
+                        text: t('passwordUpdatedSuccess')
+                      });
+                      setRecoveryStep('email');
+                      setRecoveryEmail('');
+                      setNewRecoveryPassword('');
+                      setConfirmRecoveryPassword('');
+                      setTargetRecoveryUser(null);
+                    }}
+                    className="w-full bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold py-3 rounded-xl transition-all duration-200 text-xs sm:text-sm cursor-pointer active:scale-[0.98] flex items-center justify-center gap-2 shadow"
+                  >
+                    {isRtl ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
+                    <span>{t('backToLoginBtn')}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Security badge at bottom */}

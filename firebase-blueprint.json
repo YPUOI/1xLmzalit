@@ -46,6 +46,7 @@
       "type": "object",
       "properties": {
         "username": { "type": "string", "maxLength": 50 },
+        "originalUsername": { "type": "string", "maxLength": 50 },
         "email": { "type": "string", "maxLength": 100 },
         "role": { "type": "string", "enum": ["user", "admin"] },
         "points": { "type": "number" },

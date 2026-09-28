@@ -160,6 +160,31 @@ export const translations = {
     accountProtection: 'حماية الحسابات',
     oneAccountPerDevice: 'حساب موثق واحد لكل جهاز',
 
+    // Password Recovery / Forgot Password
+    forgotPassword: 'نسيت كلمة المرور؟',
+    forgotPasswordTitle: 'استعادة كلمة المرور',
+    forgotPasswordDesc: 'أدخل بريدك الإلكتروني المسجل (Gmail) للتحقق من حسابك وتعيين كلمة مرور جديدة مباشرة.',
+    recoveryEmailLabel: 'البريد الإلكتروني المسجل (Gmail)',
+    recoveryEmailPlaceholder: 'أدخل بريدك المسجل: yourname@gmail.com',
+    continueBtn: 'متابعة',
+    setNewPasswordTitle: 'تعيين كلمة مرور جديدة',
+    setNewPasswordDesc: 'أدخل كلمة المرور الجديدة لحسابك وقم بتأكيدها للمتابعة.',
+    newPasswordLabel: 'كلمة المرور الجديدة',
+    newPasswordPlaceholder: 'أدخل كلمة المرور الجديدة...',
+    confirmNewPasswordLabel: 'تأكيد كلمة المرور الجديدة',
+    confirmNewPasswordPlaceholder: 'أعد إدخال كلمة المرور الجديدة...',
+    updatePasswordBtn: 'تحديث كلمة المرور',
+    updatingPassword: 'جاري تحديث كلمة المرور...',
+    passwordUpdatedSuccess: 'تم تحديث كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.',
+    updatingForAccount: 'تحديث كلمة المرور للحساب:',
+    sendResetLinkBtn: 'إرسال رابط إعادة التعيين',
+    sendingResetLink: 'جاري إرسال الرابط...',
+    resetLinkSentTitle: 'تم تحديث كلمة المرور بنجاح!',
+    resetLinkSentDesc: 'تم تحديث كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.',
+    backToLoginBtn: 'العودة لتسجيل الدخول',
+    errorInvalidRecoveryEmail: 'الرجاء إدخال بريد إلكتروني صالح ينتهي بـ @gmail.com!',
+    errorAccountNotFoundWithEmail: 'لم نتمكن من العثور على حساب مسجل بهذا البريد الإلكتروني.',
+
     // Matches & Stages
     roundOf16: 'ثمن النهائي (دور الـ 16)',
     quarterFinals: 'ربع النهائي',
@@ -366,6 +391,18 @@ export const translations = {
     adminSecResetTitle: 'إعادة ضبط قاعدة البيانات',
     adminSecResetDesc: 'استعادة الأندية الـ 36 الافتراضية وإعادة ضبط البيانات الأولية.',
 
+    // Member Name Modification
+    changeMemberName: 'تغيير اسم العضو',
+    changeMemberNameDesc: 'تعديل اسم العضو وتحديث جميع نقاطه وسجل توقعاته تلقائياً تحت الاسم الجديد.',
+    currentMemberName: 'الاسم الحالي:',
+    newMemberNameLabel: 'الاسم الجديد (اسم المستخدم)',
+    newMemberNamePlaceholder: 'أدخل الاسم الجديد هنا...',
+    saveNewNameBtn: 'حفظ الاسم الجديد',
+    nameChangeSuccess: 'تم تغيير اسم العضو وتحديث جميع بياناته بنجاح!',
+    nameChangeError: 'حدث خطأ أثناء تغيير اسم العضو!',
+    nameSameError: 'الاسم الجديد هو نفس الاسم الحالي!',
+    nameInvalidError: 'يرجى إدخال اسم صحيح يتكون من حرفين على الأقل!',
+
     // Common / Footer
     footerCopyright: '1xlmzalit • UEFA CHAMPIONS LEAGUE 2026/2027 • UCL 2026/2027 © جميع الحقوق محفوظة',
     close: 'إغلاق',
@@ -499,6 +536,31 @@ export const translations = {
     adminPasscodeHint: 'L\'accès admin requiert uniquement le code secret validé.',
     accountProtection: 'Protection des Comptes',
     oneAccountPerDevice: 'Un seul compte certifié par appareil',
+
+    // Password Recovery / Forgot Password
+    forgotPassword: 'Mot de passe oublié ?',
+    forgotPasswordTitle: 'Récupération du mot de passe',
+    forgotPasswordDesc: 'Entrez l\'adresse Gmail associée à votre compte pour définir un nouveau mot de passe directement.',
+    recoveryEmailLabel: 'Adresse email enregistrée (Gmail)',
+    recoveryEmailPlaceholder: 'Entrez votre adresse : votrenom@gmail.com',
+    continueBtn: 'Continuer',
+    setNewPasswordTitle: 'Définir un nouveau mot de passe',
+    setNewPasswordDesc: 'Saisissez votre nouveau mot de passe et confirmez-le pour continuer.',
+    newPasswordLabel: 'Nouveau mot de passe',
+    newPasswordPlaceholder: 'Entrez le nouveau mot de passe...',
+    confirmNewPasswordLabel: 'Confirmer le nouveau mot de passe',
+    confirmNewPasswordPlaceholder: 'Confirmez le nouveau mot de passe...',
+    updatePasswordBtn: 'Mettre à jour le mot de passe',
+    updatingPassword: 'Mise à jour en cours...',
+    passwordUpdatedSuccess: 'Mot de passe mis à jour avec succès ! Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.',
+    updatingForAccount: 'Mise à jour du mot de passe pour le compte :',
+    sendResetLinkBtn: 'Envoyer le lien de réinitialisation',
+    sendingResetLink: 'Envoi du lien en cours...',
+    resetLinkSentTitle: 'Mot de passe mis à jour avec succès !',
+    resetLinkSentDesc: 'Mot de passe mis à jour avec succès ! Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.',
+    backToLoginBtn: 'Retour à la connexion',
+    errorInvalidRecoveryEmail: 'Veuillez saisir une adresse Gmail valide se terminant par @gmail.com !',
+    errorAccountNotFoundWithEmail: 'Aucun compte associé à cette adresse email n\'a été trouvé.',
 
     // Matches & Stages
     roundOf16: '8es de finale',
@@ -706,6 +768,18 @@ export const translations = {
     adminSecResetTitle: 'Réinitialiser la Base de Données',
     adminSecResetDesc: 'Restaurer les 36 clubs par défaut et réinitialiser les réglages initiaux.',
 
+    // Member Name Modification
+    changeMemberName: 'Modifier le nom du membre',
+    changeMemberNameDesc: 'Modifiez le nom d\'utilisateur du membre. Tous ses points et pronostics seront transférés automatiquement sous le nouveau nom.',
+    currentMemberName: 'Nom actuel :',
+    newMemberNameLabel: 'Nouveau nom d\'utilisateur',
+    newMemberNamePlaceholder: 'Entrez le nouveau nom...',
+    saveNewNameBtn: 'Enregistrer le nouveau nom',
+    nameChangeSuccess: 'Le nom du membre a été modifié et synchronisé avec succès !',
+    nameChangeError: 'Une erreur est survenue lors de la modification du nom !',
+    nameSameError: 'Le nouveau nom est identique au nom actuel !',
+    nameInvalidError: 'Veuillez saisir un nom valide d\'au moins 2 caractères !',
+
     // Common / Footer
     footerCopyright: '1xlmzalit • UEFA CHAMPIONS LEAGUE 2026/2027 • UCL 2026/2027 © Tous droits réservés',
     close: 'Fermer',
@@ -839,6 +913,31 @@ export const translations = {
     adminPasscodeHint: 'Admin login only requires the approved management secret passcode.',
     accountProtection: 'Account Protection',
     oneAccountPerDevice: 'Strictly one certified account per device',
+
+    // Password Recovery / Forgot Password
+    forgotPassword: 'Forgot Password?',
+    forgotPasswordTitle: 'Reset Your Password',
+    forgotPasswordDesc: 'Enter your registered Gmail address to verify your account and set a new password directly.',
+    recoveryEmailLabel: 'Registered Email Address (Gmail)',
+    recoveryEmailPlaceholder: 'Enter your email: yourname@gmail.com',
+    continueBtn: 'Continue',
+    setNewPasswordTitle: 'Set New Password',
+    setNewPasswordDesc: 'Enter and confirm your new password below.',
+    newPasswordLabel: 'New Password',
+    newPasswordPlaceholder: 'Enter new password...',
+    confirmNewPasswordLabel: 'Confirm New Password',
+    confirmNewPasswordPlaceholder: 'Re-enter new password...',
+    updatePasswordBtn: 'Update Password',
+    updatingPassword: 'Updating password...',
+    passwordUpdatedSuccess: 'Password updated successfully! You can now sign in with your new password.',
+    updatingForAccount: 'Setting new password for account:',
+    sendResetLinkBtn: 'Send Reset Link',
+    sendingResetLink: 'Sending reset link...',
+    resetLinkSentTitle: 'Password updated successfully!',
+    resetLinkSentDesc: 'Password updated successfully! You can now sign in with your new password.',
+    backToLoginBtn: 'Back to logIn',
+    errorInvalidRecoveryEmail: 'Please enter a valid Gmail address ending with @gmail.com!',
+    errorAccountNotFoundWithEmail: 'No registered account was found matching this email address.',
 
     // Matches & Stages
     roundOf16: 'Round of 16',
@@ -1045,6 +1144,18 @@ export const translations = {
     adminSecTeamsDesc: 'Update club names, official logos, and player squad rosters.',
     adminSecResetTitle: 'Reset Database',
     adminSecResetDesc: 'Restore default 36 Champions League clubs and reset tournament data.',
+
+    // Member Name Modification
+    changeMemberName: 'Change Member Name',
+    changeMemberNameDesc: 'Update the member\'s username. All of their points, ranking, and predictions will be seamlessly updated under the new name.',
+    currentMemberName: 'Current Name:',
+    newMemberNameLabel: 'New Member Name',
+    newMemberNamePlaceholder: 'Enter new name...',
+    saveNewNameBtn: 'Save New Name',
+    nameChangeSuccess: 'Member name updated and all records synced successfully!',
+    nameChangeError: 'An error occurred while changing the member name!',
+    nameSameError: 'The new name is the same as the current name!',
+    nameInvalidError: 'Please enter a valid name with at least 2 characters!',
 
     // Common / Footer
     footerCopyright: '1xlmzalit • UEFA CHAMPIONS LEAGUE 2026/2027 • UCL 2026/2027 © All rights reserved',

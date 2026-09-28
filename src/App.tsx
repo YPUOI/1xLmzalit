@@ -26,6 +26,7 @@ import {
   syncDeletePrediction, 
   subscribeUsers, 
   syncSaveUser,
+  syncRenameUser,
   subscribeSecurityConfig,
   subscribeArchivedSeasons,
   syncSaveArchivedSeason,
@@ -74,7 +75,7 @@ export default function App() {
   // Modals & Toast State
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
   const [authModalRole, setAuthModalRole] = useState<'user' | 'admin'>('user');
-  const [authModalTab, setAuthModalTab] = useState<'login' | 'signup' | 'admin'>('login');
+  const [authModalTab, setAuthModalTab] = useState<'login' | 'signup' | 'admin' | 'forgot'>('login');
   const [securityModalOpen, setSecurityModalOpen] = useState<boolean>(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [matchToDelete, setMatchToDelete] = useState<Match | null>(null);
@@ -235,6 +236,97 @@ export default function App() {
         }
         sessionStorage.setItem('cl_session_logged_user', JSON.stringify(updatedCurrent));
       }
+    }
+  };
+
+  // Direct Password Update Handler (Password Recovery)
+  const handleUpdateUserPassword = async (username: string, newPassword: string) => {
+    const updatedUsers = users.map(u => {
+      if (u.username.toLowerCase() === username.toLowerCase()) {
+        const updated = { ...u, password: newPassword };
+        syncSaveUser(updated).catch(err => console.error("Firebase update password error:", err));
+        return updated;
+      }
+      return u;
+    });
+    setUsers(updatedUsers);
+    localStorage.setItem('cl_users', JSON.stringify(updatedUsers));
+
+    if (currentUser && currentUser.username.toLowerCase() === username.toLowerCase()) {
+      const updatedCurrent = { ...currentUser, password: newPassword };
+      setCurrentUser(updatedCurrent);
+      if (localStorage.getItem('cl_logged_user')) {
+        localStorage.setItem('cl_logged_user', JSON.stringify(updatedCurrent));
+      }
+      sessionStorage.setItem('cl_session_logged_user', JSON.stringify(updatedCurrent));
+    }
+  };
+
+  // Admin Rename Member Handler
+  const handleRenameUser = async (oldUsername: string, newUsername: string) => {
+    const trimmedOld = oldUsername.trim();
+    const trimmedNew = newUsername.trim();
+    if (!trimmedNew || trimmedNew.length < 2) {
+      throw new Error(t('nameInvalidError'));
+    }
+    if (trimmedOld.toLowerCase() === trimmedNew.toLowerCase()) {
+      return;
+    }
+    const alreadyTaken = users.some(u => u.username.toLowerCase() === trimmedNew.toLowerCase());
+    if (alreadyTaken) {
+      throw new Error(t('authUsernameTaken'));
+    }
+
+    const targetUser = users.find(u => u.username === trimmedOld);
+    if (!targetUser) {
+      throw new Error('User not found');
+    }
+
+    const updatedUser: AppUser = {
+      ...targetUser,
+      username: trimmedNew,
+      originalUsername: targetUser.originalUsername || trimmedOld,
+    };
+
+    // 1. Update users array
+    const nextUsers = users.map(u => u.username === trimmedOld ? updatedUser : u);
+    setUsers(nextUsers);
+    localStorage.setItem('cl_users', JSON.stringify(nextUsers));
+
+    // 2. Update predictions object and migrate keys
+    const nextPredictions = { ...predictions };
+    const predictionsToMigrate: Prediction[] = [];
+    Object.keys(nextPredictions).forEach(key => {
+      const p = nextPredictions[key];
+      if (p.username === trimmedOld) {
+        predictionsToMigrate.push(p);
+        delete nextPredictions[key];
+        const newKey = `${trimmedNew}_${p.matchId}`;
+        nextPredictions[newKey] = {
+          ...p,
+          username: trimmedNew
+        };
+      }
+    });
+    setPredictions(nextPredictions);
+    localStorage.setItem('cl_predictions', JSON.stringify(nextPredictions));
+
+    // 3. Update current user if renamed
+    if (currentUser && currentUser.username === trimmedOld) {
+      setCurrentUser(updatedUser);
+      if (localStorage.getItem('cl_logged_user')) {
+        localStorage.setItem('cl_logged_user', JSON.stringify(updatedUser));
+      }
+      sessionStorage.setItem('cl_session_logged_user', JSON.stringify(updatedUser));
+    }
+
+    // 4. Sync with Firebase
+    try {
+      await syncRenameUser(trimmedOld, trimmedNew, updatedUser, predictionsToMigrate);
+      addToast(t('nameChangeSuccess'), 'success');
+    } catch (err) {
+      console.warn("Firebase rename sync warning (local state preserved):", err);
+      addToast(t('nameChangeSuccess'), 'success');
     }
   };
 
@@ -404,13 +496,16 @@ export default function App() {
     setIsUnlocked(false);
   };
 
-  const handleOpenAuth = (roleOrTab: 'user' | 'admin' | 'login' | 'signup' = 'login') => {
+  const handleOpenAuth = (roleOrTab: 'user' | 'admin' | 'login' | 'signup' | 'forgot' = 'login') => {
     if (roleOrTab === 'admin') {
       setAuthModalRole('admin');
       setAuthModalTab('admin');
     } else if (roleOrTab === 'signup') {
       setAuthModalRole('user');
       setAuthModalTab('signup');
+    } else if (roleOrTab === 'forgot') {
+      setAuthModalRole('user');
+      setAuthModalTab('forgot');
     } else {
       setAuthModalRole('user');
       setAuthModalTab('login');
@@ -947,6 +1042,7 @@ export default function App() {
                     onSaveArchivedSeason={handleSaveArchivedSeason}
                     onDeleteArchivedSeason={handleDeleteArchivedSeason}
                     onFinishCurrentSeason={handleFinishCurrentSeason}
+                    onRenameUser={handleRenameUser}
                   />
                 )}
 
@@ -969,6 +1065,7 @@ export default function App() {
                     onAdminAuthenticated={handleLoginSuccess}
                     onShowToast={addToast}
                     onRequestDeleteMatch={handleRequestDeleteMatch}
+                    onRenameUser={handleRenameUser}
                   />
                 )}
               </motion.div>
@@ -1118,6 +1215,7 @@ export default function App() {
         onClose={() => setAuthModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
         onRegisterUser={handleRegisterUser}
+        onUpdateUserPassword={handleUpdateUserPassword}
       />
 
       {/* Security & Biometrics Settings Modal */}
