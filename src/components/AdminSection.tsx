@@ -1911,6 +1911,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                     type="datetime-local"
                     value={newDeadline}
                     onChange={(e) => setNewDeadline(e.target.value)}
+                    style={{ colorScheme: 'dark' }}
                     className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-[#CCD0CF] font-semibold focus:border-[#4A5C6A] outline-none text-xs font-mono transition-all duration-200"
                     required
                   />
@@ -2053,6 +2054,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                           type="datetime-local"
                           value={editDeadlines[match.id] !== undefined ? editDeadlines[match.id] : formatMoroccoInput(match.deadline, moroccoOffset)}
                           onChange={(e) => setEditDeadlines({ ...editDeadlines, [match.id]: e.target.value })}
+                          style={{ colorScheme: 'dark' }}
                           className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-2 text-xs text-[#CCD0CF] font-semibold outline-none focus:border-[#4A5C6A] font-mono transition-all duration-200"
                         />
                       </div>

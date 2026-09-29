@@ -45,12 +45,26 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
   const openPredictionCard = (match: Match, pred: Prediction) => {
     const home = teams[match.homeTeam] || { name: match.homeTeam, logo: '', squad: [] };
     const away = teams[match.awayTeam] || { name: match.awayTeam, logo: '', squad: [] };
+
+    // Resolve official name as it appears in standings (changed by admin or original)
+    const rawTarget = (pred.username || '').replace(/^@+/, '').trim();
+    let nameInStandings = rawTarget;
+    if (users && users.length > 0 && rawTarget) {
+      const matchInUsers = users.find(u => 
+        u.username.toLowerCase() === rawTarget.toLowerCase() ||
+        (u.originalUsername && u.originalUsername.toLowerCase() === rawTarget.toLowerCase())
+      );
+      if (matchInUsers) {
+        nameInStandings = matchInUsers.username;
+      }
+    }
+
     setActiveCardModal({
       match,
       homeTeam: home,
       awayTeam: away,
       prediction: pred,
-      memberName: pred.username
+      memberName: nameInStandings
     });
   };
 
@@ -246,7 +260,7 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
                     </span>
                   </div>
                   <p className="text-[11px] text-[#9BA8AB] mt-0.5">
-                    {t('deadlineTimeLabel')} {formatEnglishDeadlineMorocco(match.deadline)}
+                    {t('deadlineTimeLabel')} <bdi dir="ltr" className="inline-block font-mono text-[#CCD0CF] text-[11px]">{formatEnglishDeadlineMorocco(match.deadline)}</bdi>
                   </p>
                 </div>
               </div>
@@ -406,6 +420,7 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
           awayTeam={activeCardModal.awayTeam}
           prediction={activeCardModal.prediction}
           memberName={activeCardModal.memberName}
+          users={users}
         />
       )}
     </div>

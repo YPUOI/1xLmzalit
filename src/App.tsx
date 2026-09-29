@@ -1023,6 +1023,7 @@ export default function App() {
                     teams={teams}
                     predictions={predictions}
                     currentUser={currentUser}
+                    users={users}
                     onSavePrediction={handleSavePrediction}
                     onDeleteMatch={handleRequestDeleteMatch}
                     onOpenAuth={() => handleOpenAuth('user')}

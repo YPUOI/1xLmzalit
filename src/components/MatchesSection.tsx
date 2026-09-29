@@ -28,6 +28,7 @@ interface MatchesSectionProps {
   teams: Record<string, Team>;
   predictions: Record<string, Prediction>;
   currentUser: AppUser | null;
+  users?: AppUser[];
   onSavePrediction: (prediction: Prediction) => void;
   onDeleteMatch: (match: Match) => void;
   onOpenAuth: () => void;
@@ -124,6 +125,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   teams,
   predictions,
   currentUser,
+  users = [],
   onSavePrediction,
   onDeleteMatch,
   onOpenAuth
@@ -156,12 +158,26 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   const openPredictionCard = (match: Match, pred: Prediction) => {
     const home = teams[match.homeTeam] || { name: match.homeTeam, logo: '', squad: [] };
     const away = teams[match.awayTeam] || { name: match.awayTeam, logo: '', squad: [] };
+    
+    // Resolve name that appears in standings (changed by admin or original)
+    const rawTarget = (pred.username || currentUser?.username || '').replace(/^@+/, '').trim();
+    let nameInStandings = rawTarget;
+    if (users && users.length > 0 && rawTarget) {
+      const found = users.find(u => 
+        u.username.toLowerCase() === rawTarget.toLowerCase() ||
+        (u.originalUsername && u.originalUsername.toLowerCase() === rawTarget.toLowerCase())
+      );
+      if (found) {
+        nameInStandings = found.username;
+      }
+    }
+
     setActiveCardModal({
       match,
       homeTeam: home,
       awayTeam: away,
       prediction: pred,
-      memberName: currentUser?.username || pred.username
+      memberName: nameInStandings
     });
   };
 
@@ -381,7 +397,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-semibold text-[#CCD0CF]">
                     <div className="flex items-center gap-1.5" title="Morocco Time (GMT)">
                       <Clock className="w-3.5 h-3.5 text-[#9BA8AB] shrink-0" />
-                      <span className="font-mono text-[#CCD0CF] tracking-wide" dir="ltr">{formatEnglishDeadline(match.deadline)}</span>
+                      <bdi className="font-mono text-[#CCD0CF] text-[11px] sm:text-xs tracking-wide inline-block" dir="ltr">{formatEnglishDeadline(match.deadline)}</bdi>
                     </div>
 
                     {/* Live Countdown Timer */}
@@ -819,6 +835,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
           awayTeam={activeCardModal.awayTeam}
           prediction={activeCardModal.prediction}
           memberName={activeCardModal.memberName}
+          users={users}
         />
       )}
     </div>

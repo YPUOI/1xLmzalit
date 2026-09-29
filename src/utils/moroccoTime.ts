@@ -116,12 +116,13 @@ export function formatEnglishDeadlineMorocco(deadlineStr: string, offsetHours = 
   const minutes = pad(moroccoDate.getMinutes());
 
   const offsetTag = offsetHours === 0 ? 'GMT' : `GMT+${offsetHours}`;
-  return `${month} ${day}, ${year}, ${formattedHours}:${minutes} ${ampm} (🇲🇦 ${offsetTag})`;
+  // Wrapped with Unicode LTR marks to prevent BiDi text reversal on mobile phones
+  return `\u200E${month} ${day}, ${year}, ${formattedHours}:${minutes} ${ampm} (${offsetTag})\u200E`;
 }
 
 /**
  * Universal date/time formatter for Morocco GMT (UTC+0)
- * e.g. "Oct 21, 2026, 08:00 PM (🇲🇦 GMT)"
+ * e.g. "Oct 21, 2026, 08:00 PM (GMT)"
  */
 export function formatDateTimeMoroccoGmt(dateInput?: string | number | Date, offsetHours = getStoredMoroccoOffset()): string {
   if (!dateInput) dateInput = new Date();
@@ -145,6 +146,6 @@ export function formatDateTimeMoroccoGmt(dateInput?: string | number | Date, off
   const minutes = pad(moroccoDate.getMinutes());
 
   const offsetTag = offsetHours === 0 ? 'GMT' : `GMT+${offsetHours}`;
-  return `${month} ${day}, ${year}, ${formattedHours}:${minutes} ${ampm} (🇲🇦 ${offsetTag})`;
+  return `${month} ${day}, ${year}, ${formattedHours}:${minutes} ${ampm} (${offsetTag})`;
 }
 

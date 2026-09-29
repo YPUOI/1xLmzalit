@@ -367,13 +367,14 @@ export async function generatePredictionCardImage(options: CardGenerationOptions
   ctx.arc(avatarX, avatarY, avatarRadius - 2, 0, Math.PI * 2);
   ctx.fill();
 
-  const userInitial = (memberName || 'U').charAt(0).toUpperCase();
+  const cleanMemberName = (memberName || prediction.username || 'Contestant').replace(/^@+/, '').trim();
+  const userInitial = (cleanMemberName || 'U').charAt(0).toUpperCase();
   ctx.fillStyle = '#CCD0CF';
   ctx.font = '900 30px "Segoe UI", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(userInitial, avatarX, avatarY + 11);
 
-  // Member Name Text
+  // Member Name Text (Name that appears in standings)
   ctx.textAlign = 'left';
   ctx.fillStyle = '#9BA8AB';
   ctx.font = 'bold 12px "Segoe UI", sans-serif';
@@ -381,7 +382,7 @@ export async function generatePredictionCardImage(options: CardGenerationOptions
 
   ctx.fillStyle = '#FFFFFF';
   ctx.font = '900 26px "Cairo", "Segoe UI", sans-serif';
-  ctx.fillText(`@${memberName || 'Contestant'}`, avatarX + 48, userBoxY + 70);
+  ctx.fillText(`@${cleanMemberName}`, avatarX + 48, userBoxY + 70);
 
   // Verified Badge (Emerald accent)
   roundRect(ctx, avatarX + 48, userBoxY + 80, 150, 22, 6);
@@ -395,31 +396,31 @@ export async function generatePredictionCardImage(options: CardGenerationOptions
   ctx.font = 'bold 11px "Segoe UI", sans-serif';
   ctx.fillText('★ VERIFIED PREDICTION', avatarX + 58, userBoxY + 95);
 
-  // Morocco GMT Timestamps on the Right
-  const rightEdgeX = margin + cardW - 42;
+  // Morocco GMT Timestamps on the Right (Stacked and cleanly formatted with no overlap for phone view)
+  const rightEdgeX = margin + cardW - 36;
   ctx.textAlign = 'right';
 
   // Prediction Timestamp
   ctx.fillStyle = '#9BA8AB';
-  ctx.font = '900 11px "Segoe UI", sans-serif';
-  ctx.fillText('PREDICTION TIME:', rightEdgeX - 200, userBoxY + 46);
+  ctx.font = 'bold 11px "Segoe UI", sans-serif';
+  ctx.fillText('PREDICTION TIME (MOROCCO GMT):', rightEdgeX, userBoxY + 40);
 
   const predictionDateGmt = formatDateTimeMoroccoGmt(prediction.updatedAt, 0);
   ctx.fillStyle = '#CCD0CF';
-  ctx.font = 'bold 12px "Segoe UI", monospace';
-  ctx.fillText(predictionDateGmt, rightEdgeX, userBoxY + 46);
+  ctx.font = 'bold 13px "Segoe UI", monospace';
+  ctx.fillText(predictionDateGmt, rightEdgeX, userBoxY + 58);
 
   // Download / Generation Timestamp
   const currentDownloadTime = options.downloadDate || new Date();
   const downloadDateGmt = formatDateTimeMoroccoGmt(currentDownloadTime, 0);
 
   ctx.fillStyle = '#9BA8AB';
-  ctx.font = '900 11px "Segoe UI", sans-serif';
-  ctx.fillText('GENERATED AT:', rightEdgeX - 200, userBoxY + 82);
+  ctx.font = 'bold 11px "Segoe UI", sans-serif';
+  ctx.fillText('TICKET GENERATED (MOROCCO GMT):', rightEdgeX, userBoxY + 84);
 
   ctx.fillStyle = '#10B981';
-  ctx.font = 'bold 12px "Segoe UI", monospace';
-  ctx.fillText(downloadDateGmt, rightEdgeX, userBoxY + 82);
+  ctx.font = 'bold 13px "Segoe UI", monospace';
+  ctx.fillText(downloadDateGmt, rightEdgeX, userBoxY + 102);
 
   // 5. MATCH KICKOFF TIME BANNER (Strictly Morocco GMT)
   const matchHeaderY = userBoxY + 135;
@@ -662,18 +663,13 @@ export async function generatePredictionCardImage(options: CardGenerationOptions
   ctx.font = '900 25px "Cairo", "Segoe UI", sans-serif';
   ctx.fillText(prediction.mvp ? prediction.mvp.trim() : 'Not Specified', margin + 116, mvpY + 67);
 
-  // 9. FOOTER WATERMARK & AUTHENTICITY CODE
+  // 9. FOOTER WATERMARK & AUTHENTICITY CODE (Bottom-right extra details deleted as requested)
   const footerY = height - margin - 28;
   ctx.textAlign = 'left';
   ctx.fillStyle = '#9BA8AB';
   ctx.font = 'bold 12px "Segoe UI", monospace';
-  const ticketId = `TKT-UCL26-${match.id.substring(0, 6).toUpperCase()}-${(prediction.username || 'USR').substring(0, 4).toUpperCase()}`;
+  const ticketId = `TKT-UCL26-${match.id.substring(0, 6).toUpperCase()}-${(cleanMemberName || 'USR').substring(0, 4).toUpperCase()}`;
   ctx.fillText(`TICKET ID: ${ticketId} • OFFICIAL VERIFIED ENTRY`, margin + 26, footerY);
-
-  ctx.textAlign = 'right';
-  ctx.fillStyle = '#CCD0CF';
-  ctx.font = 'bold 12px "Segoe UI", sans-serif';
-  ctx.fillText('🇲🇦 OFFICIAL MOROCCO GMT FIXTURE • 1xlmzalit.ai', margin + cardW - 26, footerY);
 
   return canvas.toDataURL('image/png', 1.0);
 }
