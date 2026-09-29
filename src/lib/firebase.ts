@@ -108,9 +108,9 @@ if (typeof window !== 'undefined') {
 
 // Real-time Firestore synchronizers
 
-// Helper for safe team document IDs (handles special characters and slashes safely)
+// Helper for safe team document IDs (handles forward slashes safely while preserving clean canonical names)
 const getSafeTeamDocId = (teamId: string): string => {
-  return encodeURIComponent(teamId.trim());
+  return teamId.trim().replace(/\//g, '-');
 };
 
 // 1. Teams
@@ -120,11 +120,46 @@ export const subscribeTeams = (onUpdate: (teams: Record<string, Team>) => void) 
     collection(db, path),
     (snapshot) => {
       const teams: Record<string, Team> = {};
+      const staleDuplicatesToDelete: string[] = [];
+
       snapshot.forEach(docSnap => {
         const data = docSnap.data() as Team;
-        const key = (data && data.name) ? data.name : decodeURIComponent(docSnap.id);
-        teams[key] = data;
+        const rawName = (data && data.name) ? data.name : decodeURIComponent(docSnap.id);
+        const canonicalKey = rawName.trim();
+
+        // If a duplicate document exists for this team (e.g. legacy percent-encoded ID vs raw ID)
+        if (teams[canonicalKey]) {
+          const existingLogo = teams[canonicalKey].logo || '';
+          const currentLogo = data.logo || '';
+
+          // If existing is already a transparent cutout PNG and current is an older JPEG, keep existing
+          if (existingLogo.startsWith('data:image/png') && !currentLogo.startsWith('data:image/png')) {
+            staleDuplicatesToDelete.push(docSnap.id);
+            return;
+          }
+          // If current is a transparent cutout PNG and existing is not, prioritize current
+          if (currentLogo.startsWith('data:image/png') && !existingLogo.startsWith('data:image/png')) {
+            staleDuplicatesToDelete.push(getSafeTeamDocId(canonicalKey));
+            teams[canonicalKey] = data;
+            return;
+          }
+          // Prefer canonical non-percent-encoded document
+          if (docSnap.id.includes('%') && !getSafeTeamDocId(canonicalKey).includes('%')) {
+            staleDuplicatesToDelete.push(docSnap.id);
+            return;
+          }
+        }
+
+        teams[canonicalKey] = data;
       });
+
+      // Automatically clean up any detected duplicate documents in background
+      if (staleDuplicatesToDelete.length > 0) {
+        staleDuplicatesToDelete.forEach(dupId => {
+          deleteDoc(doc(db, 'teams', dupId)).catch(() => {});
+        });
+      }
+
       onUpdate(teams);
     },
     (error) => {
@@ -139,6 +174,7 @@ export const subscribeTeams = (onUpdate: (teams: Record<string, Team>) => void) 
 
 export const syncSaveTeam = async (teamId: string, team: Team) => {
   const safeId = getSafeTeamDocId(teamId);
+  const legacyEncodedId = encodeURIComponent(teamId.trim());
   const path = `teams/${safeId}`;
   try {
     const payload: Team = {
@@ -157,6 +193,11 @@ export const syncSaveTeam = async (teamId: string, team: Team) => {
     }
 
     await setDoc(doc(db, 'teams', safeId), payload);
+
+    // If a legacy percent-encoded document existed under a different ID, delete it to prevent overrides
+    if (legacyEncodedId !== safeId) {
+      deleteDoc(doc(db, 'teams', legacyEncodedId)).catch(() => {});
+    }
   } catch (error) {
     console.error(`Error saving team ${teamId} to Firestore:`, error);
     handleFirestoreError(error, OperationType.WRITE, path);
@@ -166,9 +207,13 @@ export const syncSaveTeam = async (teamId: string, team: Team) => {
 
 export const syncDeleteTeam = async (teamId: string) => {
   const safeId = getSafeTeamDocId(teamId);
+  const legacyEncodedId = encodeURIComponent(teamId.trim());
   const path = `teams/${safeId}`;
   try {
     await deleteDoc(doc(db, 'teams', safeId));
+    if (legacyEncodedId !== safeId) {
+      deleteDoc(doc(db, 'teams', legacyEncodedId)).catch(() => {});
+    }
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, path);
   }
