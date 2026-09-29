@@ -61,7 +61,7 @@ interface AdminSectionProps {
   currentUser: AppUser | null;
   onUpdateUsers: (users: AppUser[]) => void;
   onUpdateMatches: (matches: Match[]) => void;
-  onUpdateTeams: (teams: Record<string, Team>) => void;
+  onUpdateTeams: (teams: Record<string, Team>) => void | Promise<void>;
   onResetDeviceLock: () => void;
   onResetDatabase?: () => void;
   onAdminAuthenticated?: (adminUser: AppUser) => void;
@@ -465,7 +465,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     );
   };
 
-  const handleAddNewTeam = () => {
+  const handleAddNewTeam = async () => {
     const name = newTeamName.trim();
     if (!name) {
       notify(
@@ -493,20 +493,28 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
         squad: initialSquad
       }
     };
-    onUpdateTeams(nextTeams);
-    setSelectedManageTeam(name);
-    setNewTeamName('');
-    setNewTeamLogo('');
-    setNewTeamInitialSquad('');
-    setShowPresetPicker(false);
-    notify(
-      language === 'fr'
-        ? (initialSquad.length > 0 ? `Équipe (${name}) enregistrée avec (${initialSquad.length}) joueurs !` : `Équipe (${name}) enregistrée !`)
-        : language === 'en'
-        ? (initialSquad.length > 0 ? `Team (${name}) registered with (${initialSquad.length}) players added!` : `Team (${name}) registered!`)
-        : (initialSquad.length > 0 ? `تم تسجيل فريق (${name}) بنجاح مع إضافة (${initialSquad.length}) لاعباً لتشكيلته تلقائياً!` : `تم تسجيل فريق (${name}) بنجاح!`),
-      'success'
-    );
+    try {
+      await onUpdateTeams(nextTeams);
+      setSelectedManageTeam(name);
+      setNewTeamName('');
+      setNewTeamLogo('');
+      setNewTeamInitialSquad('');
+      setShowPresetPicker(false);
+      notify(
+        language === 'fr'
+          ? (initialSquad.length > 0 ? `Équipe (${name}) enregistrée dans la base de données avec (${initialSquad.length}) joueurs pour tous !` : `Équipe (${name}) enregistrée pour tous !`)
+          : language === 'en'
+          ? (initialSquad.length > 0 ? `Team (${name}) registered in database with (${initialSquad.length}) players for everyone!` : `Team (${name}) registered for everyone!`)
+          : (initialSquad.length > 0 ? `تم تسجيل فريق (${name}) في قاعدة البيانات لكافة الأعضاء مع (${initialSquad.length}) لاعباً!` : `تم تسجيل فريق (${name}) في قاعدة البيانات لكافة الأعضاء!`),
+        'success'
+      );
+    } catch (err: any) {
+      console.error(err);
+      notify(
+        language === 'fr' ? 'Échec de l\'enregistrement de l\'équipe' : language === 'en' ? 'Failed to save team to database' : 'فشل حفظ الفريق في قاعدة البيانات',
+        'error'
+      );
+    }
   };
 
   const handleSelectPreset = (preset: ClubPreset) => {
@@ -626,15 +634,21 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           logo: transparentLogo
         }
       };
-      onUpdateTeams(nextTeams);
+
       notify(
-        language === 'fr' ? `Logo de ${selectedManageTeam} mis à jour sans fond ! ✨` : language === 'en' ? `Logo of ${selectedManageTeam} updated with background removed! ✨` : `تم تحديث شعار فريق ${selectedManageTeam} وإزالة الخلفية بنجاح! ✨`,
+        language === 'fr' ? `Enregistrement du logo dans la base de données...` : language === 'en' ? `Saving logo to database for everyone...` : `جارٍ حفظ الشعار في قاعدة البيانات لكافة المستخدمين...`,
+        'info'
+      );
+      await onUpdateTeams(nextTeams);
+
+      notify(
+        language === 'fr' ? `Logo de ${selectedManageTeam} mis à jour et enregistré pour tous ! ✨` : language === 'en' ? `Logo of ${selectedManageTeam} updated and saved for everyone! ✨` : `تم تحديث شعار فريق ${selectedManageTeam} بدون خلفية وحفظه بنجاح لكافة المستخدمين! ✨`,
         'success'
       );
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       notify(
-        language === 'fr' ? 'Échec du traitement du logo' : language === 'en' ? 'Logo processing failed' : 'فشل معالجة الشعار، يرجى المحاولة مرة أخرى',
+        err?.message || (language === 'fr' ? 'Échec du traitement du logo' : language === 'en' ? 'Logo processing failed' : 'فشل معالجة الشعار، يرجى المحاولة مرة أخرى'),
         'error'
       );
     } finally {
@@ -667,15 +681,21 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           logo: transparentLogo
         }
       };
-      onUpdateTeams(nextTeams);
+
       notify(
-        language === 'fr' ? `Arrière-plan du logo de ${selectedManageTeam} retiré ! ✨` : language === 'en' ? `Logo background of ${selectedManageTeam} removed! ✨` : `تمت إزالة خلفية شعار ${selectedManageTeam} بنجاح! ✨`,
+        language === 'fr' ? `Enregistrement dans la base de données pour tous...` : language === 'en' ? `Saving to database for everyone...` : `جارٍ حفظ الشعار الشفاف لكافة الأعضاء في قاعدة البيانات...`,
+        'info'
+      );
+      await onUpdateTeams(nextTeams);
+
+      notify(
+        language === 'fr' ? `Arrière-plan du logo de ${selectedManageTeam} retiré et enregistré pour tous ! ✨` : language === 'en' ? `Logo background of ${selectedManageTeam} removed and saved for everyone! ✨` : `تمت إزالة خلفية شعار ${selectedManageTeam} وحفظه بنجاح لكافة المستخدمين! ✨`,
         'success'
       );
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       notify(
-        language === 'fr' ? 'Impossible de supprimer le fond automatiquement' : language === 'en' ? 'Could not remove background automatically' : 'تعذر إزالة خلفية هذا الشعار تلقائياً، يمكنك رفع صورة الشعار مباشرة من جهازك',
+        err?.message || (language === 'fr' ? 'Impossible de supprimer le fond automatiquement' : language === 'en' ? 'Could not remove background automatically' : 'تعذر إزالة خلفية هذا الشعار تلقائياً، يمكنك رفع صورة الشعار مباشرة من جهازك'),
         'error'
       );
     } finally {

@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import firebaseAppletConfig from '../../firebase-applet-config.json';
 import { Match, Team, Prediction, AppUser, ArchivedSeason } from '../types';
+import { compressLogoDataUrl } from '../utils/removeBackground';
 
 const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId,
@@ -140,9 +141,22 @@ export const syncSaveTeam = async (teamId: string, team: Team) => {
   const safeId = getSafeTeamDocId(teamId);
   const path = `teams/${safeId}`;
   try {
-    await setDoc(doc(db, 'teams', safeId), team);
+    const payload: Team = {
+      name: team.name || teamId,
+      logo: team.logo || '',
+      squad: Array.isArray(team.squad) ? team.squad : []
+    };
+
+    // If logo is a base64 data URL, ensure it is safely compressed (<150KB) so Firestore accepts it
+    if (payload.logo && payload.logo.startsWith('data:image/') && payload.logo.length > 120000) {
+      payload.logo = await compressLogoDataUrl(payload.logo, 256);
+    }
+
+    await setDoc(doc(db, 'teams', safeId), payload);
   } catch (error) {
+    console.error(`Error saving team ${teamId} to Firestore:`, error);
     handleFirestoreError(error, OperationType.WRITE, path);
+    throw error;
   }
 };
 

@@ -399,20 +399,26 @@ export default function App() {
     });
   };
 
-  const handleUpdateTeams = (nextTeams: Record<string, Team>) => {
+  const handleUpdateTeams = async (nextTeams: Record<string, Team>): Promise<void> => {
     // Find and delete any teams removed in this update from Firestore
     const currentKeys = Object.keys(teams);
     const nextKeys = new Set(Object.keys(nextTeams));
     const deletedKeys = currentKeys.filter(k => !nextKeys.has(k));
-    deletedKeys.forEach(id => {
-      syncDeleteTeam(id).catch(err => console.error("Firebase delete team error:", err));
-    });
 
+    // Update local state and localStorage immediately
     setTeams(nextTeams);
     localStorage.setItem('cl_teams', JSON.stringify(nextTeams));
-    Object.entries(nextTeams).forEach(([id, t]) => {
-      syncSaveTeam(id, t).catch(err => console.error("Firebase save team error:", err));
-    });
+
+    // Persist all deleted and updated teams to Firestore and wait for completion
+    try {
+      await Promise.all([
+        ...deletedKeys.map(id => syncDeleteTeam(id)),
+        ...Object.entries(nextTeams).map(([id, t]) => syncSaveTeam(id, t))
+      ]);
+    } catch (err) {
+      console.error("Firebase update teams error:", err);
+      throw err;
+    }
   };
 
   const handleSavePrediction = (pred: Prediction) => {
