@@ -14,6 +14,7 @@ import { Match, Team, Prediction, AppUser } from '../types';
 import { PredictionCardModal } from './PredictionCardModal';
 import { useLanguage } from '../i18n/LanguageContext';
 import { getTeamEnglishName } from '../data/clubPresets';
+import { formatEnglishDeadlineMorocco } from '../utils/moroccoTime';
 
 interface MembersPredictionsSlideProps {
   matches: Match[];
@@ -207,7 +208,7 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
                   <div key={m.id} className="p-2.5 bg-[#06141B] border border-[#253745] rounded-xl flex items-center justify-between text-xs">
                     <span className="font-semibold text-[#CCD0CF]">{getTeamEnglishName(m.homeTeam)} × {getTeamEnglishName(m.awayTeam)}</span>
                     <span className="text-[#9BA8AB] font-mono text-[11px]">
-                      {t('deadlinePrefix')} {new Date(m.deadline).toLocaleString(dateLocale, { timeZone: 'Africa/Casablanca', dateStyle: 'short', timeStyle: 'short' })} (🇲🇦)
+                      {t('deadlinePrefix')} {formatEnglishDeadlineMorocco(m.deadline)}
                     </span>
                   </div>
                 ))}
@@ -245,7 +246,7 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
                     </span>
                   </div>
                   <p className="text-[11px] text-[#9BA8AB] mt-0.5">
-                    {t('deadlineTimeLabel')} {new Date(match.deadline).toLocaleString(dateLocale, { timeZone: 'Africa/Casablanca', dateStyle: 'medium', timeStyle: 'short' })} (🇲🇦 GMT+1)
+                    {t('deadlineTimeLabel')} {formatEnglishDeadlineMorocco(match.deadline)}
                   </p>
                 </div>
               </div>

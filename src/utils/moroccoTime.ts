@@ -118,3 +118,33 @@ export function formatEnglishDeadlineMorocco(deadlineStr: string, offsetHours = 
   const offsetTag = offsetHours === 0 ? 'GMT' : `GMT+${offsetHours}`;
   return `${month} ${day}, ${year}, ${formattedHours}:${minutes} ${ampm} (🇲🇦 ${offsetTag})`;
 }
+
+/**
+ * Universal date/time formatter for Morocco GMT (UTC+0)
+ * e.g. "Oct 21, 2026, 08:00 PM (🇲🇦 GMT)"
+ */
+export function formatDateTimeMoroccoGmt(dateInput?: string | number | Date, offsetHours = getStoredMoroccoOffset()): string {
+  if (!dateInput) dateInput = new Date();
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return String(dateInput);
+
+  const utcMs = d.getTime() + (d.getTimezoneOffset() * 60000);
+  const moroccoDate = new Date(utcMs + (offsetHours * 3600000));
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = months[moroccoDate.getMonth()];
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const day = pad(moroccoDate.getDate());
+  const year = moroccoDate.getFullYear();
+
+  let hours = moroccoDate.getHours();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const formattedHours = pad(hours);
+  const minutes = pad(moroccoDate.getMinutes());
+
+  const offsetTag = offsetHours === 0 ? 'GMT' : `GMT+${offsetHours}`;
+  return `${month} ${day}, ${year}, ${formattedHours}:${minutes} ${ampm} (🇲🇦 ${offsetTag})`;
+}
+
