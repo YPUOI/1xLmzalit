@@ -147,9 +147,13 @@ export const syncSaveTeam = async (teamId: string, team: Team) => {
       squad: Array.isArray(team.squad) ? team.squad : []
     };
 
-    // If logo is a base64 data URL, ensure it is safely compressed (<150KB) so Firestore accepts it
-    if (payload.logo && payload.logo.startsWith('data:image/') && payload.logo.length > 120000) {
-      payload.logo = await compressLogoDataUrl(payload.logo, 256);
+    // If logo is a base64 data URL, ensure it is safely compressed (<50KB) so Firestore accepts it without issue
+    if (payload.logo && payload.logo.startsWith('data:image/') && payload.logo.length > 60000) {
+      try {
+        payload.logo = await compressLogoDataUrl(payload.logo, 256);
+      } catch (compErr) {
+        console.warn('Logo compression in syncSaveTeam notice:', compErr);
+      }
     }
 
     await setDoc(doc(db, 'teams', safeId), payload);

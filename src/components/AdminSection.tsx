@@ -149,6 +149,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   const [clearSquadConfirm, setClearSquadConfirm] = useState<string | null>(null);
   const [isProcessingLogo, setIsProcessingLogo] = useState<boolean>(false);
   const [autoRemoveBg, setAutoRemoveBg] = useState<boolean>(true);
+  const [editSelectedTeamLogoUrl, setEditSelectedTeamLogoUrl] = useState<string>('');
 
   const detectedBulkPlayers = parsePlayersText(bulkSquadInput);
   const detectedInitialSquad = parsePlayersText(newTeamInitialSquad);
@@ -483,7 +484,21 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     }
 
     const initialSquad = parsePlayersText(newTeamInitialSquad);
-    const finalLogo = newTeamLogo.trim() || generateFallbackLogo(name);
+    let finalLogo = newTeamLogo.trim();
+
+    if (!finalLogo) {
+      finalLogo = generateFallbackLogo(name);
+    } else {
+      // Automatically ensure any uploaded or pasted logo has its background stripped and is compressed
+      try {
+        setIsProcessingLogo(true);
+        finalLogo = await removeImageBackground(finalLogo);
+      } catch (e) {
+        console.warn('Auto background cutout notice:', e);
+      } finally {
+        setIsProcessingLogo(false);
+      }
+    }
 
     const nextTeams = {
       ...teams,
@@ -531,9 +546,9 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 15 * 1024 * 1024) {
       notify(
-        language === 'fr' ? 'Fichier trop lourd, maximum 10 Mo' : language === 'en' ? 'File too large, maximum 10 MB' : 'حجم الصورة كبير، يرجى اختيار صورة أقل من 10 ميغابايت',
+        language === 'fr' ? 'Fichier trop lourd, maximum 15 Mo' : language === 'en' ? 'File too large, maximum 15 MB' : 'حجم الصورة كبير، يرجى اختيار صورة أقل من 15 ميغابايت',
         'error'
       );
       return;
@@ -541,47 +556,42 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
 
     try {
       setIsProcessingLogo(true);
-      if (autoRemoveBg) {
-        notify(
-          language === 'fr' ? 'Traitement du logo et suppression de l\'arrière-plan...' : language === 'en' ? 'Processing logo and removing background...' : 'جارٍ معالجة الشعار وإزالة الخلفية تلقائياً...',
-          'info'
-        );
-        const transparentLogo = await removeImageBackground(file);
-        setNewTeamLogo(transparentLogo);
-        notify(
-          language === 'fr' ? 'Logo importé et arrière-plan retiré ! ✨' : language === 'en' ? 'Logo uploaded with background removed! ✨' : 'تم رفع الشعار وإزالة الخلفية تلقائياً بنجاح! ✨',
-          'success'
-        );
-      } else {
-        const reader = new FileReader();
-        reader.onload = () => {
-          if (typeof reader.result === 'string') {
-            setNewTeamLogo(reader.result);
-            notify(
-              language === 'fr' ? 'Logo importé avec succès !' : language === 'en' ? 'Logo uploaded successfully!' : 'تم رفع الشعار بنجاح!',
-              'success'
-            );
-          }
-        };
-        reader.readAsDataURL(file);
-      }
-    } catch (err) {
+      notify(
+        language === 'fr' ? 'Traitement du logo et suppression automatique de l\'arrière-plan...' : language === 'en' ? 'Processing logo and automatically removing background...' : 'جارٍ معالجة الشعار وإزالة الخلفية تلقائياً...',
+        'info'
+      );
+      const transparentLogo = await removeImageBackground(file);
+      setNewTeamLogo(transparentLogo);
+      notify(
+        language === 'fr' ? 'Logo importé et arrière-plan retiré automatiquement ! ✨' : language === 'en' ? 'Logo uploaded with background removed automatically! ✨' : 'تم رفع الشعار وإزالة الخلفية تلقائياً وجعله شفافاً بنجاح! ✨',
+        'success'
+      );
+    } catch (err: any) {
       console.error('Logo upload error:', err);
-      // Fallback in case of canvas processing failure
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setNewTeamLogo(reader.result);
-          notify(
-            language === 'fr' ? 'Logo importé dans son format original' : language === 'en' ? 'Logo uploaded in original format' : 'تم رفع الشعار بالصيغة الأصلية',
-            'info'
-          );
-        }
-      };
-      reader.readAsDataURL(file);
+      notify(
+        language === 'fr' ? `Erreur de traitement du logo (${err?.message || ''})` : language === 'en' ? `Error processing logo (${err?.message || ''})` : 'تعذر إزالة خلفية الشعار، يرجى تجربة صورة أخرى',
+        'error'
+      );
     } finally {
       setIsProcessingLogo(false);
       e.target.value = '';
+    }
+  };
+
+  const handleLogoUrlBlur = async () => {
+    if (!newTeamLogo.trim() || newTeamLogo.startsWith('data:image/png;base64,')) return;
+    try {
+      setIsProcessingLogo(true);
+      const transparent = await removeImageBackground(newTeamLogo.trim());
+      setNewTeamLogo(transparent);
+      notify(
+        language === 'fr' ? 'Arrière-plan supprimé automatiquement ! ✨' : language === 'en' ? 'Background removed automatically! ✨' : 'تم تفريغ خلفية الشعار تلقائياً بنجاح! ✨',
+        'success'
+      );
+    } catch (err) {
+      console.warn('URL auto cutout notice:', err);
+    } finally {
+      setIsProcessingLogo(false);
     }
   };
 
@@ -623,7 +633,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     try {
       setIsProcessingLogo(true);
       notify(
-        language === 'fr' ? `Traitement du logo ${selectedManageTeam}...` : language === 'en' ? `Processing logo for ${selectedManageTeam}...` : `جارٍ معالجة شعار ${selectedManageTeam} وإزالة الخلفية تلقائياً...`,
+        language === 'fr' ? `Traitement du logo ${selectedManageTeam} et détourage automatique...` : language === 'en' ? `Processing logo for ${selectedManageTeam} and auto-removing background...` : `جارٍ معالجة شعار ${selectedManageTeam} وإزالة الخلفية تلقائياً...`,
         'info'
       );
       const transparentLogo = await removeImageBackground(file);
@@ -642,7 +652,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
       await onUpdateTeams(nextTeams);
 
       notify(
-        language === 'fr' ? `Logo de ${selectedManageTeam} mis à jour et enregistré pour tous ! ✨` : language === 'en' ? `Logo of ${selectedManageTeam} updated and saved for everyone! ✨` : `تم تحديث شعار فريق ${selectedManageTeam} بدون خلفية وحفظه بنجاح لكافة المستخدمين! ✨`,
+        language === 'fr' ? `Logo de ${selectedManageTeam} détouré et enregistré pour tous ! ✨` : language === 'en' ? `Logo of ${selectedManageTeam} cutout and saved for everyone! ✨` : `تم تفريغ شعار فريق ${selectedManageTeam} بدون خلفية وحفظه بنجاح لكافة المستخدمين! ✨`,
         'success'
       );
     } catch (err: any) {
@@ -654,6 +664,45 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     } finally {
       setIsProcessingLogo(false);
       e.target.value = '';
+    }
+  };
+
+  const handleUpdateSelectedTeamLogoFromUrl = async () => {
+    if (!editSelectedTeamLogoUrl.trim() || !selectedManageTeam || !teams[selectedManageTeam]) return;
+    try {
+      setIsProcessingLogo(true);
+      notify(
+        language === 'fr' ? `Traitement du logo ${selectedManageTeam} et suppression de l'arrière-plan...` : language === 'en' ? `Processing logo for ${selectedManageTeam} and auto-removing background...` : `جارٍ معالجة شعار ${selectedManageTeam} وإزالة الخلفية تلقائياً...`,
+        'info'
+      );
+      const transparentLogo = await removeImageBackground(editSelectedTeamLogoUrl.trim());
+      const nextTeams = {
+        ...teams,
+        [selectedManageTeam]: {
+          ...teams[selectedManageTeam],
+          logo: transparentLogo
+        }
+      };
+
+      notify(
+        language === 'fr' ? `Enregistrement du logo dans la base de données...` : language === 'en' ? `Saving logo to database for everyone...` : `جارٍ حفظ الشعار في قاعدة البيانات لكافة المستخدمين...`,
+        'info'
+      );
+      await onUpdateTeams(nextTeams);
+
+      notify(
+        language === 'fr' ? `Logo de ${selectedManageTeam} détouré et enregistré pour tous ! ✨` : language === 'en' ? `Logo of ${selectedManageTeam} cutout and saved for everyone! ✨` : `تم تفريغ شعار فريق ${selectedManageTeam} وحفظه بنجاح لكافة المستخدمين! ✨`,
+        'success'
+      );
+      setEditSelectedTeamLogoUrl('');
+    } catch (err: any) {
+      console.error(err);
+      notify(
+        err?.message || (language === 'fr' ? 'Échec du traitement du logo' : language === 'en' ? 'Logo processing failed' : 'فشل معالجة الشعار، يرجى المحاولة مرة أخرى'),
+        'error'
+      );
+    } finally {
+      setIsProcessingLogo(false);
     }
   };
 
@@ -2381,15 +2430,10 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 <label className="text-[11px] text-[#9BA8AB] font-bold">
                   {language === 'fr' ? 'Lien de l\'image / Logo :' : language === 'en' ? 'Logo or Image URL:' : 'رابط الشعار أو الصورة:'}
                 </label>
-                <label className="flex items-center gap-1 text-[10px] text-[#CCD0CF] font-bold cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={autoRemoveBg}
-                    onChange={(e) => setAutoRemoveBg(e.target.checked)}
-                    className="w-3.5 h-3.5 rounded accent-[#4A5C6A] cursor-pointer"
-                  />
-                  <span>{language === 'fr' ? 'Détourer auto' : language === 'en' ? 'Auto remove bg' : 'تفريغ الخلفية تلقائياً'}</span>
-                </label>
+                <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded-full select-none">
+                  <Sparkles className="w-3 h-3 text-emerald-400" />
+                  <span>{language === 'fr' ? 'Détourage 100% auto' : language === 'en' ? 'Auto-cutout active' : 'تفريغ تلقائي 100%'}</span>
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -2397,6 +2441,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   dir="ltr"
                   value={newTeamLogo}
                   onChange={(e) => setNewTeamLogo(e.target.value)}
+                  onBlur={handleLogoUrlBlur}
                   placeholder={language === 'fr' ? 'https://... ou importer ci-dessus' : language === 'en' ? 'https://... or upload above' : 'https://... أو استخدم زر الرفع أعلاه'}
                   className="w-full bg-[#11212D] border border-[#253745] rounded-xl p-2.5 text-xs text-[#CCD0CF] placeholder-[#9BA8AB]/50 outline-none focus:border-[#4A5C6A] font-mono text-[11px] force-ltr transition-all duration-200"
                 />
@@ -2598,6 +2643,34 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       <span>{language === 'fr' ? 'Détourer le logo' : language === 'en' ? 'Cutout Logo' : 'إزالة خلفية الشعار'}</span>
                     </button>
                   )}
+
+                  {/* Optional Quick URL input for selected team */}
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="url"
+                      dir="ltr"
+                      value={editSelectedTeamLogoUrl}
+                      onChange={(e) => setEditSelectedTeamLogoUrl(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleUpdateSelectedTeamLogoFromUrl();
+                        }
+                      }}
+                      placeholder={language === 'fr' ? 'URL nouveau logo...' : language === 'en' ? 'New logo URL...' : 'رابط شعار جديد...'}
+                      className="bg-[#11212D] border border-[#253745] rounded-xl px-2.5 py-1.5 text-xs text-[#CCD0CF] placeholder-[#9BA8AB]/50 outline-none focus:border-[#4A5C6A] w-32 sm:w-44 font-mono text-[11px]"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleUpdateSelectedTeamLogoFromUrl}
+                      disabled={isProcessingLogo || !editSelectedTeamLogoUrl.trim()}
+                      className="p-2 bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] border border-[#253745] rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 disabled:opacity-40"
+                      title={language === 'fr' ? 'Détourer et enregistrer pour tous' : language === 'en' ? 'Cutout and save for everyone' : 'تفريغ الشعار وحفظه لكافة الأعضاء'}
+                    >
+                      {isProcessingLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-emerald-400" />}
+                      <span className="hidden sm:inline">{language === 'fr' ? 'Appliquer' : language === 'en' ? 'Apply' : 'تطبيق'}</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2">

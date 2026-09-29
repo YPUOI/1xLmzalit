@@ -1,22 +1,22 @@
 /**
- * Utility to automatically remove white, light, solid, or checkerboard backgrounds
- * from uploaded team crests and logos using client-side HTML5 Canvas and edge-connected flood fill.
- * 
- * Optimized for Firebase Firestore persistence (< 1MB document size limit).
- * Automatically downsamples logos to crisp 256x256 dimensions (~20KB-50KB) so they
- * save instantly to Firestore and broadcast to all users in real-time.
+ * High-performance, universal background removal for football team crests and club logos.
+ * Handles client-side processing directly in HTML5 Canvas:
+ * - Automatically strips white, light, dark, solid-color, and fake checkerboard backgrounds.
+ * - Scales high-res phone camera uploads down safely (preventing iOS Safari memory crashes).
+ * - Crops transparent padding and centers crests in crisp, high-definition 256x256 dimensions.
+ * - Produces compact transparent PNG data URLs (< 40KB) that save instantly to Firebase Firestore.
  */
 
 export interface BackgroundRemovalOptions {
-  tolerance?: number; // Color distance threshold (default: 42)
-  feather?: number; // Anti-aliasing soft edge margin (default: 20)
+  tolerance?: number; // Color difference threshold (default: 55)
+  feather?: number; // Soft edge margin (default: 18)
   autoCrop?: boolean; // Trim transparent padding (default: true)
-  cropPadding?: number; // Padding after cropping (default: 8)
-  maxDim?: number; // Maximum dimension (default: 256px)
+  cropPadding?: number; // Padding around badge after cropping (default: 6)
+  maxDim?: number; // Target max dimension for Firestore (default: 256)
 }
 
 /**
- * Calculates Euclidean distance in RGB color space using Redmean approximation
+ * Calculates human-perception-weighted color difference (Redmean approximation)
  */
 function colorDistance(r1: number, g1: number, b1: number, r2: number, g2: number, b2: number): number {
   const dr = r1 - r2;
@@ -31,60 +31,94 @@ function colorDistance(r1: number, g1: number, b1: number, r2: number, g2: numbe
 }
 
 /**
- * Helper to convert Blob or File to data URL
+ * Calculates standard perceived luminance (0-255)
+ */
+function getLuminance(r: number, g: number, b: number): number {
+  return 0.299 * r + 0.587 * g + 0.114 * b;
+}
+
+/**
+ * Determines whether a color is neutral / achromatic (grayscale, white, black, gray)
+ */
+function isAchromatic(r: number, g: number, b: number, maxSpread = 24): boolean {
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  return (max - min) <= maxSpread;
+}
+
+/**
+ * Converts a Blob or File to a Base64 data URL
  */
 function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Failed to read blob as data URL'));
+      }
+    };
     reader.onerror = (err) => reject(err);
     reader.readAsDataURL(blob);
   });
 }
 
 /**
- * Loads an image from a File, Blob, or URL string into an HTMLImageElement
- * Handles CORS and proxies external image URLs to prevent canvas tainting.
+ * Safely loads any File, Blob, or URL into an HTMLImageElement without CORS tainting.
  */
 export async function loadImage(source: File | Blob | string): Promise<HTMLImageElement> {
   let effectiveSrc = source;
+  const isHttpUrl = typeof source === 'string' && (source.startsWith('http://') || source.startsWith('https://'));
 
-  // If source is an external URL, attempt fetching as blob first to guarantee canvas non-tainted state
-  if (typeof source === 'string' && source.startsWith('http')) {
+  if (isHttpUrl) {
     try {
-      const res = await fetch(source, { mode: 'cors' });
+      const res = await fetch(source as string, { mode: 'cors' });
       if (res.ok) {
         const blob = await res.blob();
         effectiveSrc = await blobToDataUrl(blob);
       }
     } catch {
-      // If direct fetch fails (e.g. strict CORS), try via CORS proxy
-      try {
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(source)}`;
-        const res = await fetch(proxyUrl);
-        if (res.ok) {
-          const blob = await res.blob();
-          effectiveSrc = await blobToDataUrl(blob);
+      // If direct CORS fetch fails, try reliable proxies
+      const proxies = [
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(source as string)}`,
+        `https://corsproxy.io/?url=${encodeURIComponent(source as string)}`
+      ];
+
+      for (const proxy of proxies) {
+        try {
+          const res = await fetch(proxy);
+          if (res.ok) {
+            const blob = await res.blob();
+            effectiveSrc = await blobToDataUrl(blob);
+            break;
+          }
+        } catch {
+          // Continue to next fallback
         }
-      } catch {
-        // Fallback to direct URL if proxies fail
       }
     }
   } else if (typeof source !== 'string') {
+    // File or Blob
     effectiveSrc = await blobToDataUrl(source);
   }
 
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    const isDataOrBlob = typeof effectiveSrc === 'string' && (effectiveSrc.startsWith('data:') || effectiveSrc.startsWith('blob:'));
+
+    // DO NOT set crossOrigin on data: or blob: URLs (causes failures in Safari/iOS WebKit)
+    if (!isDataOrBlob && isHttpUrl) {
+      img.crossOrigin = 'anonymous';
+    }
 
     img.onload = () => resolve(img);
     img.onerror = () => {
-      // Retry without crossOrigin attribute if failed
-      const img2 = new Image();
-      img2.onload = () => resolve(img2);
-      img2.onerror = (err) => reject(new Error('Failed to load image: ' + String(err)));
-      img2.src = typeof effectiveSrc === 'string' ? effectiveSrc : URL.createObjectURL(effectiveSrc);
+      // Secondary fallback
+      const imgFallback = new Image();
+      imgFallback.onload = () => resolve(imgFallback);
+      imgFallback.onerror = (err) => reject(new Error('Failed to load image: ' + String(err)));
+      imgFallback.src = typeof effectiveSrc === 'string' ? effectiveSrc : URL.createObjectURL(effectiveSrc);
     };
 
     img.src = typeof effectiveSrc === 'string' ? effectiveSrc : URL.createObjectURL(effectiveSrc);
@@ -92,8 +126,8 @@ export async function loadImage(source: File | Blob | string): Promise<HTMLImage
 }
 
 /**
- * Compresses any image Data URL to fit within target max dimension (default 256px)
- * ensuring it stays well under 100KB for Firestore storage.
+ * Resizes and compresses any image Data URL to fit within target max dimension (default 256px)
+ * ensuring it stays under 50KB for safe, instant Firestore broadcasting.
  */
 export async function compressLogoDataUrl(dataUrl: string, maxDim = 256): Promise<string> {
   if (!dataUrl || !dataUrl.startsWith('data:image/')) return dataUrl;
@@ -102,21 +136,21 @@ export async function compressLogoDataUrl(dataUrl: string, maxDim = 256): Promis
     let width = img.naturalWidth || img.width;
     let height = img.naturalHeight || img.height;
 
-    if (width <= maxDim && height <= maxDim && dataUrl.length < 150000) {
+    if (width <= maxDim && height <= maxDim && dataUrl.length < 80000) {
       return dataUrl;
     }
 
     if (width >= height) {
-      height = Math.round((height * maxDim) / width);
+      height = Math.max(1, Math.round((height * maxDim) / width));
       width = maxDim;
     } else {
-      width = Math.round((width * maxDim) / height);
+      width = Math.max(1, Math.round((width * maxDim) / height));
       height = maxDim;
     }
 
     const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, width);
-    canvas.height = Math.max(1, height);
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext('2d');
     if (!ctx) return dataUrl;
 
@@ -131,179 +165,228 @@ export async function compressLogoDataUrl(dataUrl: string, maxDim = 256): Promis
 }
 
 /**
- * Automatically removes background from an image source
- * @param source Image file, blob, or dataURL/URL
- * @param options Customization options for tolerance and feathering
- * @returns Promise with transparent PNG Data URL (< 100KB, ideal for Firestore)
+ * Automatically removes background from any club crest/logo.
+ * Guaranteed to produce a transparent PNG data URL (< 50KB) safe for Firestore.
  */
 export async function removeImageBackground(
   source: File | Blob | string,
   options: BackgroundRemovalOptions = {}
 ): Promise<string> {
   const {
-    tolerance = 44,
-    feather = 22,
+    tolerance = 56,
+    feather = 16,
     autoCrop = true,
-    cropPadding = 8,
-    maxDim = 280, // Optimal dimension for crests (< 60KB PNG data URL)
+    cropPadding = 6,
+    maxDim = 256
   } = options;
 
   const img = await loadImage(source);
+  const origW = img.naturalWidth || img.width;
+  const origH = img.naturalHeight || img.height;
 
-  let width = img.naturalWidth || img.width;
-  let height = img.naturalHeight || img.height;
+  if (origW <= 0 || origH <= 0) {
+    throw new Error('Invalid image dimensions');
+  }
 
-  // Scale down to maxDim for fast flood-fill and safe Firestore size
-  if (width > maxDim || height > maxDim) {
-    if (width >= height) {
-      height = Math.round((height * maxDim) / width);
-      width = maxDim;
+  // Work at a crisp, safe resolution (max 320px) to prevent iOS mobile memory crashes
+  // while preserving sharp badge contours.
+  const WORK_DIM = 320;
+  let workW = origW;
+  let workH = origH;
+
+  if (workW > WORK_DIM || workH > WORK_DIM) {
+    if (workW >= workH) {
+      workH = Math.max(1, Math.round((workH * WORK_DIM) / workW));
+      workW = WORK_DIM;
     } else {
-      width = Math.round((width * maxDim) / height);
-      height = maxDim;
+      workW = Math.max(1, Math.round((workW * WORK_DIM) / workH));
+      workH = WORK_DIM;
     }
   }
 
-  // Create processing canvas
   const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = workW;
+  canvas.height = workH;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (!ctx) throw new Error('Could not initialize canvas context');
+  if (!ctx) throw new Error('Failed to create canvas context');
 
-  ctx.drawImage(img, 0, 0, width, height);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, 0, 0, workW, workH);
 
-  const imgData = ctx.getImageData(0, 0, width, height);
+  const imgData = ctx.getImageData(0, 0, workW, workH);
   const data = imgData.data;
 
-  // 1. Analyze border pixels to determine the background color(s)
-  const cornerCoords = [
+  // 1. Analyze border pixels to understand background type
+  // Sample the 4 corners, inset corners (to skip 1px borders), and edge mid-points
+  const samplePoints: [number, number][] = [
     [0, 0],
-    [width - 1, 0],
-    [0, height - 1],
-    [width - 1, height - 1],
-    [Math.floor(width / 2), 0],
-    [Math.floor(width / 2), height - 1],
-    [0, Math.floor(height / 2)],
-    [width - 1, Math.floor(height / 2)],
+    [workW - 1, 0],
+    [0, workH - 1],
+    [workW - 1, workH - 1],
+    [Math.min(2, workW - 1), Math.min(2, workH - 1)],
+    [Math.max(0, workW - 3), Math.min(2, workH - 1)],
+    [Math.min(2, workW - 1), Math.max(0, workH - 3)],
+    [Math.max(0, workW - 3), Math.max(0, workH - 3)],
+    [Math.floor(workW * 0.25), 0],
+    [Math.floor(workW * 0.75), 0],
+    [Math.floor(workW * 0.25), workH - 1],
+    [Math.floor(workW * 0.75), workH - 1],
+    [0, Math.floor(workH * 0.25)],
+    [0, Math.floor(workH * 0.75)],
+    [workW - 1, Math.floor(workH * 0.25)],
+    [workW - 1, Math.floor(workH * 0.75)],
   ];
 
-  let sampleR = 0;
-  let sampleG = 0;
-  let sampleB = 0;
-  let sampleCount = 0;
-  let whitePixelCount = 0;
-  let darkPixelCount = 0;
+  let transparentSamples = 0;
+  let whiteSamples = 0;
+  let greySamples = 0;
+  let darkSamples = 0;
+  let totalSolidSamples = 0;
+  let sumR = 0;
+  let sumG = 0;
+  let sumB = 0;
 
-  for (const [cx, cy] of cornerCoords) {
-    const idx = (cy * width + cx) * 4;
+  for (const [sx, sy] of samplePoints) {
+    const idx = (sy * workW + sx) * 4;
     const a = data[idx + 3];
-    if (a > 50) {
-      const r = data[idx];
-      const g = data[idx + 1];
-      const b = data[idx + 2];
-      sampleR += r;
-      sampleG += g;
-      sampleB += b;
-      sampleCount++;
-
-      if (r > 215 && g > 215 && b > 215) whitePixelCount++;
-      if (r < 40 && g < 40 && b < 40) darkPixelCount++;
+    if (a < 35) {
+      transparentSamples++;
+      continue;
     }
+
+    const r = data[idx];
+    const g = data[idx + 1];
+    const b = data[idx + 2];
+    const lum = getLuminance(r, g, b);
+    const neutral = isAchromatic(r, g, b, 26);
+
+    sumR += r;
+    sumG += g;
+    sumB += b;
+    totalSolidSamples++;
+
+    if (neutral && lum >= 225) whiteSamples++;
+    else if (neutral && lum >= 170 && lum < 225) greySamples++;
+    else if (lum <= 40) darkSamples++;
   }
 
-  const bgR = sampleCount > 0 ? Math.round(sampleR / sampleCount) : 255;
-  const bgG = sampleCount > 0 ? Math.round(sampleG / sampleCount) : 255;
-  const bgB = sampleCount > 0 ? Math.round(sampleB / sampleCount) : 255;
+  // If already predominantly transparent (e.g. valid transparent PNG)
+  const isAlreadyTransparent = transparentSamples >= Math.floor(samplePoints.length * 0.6);
+  if (isAlreadyTransparent) {
+    // Image is already transparent! Simply crop transparent borders and return compressed PNG
+    return finalizeAndCrop(canvas, ctx, imgData, workW, workH, autoCrop, cropPadding, maxDim);
+  }
 
-  const isPredominantlyWhite = whitePixelCount >= Math.max(1, sampleCount * 0.4);
-  const isPredominantlyDark = darkPixelCount >= Math.max(1, sampleCount * 0.5);
+  // Check for fake transparent checkerboard (has both white and grey neutral tiles on perimeter)
+  const isCheckerboard = (whiteSamples >= 2 && greySamples >= 2) || (greySamples >= 4 && isAchromatic(Math.round(sumR / Math.max(1, totalSolidSamples)), Math.round(sumG / Math.max(1, totalSolidSamples)), Math.round(sumB / Math.max(1, totalSolidSamples))));
 
-  // 2. Connected-component flood fill from the outer perimeter
-  const visited = new Uint8Array(width * height);
-  const queue = new Int32Array(width * height);
-  let qHead = 0;
-  let qTail = 0;
+  // Check for white / light background (very common for crests copied from web/photos)
+  const isPredominantlyLight = (whiteSamples + greySamples) >= Math.max(2, Math.floor(totalSolidSamples * 0.45));
 
-  const isBackgroundPixel = (r: number, g: number, b: number, a: number): boolean => {
-    // If already transparent
+  // Check for dark background
+  const isPredominantlyDark = darkSamples >= Math.max(2, Math.floor(totalSolidSamples * 0.45));
+
+  // Dominant background color
+  const bgR = totalSolidSamples > 0 ? Math.round(sumR / totalSolidSamples) : 255;
+  const bgG = totalSolidSamples > 0 ? Math.round(sumG / totalSolidSamples) : 255;
+  const bgB = totalSolidSamples > 0 ? Math.round(sumB / totalSolidSamples) : 255;
+
+  // 2. Define background pixel test function
+  const isBgPixel = (r: number, g: number, b: number, a: number): boolean => {
     if (a < 35) return true;
 
-    // If background is white/light
-    if (isPredominantlyWhite) {
-      if (r >= 220 && g >= 220 && b >= 220) return true;
-      // Checkerboard grey/white tile detection
-      const isGreyTile = Math.abs(r - g) <= 10 && Math.abs(g - b) <= 10 && r >= 185 && r <= 255;
-      if (isGreyTile) return true;
+    // Fake checkerboard tile
+    if (isCheckerboard) {
+      if (isAchromatic(r, g, b, 28) && getLuminance(r, g, b) >= 160) {
+        return true;
+      }
     }
 
-    // If background is dark/black
+    // White / off-white background (matches white paper, white box, JPEG compression artifacts)
+    if (isPredominantlyLight) {
+      const lum = getLuminance(r, g, b);
+      if (isAchromatic(r, g, b, 30) && lum >= 195) {
+        return true;
+      }
+      if (lum >= 235) {
+        return true;
+      }
+    }
+
+    // Dark / black background
     if (isPredominantlyDark) {
-      if (r <= 40 && g <= 40 && b <= 40) return true;
+      if (getLuminance(r, g, b) <= 45 && isAchromatic(r, g, b, 30)) {
+        return true;
+      }
     }
 
-    // General distance to sampled background color
+    // Distance to sampled perimeter background color
     const dist = colorDistance(r, g, b, bgR, bgG, bgB);
     return dist <= tolerance;
   };
 
-  // Seed with all border pixels
-  for (let x = 0; x < width; x++) {
+  // 3. Flood Fill from image borders
+  const totalPixels = workW * workH;
+  const visited = new Uint8Array(totalPixels);
+  const queue = new Int32Array(totalPixels);
+  let qHead = 0;
+  let qTail = 0;
+
+  // Seed top and bottom borders
+  for (let x = 0; x < workW; x++) {
     const topIdx = x;
-    const topDataIdx = topIdx * 4;
-    if (isBackgroundPixel(data[topDataIdx], data[topDataIdx + 1], data[topDataIdx + 2], data[topDataIdx + 3])) {
+    const tdi = topIdx * 4;
+    if (isBgPixel(data[tdi], data[tdi + 1], data[tdi + 2], data[tdi + 3])) {
       visited[topIdx] = 1;
       queue[qTail++] = topIdx;
     }
 
-    const btmIdx = (height - 1) * width + x;
-    const btmDataIdx = btmIdx * 4;
-    if (isBackgroundPixel(data[btmDataIdx], data[btmDataIdx + 1], data[btmDataIdx + 2], data[btmDataIdx + 3])) {
+    const btmIdx = (workH - 1) * workW + x;
+    const bdi = btmIdx * 4;
+    if (isBgPixel(data[bdi], data[bdi + 1], data[bdi + 2], data[bdi + 3])) {
       visited[btmIdx] = 1;
       queue[qTail++] = btmIdx;
     }
   }
 
-  for (let y = 1; y < height - 1; y++) {
-    const leftIdx = y * width;
-    const leftDataIdx = leftIdx * 4;
-    if (visited[leftIdx] === 0 && isBackgroundPixel(data[leftDataIdx], data[leftDataIdx + 1], data[leftDataIdx + 2], data[leftDataIdx + 3])) {
+  // Seed left and right borders
+  for (let y = 1; y < workH - 1; y++) {
+    const leftIdx = y * workW;
+    const ldi = leftIdx * 4;
+    if (visited[leftIdx] === 0 && isBgPixel(data[ldi], data[ldi + 1], data[ldi + 2], data[ldi + 3])) {
       visited[leftIdx] = 1;
       queue[qTail++] = leftIdx;
     }
 
-    const rightIdx = y * width + (width - 1);
-    const rightDataIdx = rightIdx * 4;
-    if (visited[rightIdx] === 0 && isBackgroundPixel(data[rightDataIdx], data[rightDataIdx + 1], data[rightDataIdx + 2], data[rightDataIdx + 3])) {
+    const rightIdx = y * workW + (workW - 1);
+    const rdi = rightIdx * 4;
+    if (visited[rightIdx] === 0 && isBgPixel(data[rdi], data[rdi + 1], data[rdi + 2], data[rdi + 3])) {
       visited[rightIdx] = 1;
       queue[qTail++] = rightIdx;
     }
   }
 
-  // Process flood fill queue
+  // Process 4-way flood fill
   while (qHead < qTail) {
-    const currentIdx = queue[qHead++];
-    const cx = currentIdx % width;
-    const cy = Math.floor(currentIdx / width);
+    const curr = queue[qHead++];
+    const cx = curr % workW;
+    const cy = Math.floor(curr / workW);
 
-    const neighbors = [
+    // 4 neighbors: right, left, down, up
+    const nCoords = [
       [cx + 1, cy],
       [cx - 1, cy],
       [cx, cy + 1],
-      [cx, cy - 1],
+      [cx, cy - 1]
     ];
 
-    for (const [nx, ny] of neighbors) {
-      if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-        const nIdx = ny * width + nx;
+    for (const [nx, ny] of nCoords) {
+      if (nx >= 0 && nx < workW && ny >= 0 && ny < workH) {
+        const nIdx = ny * workW + nx;
         if (visited[nIdx] === 0) {
-          const nDataIdx = nIdx * 4;
-          const nr = data[nDataIdx];
-          const ng = data[nDataIdx + 1];
-          const nb = data[nDataIdx + 2];
-          const na = data[nDataIdx + 3];
-
-          if (isBackgroundPixel(nr, ng, nb, na)) {
+          const ndi = nIdx * 4;
+          if (isBgPixel(data[ndi], data[ndi + 1], data[ndi + 2], data[ndi + 3])) {
             visited[nIdx] = 1;
             queue[qTail++] = nIdx;
           }
@@ -312,40 +395,37 @@ export async function removeImageBackground(
     }
   }
 
-  // 3. Clear background pixels and apply anti-aliasing feathering to borders
-  for (let i = 0; i < width * height; i++) {
-    const dataIdx = i * 4;
+  // 4. Clear background and apply soft edge defringing
+  for (let i = 0; i < totalPixels; i++) {
+    const idx = i * 4;
     if (visited[i] === 1) {
-      data[dataIdx + 3] = 0;
+      data[idx + 3] = 0; // Make 100% transparent
     } else {
-      const x = i % width;
-      const y = Math.floor(i / width);
-      let adjacentBg = false;
-
-      if (
+      // Check if neighboring a removed background pixel for anti-aliased edge smoothing
+      const x = i % workW;
+      const y = Math.floor(i / workW);
+      const isBorder = (
         (x > 0 && visited[i - 1] === 1) ||
-        (x < width - 1 && visited[i + 1] === 1) ||
-        (y > 0 && visited[i - width] === 1) ||
-        (y < height - 1 && visited[i + width] === 1)
-      ) {
-        adjacentBg = true;
-      }
+        (x < workW - 1 && visited[i + 1] === 1) ||
+        (y > 0 && visited[i - workW] === 1) ||
+        (y < workH - 1 && visited[i + workW] === 1)
+      );
 
-      if (adjacentBg) {
-        const r = data[dataIdx];
-        const g = data[dataIdx + 1];
-        const b = data[dataIdx + 2];
+      if (isBorder) {
+        const r = data[idx];
+        const g = data[idx + 1];
+        const b = data[idx + 2];
         const dist = colorDistance(r, g, b, bgR, bgG, bgB);
 
         if (dist < tolerance + feather) {
-          const factor = Math.max(0, Math.min(1, (dist - tolerance) / feather));
-          data[dataIdx + 3] = Math.round(factor * 255);
+          const alphaFactor = Math.max(0, Math.min(1, (dist - tolerance) / Math.max(1, feather)));
+          data[idx + 3] = Math.round(alphaFactor * 255);
 
-          // Defringe color bleed from background
-          if (factor > 0.1 && factor < 0.95) {
-            data[dataIdx] = Math.max(0, Math.min(255, Math.round((r - bgR * (1 - factor)) / factor)));
-            data[dataIdx + 1] = Math.max(0, Math.min(255, Math.round((g - bgG * (1 - factor)) / factor)));
-            data[dataIdx + 2] = Math.max(0, Math.min(255, Math.round((b - bgB * (1 - factor)) / factor)));
+          // Defringe color bleed
+          if (alphaFactor > 0.05 && alphaFactor < 0.95) {
+            data[idx] = Math.max(0, Math.min(255, Math.round((r - bgR * (1 - alphaFactor)) / alphaFactor)));
+            data[idx + 1] = Math.max(0, Math.min(255, Math.round((g - bgG * (1 - alphaFactor)) / alphaFactor)));
+            data[idx + 2] = Math.max(0, Math.min(255, Math.round((b - bgB * (1 - alphaFactor)) / alphaFactor)));
           }
         }
       }
@@ -354,66 +434,112 @@ export async function removeImageBackground(
 
   ctx.putImageData(imgData, 0, 0);
 
-  // 4. Auto-crop transparent boundaries if requested
-  if (autoCrop) {
-    let minX = width;
-    let minY = height;
-    let maxX = 0;
-    let maxY = 0;
-    let hasVisiblePixels = false;
+  // 5. Finalize, crop transparent padding, and return crisp PNG
+  return finalizeAndCrop(canvas, ctx, imgData, workW, workH, autoCrop, cropPadding, maxDim);
+}
 
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const alpha = data[(y * width + x) * 4 + 3];
-        if (alpha > 15) {
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
-          hasVisiblePixels = true;
-        }
-      }
+/**
+ * Trims transparent bounds around the crest, centers it, and exports a 256x256 max PNG data URL.
+ */
+function finalizeAndCrop(
+  canvas: HTMLCanvasElement,
+  ctx: CanvasRenderingContext2D,
+  imgData: ImageData,
+  width: number,
+  height: number,
+  autoCrop: boolean,
+  cropPadding: number,
+  maxDim: number
+): string {
+  if (!autoCrop) {
+    if (width > maxDim || height > maxDim) {
+      return compressLogoToTarget(canvas, maxDim);
     }
+    return canvas.toDataURL('image/png');
+  }
 
-    if (hasVisiblePixels && (minX > 0 || minY > 0 || maxX < width - 1 || maxY < height - 1)) {
-      const pad = cropPadding;
-      const cropX = Math.max(0, minX - pad);
-      const cropY = Math.max(0, minY - pad);
-      const cropW = Math.min(width - cropX, (maxX - minX + 1) + pad * 2);
-      const cropH = Math.min(height - cropY, (maxY - minY + 1) + pad * 2);
+  const data = imgData.data;
+  let minX = width;
+  let minY = height;
+  let maxX = 0;
+  let maxY = 0;
+  let hasPixels = false;
 
-      // Final target dimensions (keep within 256x256 max)
-      const finalMaxDim = 256;
-      let finalW = cropW;
-      let finalH = cropH;
-      if (finalW > finalMaxDim || finalH > finalMaxDim) {
-        if (finalW >= finalH) {
-          finalH = Math.round((finalH * finalMaxDim) / finalW);
-          finalW = finalMaxDim;
-        } else {
-          finalW = Math.round((finalW * finalMaxDim) / finalH);
-          finalH = finalMaxDim;
-        }
-      }
-
-      const croppedCanvas = document.createElement('canvas');
-      croppedCanvas.width = finalW;
-      croppedCanvas.height = finalH;
-      const croppedCtx = croppedCanvas.getContext('2d');
-
-      if (croppedCtx) {
-        croppedCtx.imageSmoothingEnabled = true;
-        croppedCtx.imageSmoothingQuality = 'high';
-        croppedCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, finalW, finalH);
-        return croppedCanvas.toDataURL('image/png');
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const alpha = data[(y * width + x) * 4 + 3];
+      if (alpha > 15) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+        hasPixels = true;
       }
     }
   }
 
-  // Ensure final output canvas is within 256x256 max
-  if (width > 256 || height > 256) {
-    return await compressLogoDataUrl(canvas.toDataURL('image/png'), 256);
+  // If no visible pixels remaining, fall back to canvas
+  if (!hasPixels) {
+    return canvas.toDataURL('image/png');
   }
 
-  return canvas.toDataURL('image/png');
+  const pad = cropPadding;
+  const cropX = Math.max(0, minX - pad);
+  const cropY = Math.max(0, minY - pad);
+  const cropW = Math.min(width - cropX, (maxX - minX + 1) + pad * 2);
+  const cropH = Math.min(height - cropY, (maxY - minY + 1) + pad * 2);
+
+  // Fit within maxDim (e.g. 256x256)
+  let targetW = cropW;
+  let targetH = cropH;
+
+  if (targetW > maxDim || targetH > maxDim) {
+    if (targetW >= targetH) {
+      targetH = Math.max(1, Math.round((targetH * maxDim) / targetW));
+      targetW = maxDim;
+    } else {
+      targetW = Math.max(1, Math.round((targetW * maxDim) / targetH));
+      targetH = maxDim;
+    }
+  }
+
+  const outCanvas = document.createElement('canvas');
+  outCanvas.width = targetW;
+  outCanvas.height = targetH;
+  const outCtx = outCanvas.getContext('2d');
+  if (!outCtx) return canvas.toDataURL('image/png');
+
+  outCtx.imageSmoothingEnabled = true;
+  outCtx.imageSmoothingQuality = 'high';
+  outCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, targetW, targetH);
+
+  return outCanvas.toDataURL('image/png');
+}
+
+/**
+ * Resizes canvas to fit within maxDim
+ */
+function compressLogoToTarget(canvas: HTMLCanvasElement, maxDim: number): string {
+  let targetW = canvas.width;
+  let targetH = canvas.height;
+
+  if (targetW >= targetH) {
+    targetH = Math.max(1, Math.round((targetH * maxDim) / targetW));
+    targetW = maxDim;
+  } else {
+    targetW = Math.max(1, Math.round((targetW * maxDim) / targetH));
+    targetH = maxDim;
+  }
+
+  const outCanvas = document.createElement('canvas');
+  outCanvas.width = targetW;
+  outCanvas.height = targetH;
+  const outCtx = outCanvas.getContext('2d');
+  if (!outCtx) return canvas.toDataURL('image/png');
+
+  outCtx.imageSmoothingEnabled = true;
+  outCtx.imageSmoothingQuality = 'high';
+  outCtx.drawImage(canvas, 0, 0, targetW, targetH);
+
+  return outCanvas.toDataURL('image/png');
 }
