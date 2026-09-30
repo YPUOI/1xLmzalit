@@ -1,35 +1,30 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Download, 
   X, 
   CheckCircle2, 
   Loader2, 
-  Sparkles
+  Sparkles,
+  Trophy
 } from 'lucide-react';
-import { Match, Team, Prediction, AppUser } from '../types';
-import { generatePredictionCardImage, downloadDataUrlAsPng } from '../utils/generatePredictionCard';
+import { AppUser } from '../types';
+import { generateStandingsCardImage, downloadDataUrlAsPng } from '../utils/generateStandingsCard';
 import { useLanguage } from '../i18n/LanguageContext';
 
-interface PredictionCardModalProps {
+interface StandingsCardModalProps {
   isOpen: boolean;
   onClose: () => void;
-  match: Match;
-  homeTeam: Team;
-  awayTeam: Team;
-  prediction: Prediction;
-  memberName: string;
-  users?: AppUser[];
+  users: AppUser[];
+  userStats: Record<string, { exactScoreCount: number; correctMvpCount: number; correctScorersCount: number }>;
+  initialAction?: 'share' | 'download' | null;
 }
 
-export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
+export const StandingsCardModal: React.FC<StandingsCardModalProps> = ({
   isOpen,
   onClose,
-  match,
-  homeTeam,
-  awayTeam,
-  prediction,
-  memberName,
-  users = []
+  users,
+  userStats,
+  initialAction = null
 }) => {
   const { t, isRtl, language } = useLanguage();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -38,21 +33,15 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Compute the official member name as it appears in standings
-  // (Priority: 1. Admin-changed username in standings, 2. original username, 3. memberName/prediction username)
-  const standingsMemberName = useMemo(() => {
-    const raw = (memberName || prediction.username || '').replace(/^@+/, '').trim();
-    if (users && users.length > 0 && raw) {
-      const matchInUsers = users.find(u => 
-        u.username.toLowerCase() === raw.toLowerCase() ||
-        (u.originalUsername && u.originalUsername.toLowerCase() === raw.toLowerCase())
-      );
-      if (matchInUsers) {
-        return matchInUsers.username;
-      }
-    }
-    return raw || 'Member';
-  }, [memberName, prediction.username, users]);
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const filename = `1xlmzalit_Official_Standings_UCL_${dateStr}.png`;
+
+  const top3 = users.slice(0, 3);
+  const shareText = `🏆 *1xlmzalit UEFA Champions League Standings*\n👑 *Leader:* @${top3[0]?.username || 'N/A'} (${top3[0]?.points || 0} pts)${
+    top3[1] ? `\n🥈 *2nd:* @${top3[1].username} (${top3[1].points || 0} pts)` : ''
+  }${
+    top3[2] ? `\n🥉 *3rd:* @${top3[2].username} (${top3[2].points || 0} pts)` : ''
+  }\n📊 *Total Contenders:* ${users.length}\n🇲🇦 *Morocco GMT Official Leaderboard* • 1xlmzalit.ai`;
 
   useEffect(() => {
     if (!isOpen) {
@@ -68,29 +57,31 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
 
     const now = new Date();
 
-    generatePredictionCardImage({
-      match,
-      homeTeam,
-      awayTeam,
-      prediction,
-      memberName: standingsMemberName,
-      downloadDate: now
+    generateStandingsCardImage({
+      users,
+      userStats,
+      generatedDate: now
     })
       .then((url) => {
         if (isMounted) {
           setImageUrl(url);
           setIsGenerating(false);
+
+          // If an initial action was requested by admin
+          if (initialAction === 'download') {
+            downloadDataUrlAsPng(url, filename);
+          }
         }
       })
       .catch((err) => {
-        console.error('Failed to generate prediction card image:', err);
+        console.error('Failed to generate standings card image:', err);
         if (isMounted) {
           setError(
             language === 'fr' 
-              ? 'Erreur lors de la génération de la carte.' 
+              ? 'Erreur lors de la génération du tableau de classement.' 
               : language === 'en' 
-              ? 'Error generating prediction card image.' 
-              : 'حدث خطأ أثناء معالجة وتوليد صورة التوقع.'
+              ? 'Error generating standings image.' 
+              : 'حدث خطأ أثناء معالجة وتوليد صورة جدول الترتيب.'
           );
           setIsGenerating(false);
         }
@@ -99,26 +90,9 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, match, homeTeam, awayTeam, prediction, standingsMemberName, language]);
+  }, [isOpen, users, userStats, filename, initialAction, language]);
 
   if (!isOpen) return null;
-
-  const filename = `1xlmzalit_Prediction_${homeTeam.name}_vs_${awayTeam.name}_${standingsMemberName}.png`.replace(/\s+/g, '_');
-
-  // Formatted share text for WhatsApp, Discord, Telegram, and Socials
-  const scorersHomeText = prediction.homeScorers && prediction.homeScorers.length > 0
-    ? `\n⚽ *${homeTeam.name} Scorers:* ${prediction.homeScorers.join(', ')}`
-    : '';
-  const scorersAwayText = prediction.awayScorers && prediction.awayScorers.length > 0
-    ? `\n⚽ *${awayTeam.name} Scorers:* ${prediction.awayScorers.join(', ')}`
-    : '';
-
-  const shareText = `🏆 *1xlmzalit UCL Prediction Ticket*
-👤 *Member:* @${standingsMemberName}
-⚽ *Match:* ${homeTeam.name} vs ${awayTeam.name}
-🎯 *Prediction:* ${homeTeam.name} (${prediction.homeScore}) - (${prediction.awayScore}) ${awayTeam.name}
-⭐ *MVP:* ${prediction.mvp ? prediction.mvp.trim() : 'Unspecified'}${scorersHomeText}${scorersAwayText}
-🇲🇦 *Morocco GMT Standard* • 1xlmzalit.ai`;
 
   const handleDownload = () => {
     if (!imageUrl) return;
@@ -126,23 +100,21 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
   };
 
   /**
-   * Native Share API (opens native phone share drawer: WhatsApp, Discord, Telegram, Messages, etc.)
+   * Native Share API (opens native phone share drawer: WhatsApp, Discord, Telegram, etc.)
    */
   const handleNativeShare = async () => {
     if (!imageUrl) return;
     setIsSharing(true);
 
     try {
-      // 1. Convert data URL to Blob & File
       const res = await fetch(imageUrl);
       const blob = await res.blob();
       const file = new File([blob], filename, { type: 'image/png' });
 
-      // 2. Try native mobile share with the photo file attached
       if (typeof navigator !== 'undefined' && navigator.share) {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
-            title: `1xlmzalit UCL - ${homeTeam.name} vs ${awayTeam.name}`,
+            title: '1xlmzalit UCL Standings',
             text: shareText,
             files: [file]
           });
@@ -151,9 +123,8 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
           setIsSharing(false);
           return;
         } else {
-          // Native share with text & URL
           await navigator.share({
-            title: `1xlmzalit UCL - ${homeTeam.name} vs ${awayTeam.name}`,
+            title: '1xlmzalit UCL Standings',
             text: shareText,
             url: window.location.href
           });
@@ -164,54 +135,42 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
         }
       }
 
-      // 3. Fallback to copy image to clipboard
-      await handleCopyImageOrText(blob);
+      // Fallback: Copy image / text
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob })
+          ]);
+          setFeedbackMsg(
+            language === 'fr' 
+              ? 'Image HD copiée dans le presse-papiers !' 
+              : language === 'en' 
+              ? 'HD Standings copied to clipboard!' 
+              : 'تم نسخ صورة الترتيب إلى الحافظة!'
+          );
+          setTimeout(() => setFeedbackMsg(null), 3000);
+          return;
+        } catch {
+          // Fallback to text
+        }
+      }
+
+      await navigator.clipboard.writeText(shareText);
+      setFeedbackMsg(
+        language === 'fr' 
+          ? 'Texte du classement copié !' 
+          : language === 'en' 
+          ? 'Standings text copied!' 
+          : 'تم نسخ نص الترتيب بنجاح!'
+      );
+      setTimeout(() => setFeedbackMsg(null), 3000);
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.warn('Share warning:', err);
-        // Fallback to text copy
-        try {
-          await navigator.clipboard.writeText(shareText);
-          setFeedbackMsg(language === 'fr' ? 'Texte copié !' : language === 'en' ? 'Text copied!' : 'تم نسخ نص التوقع!');
-          setTimeout(() => setFeedbackMsg(null), 3000);
-        } catch {
-          // Silent fallback
-        }
       }
     } finally {
       setIsSharing(false);
     }
-  };
-
-  const handleCopyImageOrText = async (blob: Blob) => {
-    if (navigator.clipboard && window.isSecureContext) {
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({ 'image/png': blob })
-        ]);
-        setFeedbackMsg(
-          language === 'fr' 
-            ? 'Image HD copiée dans le presse-papiers !' 
-            : language === 'en' 
-            ? 'HD Photo copied to clipboard!' 
-            : 'تم نسخ الصورة إلى الحافظة (جاهزة للصق في ديسكورد / واتساب)!'
-        );
-        setTimeout(() => setFeedbackMsg(null), 3000);
-        return;
-      } catch {
-        // Fallback to text
-      }
-    }
-
-    await navigator.clipboard.writeText(shareText);
-    setFeedbackMsg(
-      language === 'fr' 
-        ? 'Détails du pronostic copiés !' 
-        : language === 'en' 
-        ? 'Prediction text copied!' 
-        : 'تم نسخ نص التوقع بنجاح!'
-    );
-    setTimeout(() => setFeedbackMsg(null), 3000);
   };
 
   return (
@@ -224,17 +183,17 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
         <div className="p-4 sm:p-5 border-b border-[#253745] flex items-center justify-between bg-[#11212D] gap-3">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#253745] border border-[#4A5C6A] flex items-center justify-center text-[#CCD0CF]">
-              <Sparkles className="w-4 h-4 text-[#CCD0CF]" />
+              <Trophy className="w-4 h-4 text-amber-400" />
             </div>
             <div>
               <h3 className="text-sm sm:text-base font-bold text-[#CCD0CF] flex items-center gap-2">
-                <span>{language === 'fr' ? 'Carte Officielle de Pronostic' : language === 'en' ? 'Official Prediction Ticket' : 'بطاقة التوقع الرسمية'}</span>
-                <span className="text-[10px] font-mono font-bold text-[#CCD0CF] bg-[#253745] border border-[#4A5C6A] px-2 py-0.5 rounded">
-                  HD PHOTO
+                <span>{language === 'fr' ? 'Tableau Officiel des Classements' : language === 'en' ? 'Official Standings Card' : 'بطاقة الترتيب الرسمي'}</span>
+                <span className="text-[10px] font-mono font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded">
+                  ADMIN HD
                 </span>
               </h3>
               <p className="text-xs text-[#9BA8AB]">
-                {language === 'fr' ? 'Prêt à être téléchargé et partagé (WhatsApp, Discord, etc.)' : language === 'en' ? 'Ready to share to WhatsApp, Discord, etc.' : 'جاهزة للمشاركة والتحميل (واتساب، ديسكورد، وغيرها)'}
+                {language === 'fr' ? 'Image haute définition du classement prête à télécharger ou partager' : language === 'en' ? 'HD standings card ready to download or share' : 'صورة عالية الجودة لجدول الترتيب جاهزة للتحميل أو المشاركة'}
               </p>
             </div>
           </div>
@@ -256,7 +215,7 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
               <div className="space-y-1">
                 <p className="font-semibold text-[#CCD0CF] text-sm sm:text-base">{t('loading')}</p>
                 <p className="text-xs text-[#9BA8AB]">
-                  {language === 'fr' ? 'Génération de la carte HD avec 1xlmzalit...' : language === 'en' ? 'Generating HD ticket with 1xlmzalit...' : 'تضمين التوقيت، الهدافين، رجل المباراة، وشعار 1xlmzalit الرسمي'}
+                  {language === 'fr' ? 'Génération du tableau officiel HD...' : language === 'en' ? 'Generating HD standings card...' : 'معالجة وتوليد صورة جدول الترتيب الرسمي بجودة عالية...'}
                 </p>
               </div>
             </div>
@@ -265,12 +224,12 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
               {error}
             </div>
           ) : imageUrl ? (
-            <div className="w-full flex flex-col items-center space-y-3 sm:space-y-4">
+            <div className="w-full flex flex-col items-center space-y-3">
               {/* Image Preview Box */}
               <div className="relative group rounded-xl overflow-hidden border border-[#253745] shadow-2xl max-w-sm sm:max-w-md w-full bg-[#11212D]">
                 <img
                   src={imageUrl}
-                  alt={`Prediction Ticket for @${standingsMemberName}`}
+                  alt="Official UCL Standings"
                   className="w-full h-auto object-contain select-none"
                 />
               </div>
@@ -286,10 +245,10 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
           ) : null}
         </div>
 
-        {/* Modal Footer Actions */}
+        {/* Modal Footer Actions: Simple Share Button & Download Button */}
         <div className="p-3.5 sm:p-4 border-t border-[#253745] bg-[#11212D] flex flex-wrap items-center justify-between gap-3">
           <div className="text-xs text-[#9BA8AB]">
-            <span>{t('member')}: <strong className="text-[#CCD0CF] font-semibold">@{standingsMemberName}</strong></span>
+            <span>{t('leaderboardTitle')}: <strong className="text-amber-400 font-semibold">{users.length} {language === 'fr' ? 'membres' : language === 'en' ? 'members' : 'أعضاء'}</strong></span>
           </div>
 
           <div className="flex items-center gap-2.5 w-full sm:w-auto">
@@ -299,8 +258,8 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
               onClick={handleNativeShare}
               disabled={!imageUrl || isGenerating || isSharing}
               className="p-2.5 rounded-xl bg-[#253745] hover:bg-[#4A5C6A] border border-[#4A5C6A] text-[#CCD0CF] hover:text-white transition-all duration-200 flex items-center justify-center cursor-pointer disabled:opacity-50 active:scale-95 shadow-md"
-              title={language === 'fr' ? 'Partager' : language === 'en' ? 'Share' : 'مشاركة'}
-              aria-label="Share"
+              title={language === 'fr' ? 'Partager le classement' : language === 'en' ? 'Share Standings' : 'مشاركة الترتيب'}
+              aria-label="Share Standings"
             >
               {isSharing ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -311,7 +270,7 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
               )}
             </button>
 
-            {/* Download PNG Button */}
+            {/* Download Button */}
             <button
               type="button"
               onClick={handleDownload}
@@ -319,7 +278,7 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
               className="px-5 py-2.5 rounded-xl bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold text-xs transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95 shadow-md"
             >
               <Download className="w-4 h-4" />
-              <span>{language === 'fr' ? 'Télécharger PNG' : language === 'en' ? 'Download PNG' : 'تحميل الصورة (Download PNG)'}</span>
+              <span>{language === 'fr' ? 'Télécharger PNG' : language === 'en' ? 'Download Standings' : 'تحميل صورة الترتيب'}</span>
             </button>
           </div>
         </div>

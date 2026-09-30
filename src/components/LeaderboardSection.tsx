@@ -12,7 +12,8 @@ import {
   Archive,
   Save,
   Plus,
-  Edit3
+  Edit3,
+  Download
 } from 'lucide-react';
 import { AppUser, Match, Prediction, ArchivedSeason } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -20,6 +21,7 @@ import { LeaderboardArchiveModal } from './LeaderboardArchiveModal';
 import { FinishCurrentSeasonModal } from './FinishCurrentSeasonModal';
 import { AddPastSeasonModal } from './AddPastSeasonModal';
 import { EditMemberNameModal } from './EditMemberNameModal';
+import { StandingsCardModal } from './StandingsCardModal';
 
 interface LeaderboardSectionProps {
   users: AppUser[];
@@ -44,13 +46,15 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
   onFinishCurrentSeason,
   onRenameUser,
 }) => {
-  const { t, isRtl } = useLanguage();
+  const { t, isRtl, language } = useLanguage();
   const isAdmin = currentUser?.role === 'admin';
 
   // Modals state
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [isFinishSeasonOpen, setIsFinishSeasonOpen] = useState(false);
   const [isAddPastSeasonOpen, setIsAddPastSeasonOpen] = useState(false);
+  const [isStandingsModalOpen, setIsStandingsModalOpen] = useState(false);
+  const [standingsModalAction, setStandingsModalAction] = useState<'share' | 'download' | null>(null);
   const [editingSeason, setEditingSeason] = useState<ArchivedSeason | null>(null);
   const [editingMember, setEditingMember] = useState<AppUser | null>(null);
 
@@ -241,6 +245,43 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
               </span>
             )}
           </button>
+
+          {/* Admin Standings Share & Download Buttons (just for admin) */}
+          {isAdmin && (
+            <div className="flex items-center gap-1.5 bg-[#06141B] p-1 rounded-xl border border-[#253745]">
+              {/* Simple Share Button (matching the user's photo) */}
+              <button
+                type="button"
+                onClick={() => {
+                  setStandingsModalAction('share');
+                  setIsStandingsModalOpen(true);
+                }}
+                disabled={approvedUsers.length === 0}
+                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-[#253745] hover:bg-[#4A5C6A] border border-[#4A5C6A] text-[#CCD0CF] hover:text-white transition-all duration-200 flex items-center justify-center cursor-pointer disabled:opacity-50 active:scale-95 shadow-sm"
+                title={language === 'fr' ? 'Partager le classement' : language === 'en' ? 'Share Standings' : 'مشاركة صورة الترتيب'}
+                aria-label="Share Standings"
+              >
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z"/>
+                </svg>
+              </button>
+
+              {/* Download Standings Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setStandingsModalAction('download');
+                  setIsStandingsModalOpen(true);
+                }}
+                disabled={approvedUsers.length === 0}
+                className="text-xs bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] hover:text-white border border-[#4A5C6A] px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
+                title={language === 'fr' ? 'Télécharger la photo du classement' : language === 'en' ? 'Download Standings Card' : 'تحميل صورة الترتيب'}
+              >
+                <Download className="w-3.5 h-3.5 text-[#CCD0CF]" />
+                <span className="hidden sm:inline">{language === 'fr' ? 'Télécharger le classement' : language === 'en' ? 'Download Standings' : 'تحميل الترتيب'}</span>
+              </button>
+            </div>
+          )}
 
           {/* Admin Finish and Save Season Button */}
           {isAdmin && onFinishCurrentSeason && (
@@ -733,6 +774,20 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
           onRenameUser={async (oldName, newName) => {
             await onRenameUser(oldName, newName);
           }}
+        />
+      )}
+
+      {/* 5. Admin Standings Card & Download Modal */}
+      {isAdmin && isStandingsModalOpen && (
+        <StandingsCardModal
+          isOpen={isStandingsModalOpen}
+          onClose={() => {
+            setIsStandingsModalOpen(false);
+            setStandingsModalAction(null);
+          }}
+          users={approvedUsers}
+          userStats={userStats}
+          initialAction={standingsModalAction}
         />
       )}
     </div>
