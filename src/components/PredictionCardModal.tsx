@@ -105,21 +105,6 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
 
   const filename = `1xlmzalit_Prediction_${homeTeam.name}_vs_${awayTeam.name}_${standingsMemberName}.png`.replace(/\s+/g, '_');
 
-  // Formatted share text for WhatsApp, Discord, Telegram, and Socials
-  const scorersHomeText = prediction.homeScorers && prediction.homeScorers.length > 0
-    ? `\n⚽ *${homeTeam.name} Scorers:* ${prediction.homeScorers.join(', ')}`
-    : '';
-  const scorersAwayText = prediction.awayScorers && prediction.awayScorers.length > 0
-    ? `\n⚽ *${awayTeam.name} Scorers:* ${prediction.awayScorers.join(', ')}`
-    : '';
-
-  const shareText = `🏆 *1xlmzalit UCL Prediction Ticket*
-👤 *Member:* @${standingsMemberName}
-⚽ *Match:* ${homeTeam.name} vs ${awayTeam.name}
-🎯 *Prediction:* ${homeTeam.name} (${prediction.homeScore}) - (${prediction.awayScore}) ${awayTeam.name}
-⭐ *MVP:* ${prediction.mvp ? prediction.mvp.trim() : 'Unspecified'}${scorersHomeText}${scorersAwayText}
-🇲🇦 *Morocco GMT Standard* • 1xlmzalit.ai`;
-
   const handleDownload = () => {
     if (!imageUrl) return;
     downloadDataUrlAsPng(imageUrl, filename);
@@ -127,6 +112,7 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
 
   /**
    * Native Share API (opens native phone share drawer: WhatsApp, Discord, Telegram, Messages, etc.)
+   * Shares ONLY the photo file without any text message attached.
    */
   const handleNativeShare = async () => {
     if (!imageUrl) return;
@@ -138,52 +124,32 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
       const blob = await res.blob();
       const file = new File([blob], filename, { type: 'image/png' });
 
-      // 2. Try native mobile share with the photo file attached
+      // 2. Native mobile share: ONLY the photo file (no text message)
       if (typeof navigator !== 'undefined' && navigator.share) {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
-            title: `1xlmzalit UCL - ${homeTeam.name} vs ${awayTeam.name}`,
-            text: shareText,
             files: [file]
           });
-          setFeedbackMsg(language === 'fr' ? 'Partagé avec succès !' : language === 'en' ? 'Shared successfully!' : 'تمت المشاركة بنجاح!');
-          setTimeout(() => setFeedbackMsg(null), 3000);
-          setIsSharing(false);
-          return;
-        } else {
-          // Native share with text & URL
-          await navigator.share({
-            title: `1xlmzalit UCL - ${homeTeam.name} vs ${awayTeam.name}`,
-            text: shareText,
-            url: window.location.href
-          });
-          setFeedbackMsg(language === 'fr' ? 'Partagé avec succès !' : language === 'en' ? 'Shared successfully!' : 'تمت المشاركة بنجاح!');
+          setFeedbackMsg(language === 'fr' ? 'Photo partagée avec succès !' : language === 'en' ? 'Photo shared successfully!' : 'تمت مشاركة الصورة بنجاح!');
           setTimeout(() => setFeedbackMsg(null), 3000);
           setIsSharing(false);
           return;
         }
       }
 
-      // 3. Fallback to copy image to clipboard
-      await handleCopyImageOrText(blob);
+      // 3. Fallback to copy image to clipboard (no text)
+      await handleCopyImage(blob);
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.warn('Share warning:', err);
-        // Fallback to text copy
-        try {
-          await navigator.clipboard.writeText(shareText);
-          setFeedbackMsg(language === 'fr' ? 'Texte copié !' : language === 'en' ? 'Text copied!' : 'تم نسخ نص التوقع!');
-          setTimeout(() => setFeedbackMsg(null), 3000);
-        } catch {
-          // Silent fallback
-        }
       }
     } finally {
       setIsSharing(false);
     }
   };
 
-  const handleCopyImageOrText = async (blob: Blob) => {
+  const handleCopyImage = async (blob: Blob) => {
+    if (!imageUrl) return;
     if (navigator.clipboard && window.isSecureContext) {
       try {
         await navigator.clipboard.write([
@@ -191,27 +157,20 @@ export const PredictionCardModal: React.FC<PredictionCardModalProps> = ({
         ]);
         setFeedbackMsg(
           language === 'fr' 
-            ? 'Image HD copiée dans le presse-papiers !' 
+            ? 'Image copiée dans le presse-papiers !' 
             : language === 'en' 
-            ? 'HD Photo copied to clipboard!' 
-            : 'تم نسخ الصورة إلى الحافظة (جاهزة للصق في ديسكورد / واتساب)!'
+            ? 'Photo copied to clipboard!' 
+            : 'تم نسخ الصورة إلى الحافظة!'
         );
         setTimeout(() => setFeedbackMsg(null), 3000);
         return;
       } catch {
-        // Fallback to text
+        // Fallback to downloading image
+        downloadDataUrlAsPng(imageUrl, filename);
       }
+    } else {
+      downloadDataUrlAsPng(imageUrl, filename);
     }
-
-    await navigator.clipboard.writeText(shareText);
-    setFeedbackMsg(
-      language === 'fr' 
-        ? 'Détails du pronostic copiés !' 
-        : language === 'en' 
-        ? 'Prediction text copied!' 
-        : 'تم نسخ نص التوقع بنجاح!'
-    );
-    setTimeout(() => setFeedbackMsg(null), 3000);
   };
 
   return (

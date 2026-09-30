@@ -4,7 +4,6 @@ import {
   X, 
   CheckCircle2, 
   Loader2, 
-  Sparkles,
   Trophy
 } from 'lucide-react';
 import { AppUser } from '../types';
@@ -35,13 +34,6 @@ export const StandingsCardModal: React.FC<StandingsCardModalProps> = ({
 
   const dateStr = new Date().toISOString().slice(0, 10);
   const filename = `1xlmzalit_Official_Standings_UCL_${dateStr}.png`;
-
-  const top3 = users.slice(0, 3);
-  const shareText = `🏆 *1xlmzalit UEFA Champions League Standings*\n👑 *Leader:* @${top3[0]?.username || 'N/A'} (${top3[0]?.points || 0} pts)${
-    top3[1] ? `\n🥈 *2nd:* @${top3[1].username} (${top3[1].points || 0} pts)` : ''
-  }${
-    top3[2] ? `\n🥉 *3rd:* @${top3[2].username} (${top3[2].points || 0} pts)` : ''
-  }\n📊 *Total Contenders:* ${users.length}\n🇲🇦 *Morocco GMT Official Leaderboard* • 1xlmzalit.ai`;
 
   useEffect(() => {
     if (!isOpen) {
@@ -114,28 +106,16 @@ export const StandingsCardModal: React.FC<StandingsCardModalProps> = ({
       if (typeof navigator !== 'undefined' && navigator.share) {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
-            title: '1xlmzalit UCL Standings',
-            text: shareText,
             files: [file]
           });
-          setFeedbackMsg(language === 'fr' ? 'Partagé avec succès !' : language === 'en' ? 'Shared successfully!' : 'تمت المشاركة بنجاح!');
-          setTimeout(() => setFeedbackMsg(null), 3000);
-          setIsSharing(false);
-          return;
-        } else {
-          await navigator.share({
-            title: '1xlmzalit UCL Standings',
-            text: shareText,
-            url: window.location.href
-          });
-          setFeedbackMsg(language === 'fr' ? 'Partagé avec succès !' : language === 'en' ? 'Shared successfully!' : 'تمت المشاركة بنجاح!');
+          setFeedbackMsg(language === 'fr' ? 'Photo partagée avec succès !' : language === 'en' ? 'Photo shared successfully!' : 'تمت مشاركة الصورة بنجاح!');
           setTimeout(() => setFeedbackMsg(null), 3000);
           setIsSharing(false);
           return;
         }
       }
 
-      // Fallback: Copy image / text
+      // Fallback: Copy photo to clipboard (no text)
       if (navigator.clipboard && window.isSecureContext) {
         try {
           await navigator.clipboard.write([
@@ -143,27 +123,20 @@ export const StandingsCardModal: React.FC<StandingsCardModalProps> = ({
           ]);
           setFeedbackMsg(
             language === 'fr' 
-              ? 'Image HD copiée dans le presse-papiers !' 
+              ? 'Image copiée dans le presse-papiers !' 
               : language === 'en' 
-              ? 'HD Standings copied to clipboard!' 
-              : 'تم نسخ صورة الترتيب إلى الحافظة!'
+              ? 'Photo copied to clipboard!' 
+              : 'تم نسخ الصورة إلى الحافظة!'
           );
           setTimeout(() => setFeedbackMsg(null), 3000);
           return;
         } catch {
-          // Fallback to text
+          // If copying image fails, download image
+          downloadDataUrlAsPng(imageUrl, filename);
         }
+      } else {
+        downloadDataUrlAsPng(imageUrl, filename);
       }
-
-      await navigator.clipboard.writeText(shareText);
-      setFeedbackMsg(
-        language === 'fr' 
-          ? 'Texte du classement copié !' 
-          : language === 'en' 
-          ? 'Standings text copied!' 
-          : 'تم نسخ نص الترتيب بنجاح!'
-      );
-      setTimeout(() => setFeedbackMsg(null), 3000);
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.warn('Share warning:', err);
