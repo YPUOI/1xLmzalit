@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Users, Search } from 'lucide-react';
+import { Users, Search, Globe } from 'lucide-react';
 import { Team } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
+import { getTeamEnglishName } from '../data/clubPresets';
+import { getUclTeamPreset } from '../data/uclTeams36';
 
 interface SquadsSectionProps {
   teams: Record<string, Team>;
@@ -75,9 +77,18 @@ export const SquadsSection: React.FC<SquadsSectionProps> = ({ teams }) => {
             onChange={(e) => setSelectedTeamKey(e.target.value)}
             className="w-full md:w-72 bg-[#06141B] border border-[#253745] rounded-xl p-2.5 text-[#CCD0CF] font-semibold focus:border-[#4A5C6A] outline-none transition-all duration-200 cursor-pointer text-xs sm:text-sm"
           >
-            {teamKeys.map(tKey => (
-              <option key={tKey} value={tKey}>{tKey}</option>
-            ))}
+            {teamKeys.map(tKey => {
+              const uclMatch = getUclTeamPreset(tKey);
+              const enName = uclMatch?.enName || getTeamEnglishName(tKey);
+              const label = language === 'en' 
+                ? (enName || tKey) 
+                : (enName && enName !== tKey ? `${tKey} • ${enName}` : tKey);
+              return (
+                <option key={tKey} value={tKey}>
+                  {uclMatch?.country ? `[${uclMatch.country}] ` : ''}{label}
+                </option>
+              );
+            })}
           </select>
         </div>
       </div>
@@ -94,10 +105,25 @@ export const SquadsSection: React.FC<SquadsSectionProps> = ({ teams }) => {
             />
           </div>
           <div>
-            <h3 className="text-base sm:text-lg font-bold text-[#CCD0CF]">{currentTeam.name}</h3>
-            <span className="text-xs text-[#9BA8AB] font-medium">
-              {currentTeam.squad?.length || 0} {language === 'fr' ? 'joueurs enregistrés' : language === 'en' ? 'players registered' : 'لاعباً في القائمة'}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-base sm:text-lg font-bold text-[#CCD0CF]">
+                {language === 'en' ? (getUclTeamPreset(currentTeam.name)?.enName || getTeamEnglishName(currentTeam.name) || currentTeam.name) : currentTeam.name}
+              </h3>
+              {getUclTeamPreset(currentTeam.name)?.country && (
+                <span className="text-[10px] bg-[#253745] text-sky-300 border border-sky-500/30 px-2 py-0.5 rounded font-mono font-bold">
+                  {getUclTeamPreset(currentTeam.name)?.country}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-[#9BA8AB] font-medium mt-0.5">
+              <span>
+                {language === 'en' ? currentTeam.name : (getUclTeamPreset(currentTeam.name)?.enName || getTeamEnglishName(currentTeam.name))}
+              </span>
+              <span>•</span>
+              <span className="text-[#CCD0CF] font-bold">
+                {currentTeam.squad?.length || 0} {language === 'fr' ? 'joueurs enregistrés' : language === 'en' ? 'players registered' : 'لاعباً في القائمة الرسمية'}
+              </span>
+            </div>
           </div>
         </div>
 

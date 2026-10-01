@@ -48,7 +48,7 @@ import { ToastContainer, ToastMessage } from './components/ToastContainer';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { useLanguage } from './i18n/LanguageContext';
 
-const DB_VERSION = "2026.12_TEAMS_CLEARED";
+const DB_VERSION = "2026_2027_UCL_LATEST_ROSTER";
 
 export type TabType = 'home' | 'matches' | 'members_predictions' | 'leaderboard' | 'rules' | 'admin';
 
@@ -58,7 +58,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('home');
 
   // Application Data States
-  const [teams, setTeams] = useState<Record<string, Team>>({});
+  const [teams, setTeams] = useState<Record<string, Team>>(DEFAULT_TEAMS);
   const [matches, setMatches] = useState<Match[]>([]);
   const [predictions, setPredictions] = useState<Record<string, Prediction>>({});
   const [users, setUsers] = useState<AppUser[]>([]);
@@ -104,18 +104,29 @@ export default function App() {
     // 2. Initialize Database and LocalStorage
     const storedVersion = localStorage.getItem('cl_db_version');
     if (storedVersion !== DB_VERSION) {
-      // Clear out all teams, players, and existing matches per user directive
-      localStorage.setItem('cl_teams', JSON.stringify({}));
+      // Clear out legacy matches and initialize with all 36 UCL teams
+      localStorage.setItem('cl_teams', JSON.stringify(DEFAULT_TEAMS));
       localStorage.setItem('cl_matches', JSON.stringify([]));
       localStorage.setItem('cl_predictions', JSON.stringify({}));
       localStorage.setItem('cl_db_version', DB_VERSION);
-      setTeams({});
+      setTeams(DEFAULT_TEAMS);
       setMatches([]);
       setPredictions({});
     } else {
       // Load Teams
       const storedTeams = localStorage.getItem('cl_teams');
-      setTeams(storedTeams ? JSON.parse(storedTeams) : {});
+      let loadedTeams: Record<string, Team> = DEFAULT_TEAMS;
+      try {
+        if (storedTeams) {
+          const parsed = JSON.parse(storedTeams);
+          if (parsed && Object.keys(parsed).length > 0) {
+            loadedTeams = { ...DEFAULT_TEAMS, ...parsed };
+          }
+        }
+      } catch {
+        loadedTeams = DEFAULT_TEAMS;
+      }
+      setTeams(loadedTeams);
 
       // Load Matches
       const storedMatches = localStorage.getItem('cl_matches');
@@ -163,8 +174,24 @@ export default function App() {
     // 3. Real-time Firebase Firestore Synchronizers
     const unsubTeams = subscribeTeams((firestoreTeams) => {
       if (firestoreTeams && Object.keys(firestoreTeams).length > 0) {
-        setTeams(firestoreTeams);
-        localStorage.setItem('cl_teams', JSON.stringify(firestoreTeams));
+        // Merge with all 36 UCL teams so participant clubs are always fully loaded
+        const merged: Record<string, Team> = { ...DEFAULT_TEAMS };
+        Object.entries(firestoreTeams).forEach(([id, team]) => {
+          const defaultTeam = DEFAULT_TEAMS[id];
+          merged[id] = {
+            ...team,
+            logo: team.logo || defaultTeam?.logo || '',
+            squad: (team.squad && team.squad.length > 0) ? team.squad : (defaultTeam?.squad || [])
+          };
+        });
+        setTeams(merged);
+        localStorage.setItem('cl_teams', JSON.stringify(merged));
+      } else {
+        setTeams(DEFAULT_TEAMS);
+        localStorage.setItem('cl_teams', JSON.stringify(DEFAULT_TEAMS));
+        Object.entries(DEFAULT_TEAMS).forEach(([id, t]) => {
+          syncSaveTeam(id, t).catch(() => {});
+        });
       }
     });
 

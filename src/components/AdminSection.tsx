@@ -33,15 +33,20 @@ import {
   Award,
   Filter,
   Loader2,
-  Edit3
+  Edit3,
+  Calendar,
+  Zap,
+  Trophy
 } from 'lucide-react';
 import { Match, Team, AppUser, Prediction, SecurityConfig } from '../types';
+import { MatchSuggestion, generateDynamicUclSuggestions, fetchLiveUpcomingFixtures } from '../services/matchSuggestions';
 import { getSecurityConfig, saveSecurityConfig } from '../utils/security';
 import { subscribeSecurityConfig, syncSaveSecurityConfig } from '../lib/firebase';
 import { ConfirmDialog } from './ConfirmDialog';
 import { EditMemberNameModal } from './EditMemberNameModal';
 import { getTeamEnglishName } from '../data/clubPresets';
 import { POPULAR_CLUB_PRESETS, parsePlayersText, generateFallbackLogo, ClubPreset } from '../data/clubPresets';
+import { UCL_36_TEAMS, UCL_36_CLUBS_LIST } from '../data/uclTeams36';
 import { removeImageBackground } from '../utils/removeBackground';
 import { useLanguage } from '../i18n/LanguageContext';
 import { 
@@ -105,6 +110,14 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
   const [newHomeTeam, setNewHomeTeam] = useState<string>(teamKeys[0] || '');
   const [newAwayTeam, setNewAwayTeam] = useState<string>(teamKeys[1] || teamKeys[0] || '');
   const [newDeadline, setNewDeadline] = useState<string>('');
+
+  // Match Suggestions State (Auto-Updated upcoming UCL matches)
+  const [matchSuggestions, setMatchSuggestions] = useState<MatchSuggestion[]>(() => generateDynamicUclSuggestions(getStoredMoroccoOffset()));
+  const [suggestionsLoading, setSuggestionsLoading] = useState<boolean>(false);
+  const [suggestionsFilter, setSuggestionsFilter] = useState<'all' | 'derbies' | 'thisWeek' | 'nextWeek'>('all');
+  const [suggestionsSearch, setSuggestionsSearch] = useState<string>('');
+  const [suggestionsSource, setSuggestionsSource] = useState<string>('UEFA Live Calendar');
+  const [activeAddTab, setActiveAddTab] = useState<'suggestions' | 'manual'>('suggestions');
 
   // Morocco Time settings (Default: GMT / UTC+0 officially matching Morocco phone time)
   const [moroccoOffset, setMoroccoOffset] = useState<number>(() => getStoredMoroccoOffset());
@@ -337,6 +350,154 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     setNewDeadline('');
   };
 
+  // Auto-sync upcoming fixtures on mount & when offset changes
+  useEffect(() => {
+    let isMounted = true;
+    setSuggestionsLoading(true);
+    fetchLiveUpcomingFixtures(moroccoOffset)
+      .then(res => {
+        if (isMounted) {
+          setMatchSuggestions(res.fixtures);
+          setSuggestionsSource(res.source);
+          setSuggestionsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setMatchSuggestions(generateDynamicUclSuggestions(moroccoOffset));
+          setSuggestionsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [moroccoOffset]);
+
+  const handleRefreshSuggestions = async () => {
+    setSuggestionsLoading(true);
+    try {
+      const res = await fetchLiveUpcomingFixtures(moroccoOffset);
+      setMatchSuggestions(res.fixtures);
+      setSuggestionsSource(res.source);
+      notify(
+        language === 'fr' 
+          ? 'Suggestions de matchs actualisées avec succès !' 
+          : language === 'en' 
+          ? 'Match suggestions updated successfully!' 
+          : 'تم تحديث مقترحات المباريات القادمة بنجاح!', 
+        'success'
+      );
+    } catch {
+      setMatchSuggestions(generateDynamicUclSuggestions(moroccoOffset));
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
+  const ensureTeamsExist = async (homeName: string, awayName: string): Promise<Record<string, Team>> => {
+    let updated = { ...teams };
+    let hasChanges = false;
+
+    for (const name of [homeName, awayName]) {
+      const existing = updated[name];
+      if (!existing || !existing.squad || existing.squad.length === 0) {
+        const preset = POPULAR_CLUB_PRESETS.find(
+          p => p.name.toLowerCase() === name.toLowerCase() || p.enName.toLowerCase() === name.toLowerCase()
+        ) || (UCL_36_TEAMS[name] ? { name, enName: name, logo: UCL_36_TEAMS[name].logo, squad: UCL_36_TEAMS[name].squad } : undefined);
+
+        updated[name] = {
+          name,
+          logo: existing?.logo || preset?.logo || generateFallbackLogo(name),
+          squad: (existing?.squad && existing.squad.length > 0) ? existing.squad : (preset?.squad || [])
+        };
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      await onUpdateTeams(updated);
+    }
+    return updated;
+  };
+
+  const handleApplySuggestion = async (sug: MatchSuggestion) => {
+    await ensureTeamsExist(sug.homeTeam, sug.awayTeam);
+    setNewHomeTeam(sug.homeTeam);
+    setNewAwayTeam(sug.awayTeam);
+    setNewDeadline(sug.moroccoInputDate);
+    setActiveAddTab('manual');
+    notify(
+      language === 'fr'
+        ? `Match pré-rempli dans le formulaire : ${sug.homeTeamEn} vs ${sug.awayTeamEn}`
+        : language === 'en'
+        ? `Applied fixture to form: ${sug.homeTeamEn} vs ${sug.awayTeamEn}`
+        : `تم تعبئة المباراة في النموذج: ${sug.homeTeam} ضد ${sug.awayTeam}`,
+      'info'
+    );
+  };
+
+  const handleQuickAddSuggestion = async (sug: MatchSuggestion) => {
+    const isAlreadyScheduled = matches.some(
+      m => (m.homeTeam === sug.homeTeam && m.awayTeam === sug.awayTeam) ||
+           (m.homeTeam === sug.awayTeam && m.awayTeam === sug.homeTeam)
+    );
+
+    if (isAlreadyScheduled) {
+      notify(
+        language === 'fr'
+          ? 'Ce match est déjà programmé dans la compétition !'
+          : language === 'en'
+          ? 'This match is already scheduled in the competition!'
+          : 'هذه المباراة مضافة بالفعل في جدول المنافسات!',
+        'info'
+      );
+      return;
+    }
+
+    await ensureTeamsExist(sug.homeTeam, sug.awayTeam);
+
+    const newMatch: Match = {
+      id: `m_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      homeTeam: sug.homeTeam,
+      awayTeam: sug.awayTeam,
+      deadline: sug.kickoffDate,
+      status: 'OPEN',
+      result: null
+    };
+
+    onUpdateMatches([...matches, newMatch]);
+
+    notify(
+      language === 'fr'
+        ? `Match ajouté avec succès : ${sug.homeTeamEn} vs ${sug.awayTeamEn}`
+        : language === 'en'
+        ? `Match scheduled successfully: ${sug.homeTeamEn} vs ${sug.awayTeamEn}`
+        : `تمت إضافة مباراة (${sug.homeTeam} ضد ${sug.awayTeam}) بنجاح!`,
+      'success'
+    );
+  };
+
+  const filteredSuggestions = useMemo(() => {
+    return matchSuggestions.filter(sug => {
+      if (suggestionsFilter === 'derbies' && !sug.isHot) return false;
+      if (suggestionsFilter === 'thisWeek' && sug.group !== 'thisWeek') return false;
+      if (suggestionsFilter === 'nextWeek' && sug.group !== 'nextWeek') return false;
+
+      if (suggestionsSearch.trim()) {
+        const query = suggestionsSearch.trim().toLowerCase();
+        const matchesSearch =
+          sug.homeTeam.toLowerCase().includes(query) ||
+          sug.awayTeam.toLowerCase().includes(query) ||
+          sug.homeTeamEn.toLowerCase().includes(query) ||
+          sug.awayTeamEn.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+
+      return true;
+    });
+  }, [matchSuggestions, suggestionsFilter, suggestionsSearch]);
+
   const handleUpdateDeadline = (matchId: string) => {
     const dl = editDeadlines[matchId];
     if (!dl) {
@@ -532,12 +693,54 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     }
   };
 
+  const [isImportingUclClubs, setIsImportingUclClubs] = useState(false);
+
+  const handleImportAllUclClubs = async () => {
+    setIsImportingUclClubs(true);
+    try {
+      // Merge all 36 UCL teams into teams, enriching squads and official logos
+      const nextTeams: Record<string, Team> = { ...teams };
+      Object.entries(UCL_36_TEAMS).forEach(([k, uclTeam]) => {
+        const existing = nextTeams[k];
+        nextTeams[k] = {
+          name: uclTeam.name,
+          logo: existing?.logo || uclTeam.logo,
+          squad: (existing?.squad && existing.squad.length > 0) ? existing.squad : uclTeam.squad
+        };
+      });
+      await onUpdateTeams(nextTeams);
+      notify(
+        language === 'fr'
+          ? `Succès ! Les 36 clubs participants de la Ligue des Champions (logos officiels et effectifs) ont été chargés et enregistrés.`
+          : language === 'en'
+          ? `Success! All 36 UEFA Champions League League Phase clubs (official crests & full squads) loaded & synced.`
+          : `تم بنجاح تحميل وحفظ كافة أندية دوري أبطال أوروبا الـ 36 بشعاراتها وقوائم لاعبيها الرسمية!`,
+        'success'
+      );
+    } catch (err) {
+      console.error(err);
+      notify(
+        language === 'fr' ? 'Échec du chargement des clubs UCL' : language === 'en' ? 'Failed to import UCL clubs' : 'فشل تحميل أندية دوري أبطال أوروبا',
+        'error'
+      );
+    } finally {
+      setIsImportingUclClubs(false);
+    }
+  };
+
   const handleSelectPreset = (preset: ClubPreset) => {
     setNewTeamName(preset.name);
     setNewTeamLogo(preset.logo);
+    if (preset.squad && preset.squad.length > 0) {
+      setNewTeamInitialSquad(preset.squad.join('\n'));
+    }
     setShowPresetPicker(false);
     notify(
-      language === 'fr' ? `Club ${preset.name} et logo sélectionnés !` : language === 'en' ? `Club ${preset.name} and logo selected!` : `تم اختيار نادي ${preset.name} وشعاره!`,
+      language === 'fr' 
+        ? `Club ${preset.name} sélectionné avec son logo et sa liste (${preset.squad?.length || 0}) joueurs !` 
+        : language === 'en' 
+        ? `Club ${preset.enName} selected with official crest & (${preset.squad?.length || 0}) squad players!` 
+        : `تم اختيار نادي ${preset.name} وشعاره وتشكيلته (${preset.squad?.length || 0} لاعباً)!`,
       'info'
     );
   };
@@ -1808,132 +2011,440 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
         </button>
 
         {expandedSections.addMatch && (
-          <div className="p-5 sm:p-6 pt-0 border-t border-[#253745] mt-1">
-            <p className="text-xs text-[#9BA8AB] my-4 pb-3 border-b border-[#253745] sm:hidden">
-              {language === 'fr'
-                ? 'Définir l\'équipe à domicile, à l\'extérieur et la date limite de pronostic.'
-                : language === 'en'
-                ? 'Set home team, away team, and prediction deadline.'
-                : 'تحديد الفريق المستضيف والضيف وموعد إغلاق التوقع (Deadline)'}
-            </p>
+          <div className="p-4 sm:p-6 pt-0 border-t border-[#253745] mt-1 space-y-5">
+            {/* View Mode Switcher: Suggestions vs Manual Entry */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-b border-[#253745] pb-4">
+              <div className="flex items-center gap-2 p-1 bg-[#06141B] rounded-xl border border-[#253745] w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setActiveAddTab('suggestions')}
+                  className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+                    activeAddTab === 'suggestions'
+                      ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-[#06141B] shadow-md shadow-amber-500/20'
+                      : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>
+                    {language === 'fr' 
+                      ? 'Suggestions de matchs (À jour)' 
+                      : language === 'en' 
+                      ? 'Next Match Suggestions' 
+                      : 'مقترحات المباريات القادمة (محدثة)'}
+                  </span>
+                  <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                    activeAddTab === 'suggestions' ? 'bg-black/20 text-[#06141B]' : 'bg-[#253745] text-amber-300'
+                  }`}>
+                    {filteredSuggestions.length}
+                  </span>
+                </button>
 
-            {teamKeys.length < 2 ? (
-              <div className="p-4 my-3 bg-[#06141B] border border-amber-500/30 rounded-xl text-xs text-amber-200 leading-relaxed">
-                {language === 'fr'
-                  ? 'Attention : Au moins 2 équipes sont requises pour créer un match. Veuillez d\'abord ajouter des équipes dans la section ci-dessous.'
-                  : language === 'en'
-                  ? 'Notice: At least 2 teams are required to create a match. Please add teams in the Team Management section below first.'
-                  : 'تنبيه: يلزم تسجيل فريقين على الأقل لإنشاء مباراة. يرجى إضافة الفرق وتشكيلاتها من قسم "التحكم في الفرق واللاعبين" أدناه أولاً.'}
+                <button
+                  type="button"
+                  onClick={() => setActiveAddTab('manual')}
+                  className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ${
+                    activeAddTab === 'manual'
+                      ? 'bg-[#253745] text-white shadow-md'
+                      : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
+                  }`}
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>
+                    {language === 'fr' 
+                      ? 'Ajout manuel' 
+                      : language === 'en' 
+                      ? 'Custom Manual Entry' 
+                      : 'إضافة يدوية مخصصة'}
+                  </span>
+                </button>
               </div>
-            ) : (
-              <form onSubmit={handleCreateMatch} className="space-y-4 pt-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-[#CCD0CF] mb-1.5">
-                      {language === 'fr' ? 'Équipe à domicile (Home)' : language === 'en' ? 'Home Team' : 'الفريق المستضيف (Home)'}
-                    </label>
-                    <select
-                      value={newHomeTeam}
-                      onChange={(e) => setNewHomeTeam(e.target.value)}
-                      className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-[#CCD0CF] font-semibold focus:border-[#4A5C6A] outline-none text-xs transition-all duration-200"
-                      required
-                    >
-                      {teamKeys.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-[#CCD0CF] mb-1.5">
-                      {language === 'fr' ? 'Équipe à l\'extérieur (Away)' : language === 'en' ? 'Away Team' : 'الفريق الضيف (Away)'}
-                    </label>
-                    <select
-                      value={newAwayTeam}
-                      onChange={(e) => setNewAwayTeam(e.target.value)}
-                      className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-[#CCD0CF] font-semibold focus:border-[#4A5C6A] outline-none text-xs transition-all duration-200"
-                      required
-                    >
-                      {teamKeys.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                    <div>
-                      <label className="block text-xs font-semibold text-[#CCD0CF]">
-                        {language === 'fr' 
-                          ? `Date & heure du match (🇲🇦 Heure du Maroc - GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset})` 
-                          : language === 'en' 
-                          ? `Kickoff date/time & deadline (🇲🇦 Morocco Time - GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset})` 
-                          : `موعد المباراة ووقت إغلاق التوقع (🇲🇦 بتوقيت المغرب - GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset})`}
-                      </label>
-                      <span className="text-[11px] text-[#9BA8AB]">
-                        {language === 'fr' ? 'Conforme à l\'heure de votre téléphone au Maroc' : language === 'en' ? 'Matches your phone\'s time in Morocco' : 'يطابق توقيت هاتفك في المغرب تماماً'}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 bg-[#06141B] p-0.5 rounded-lg border border-[#253745] text-[10px]">
-                        <button
-                          type="button"
-                          onClick={() => handleOffsetChange(0)}
-                          className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
-                            moroccoOffset === 0 
-                              ? 'bg-emerald-600 text-white shadow-sm' 
-                              : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
-                          }`}
-                          title="Morocco Official GMT (UTC+0)"
-                        >
-                          GMT (Officiel)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleOffsetChange(1)}
-                          className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
-                            moroccoOffset === 1 
-                              ? 'bg-emerald-600 text-white shadow-sm' 
-                              : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
-                          }`}
-                          title="GMT+1"
-                        >
-                          GMT+1
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-[#06141B] px-2.5 py-1 rounded-lg border border-[#253745] shadow-inner">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <span>🇲🇦 {moroccoNowTime}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <input
-                    type="datetime-local"
-                    value={newDeadline}
-                    onChange={(e) => setNewDeadline(e.target.value)}
-                    style={{ colorScheme: 'dark' }}
-                    className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-[#CCD0CF] font-semibold focus:border-[#4A5C6A] outline-none text-xs font-mono transition-all duration-200"
-                    required
-                  />
-                  <p className="text-[11px] text-[#9BA8AB] mt-1.5 flex items-center gap-1.5">
-                    <span className="text-amber-400">🇲🇦</span>
-                    <span>
-                      {language === 'fr' 
-                        ? `L'heure saisie est enregistrée selon le fuseau sélectionné (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}) et reste synchronisée avec l'heure réelle de votre téléphone.` 
-                        : language === 'en' 
-                        ? `The entered time is saved according to the selected timezone (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}) and matches your phone's real-time clock.` 
-                        : `يتم تسجيل الوقت وفق التوقيت المختار (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}) ليتطابق مع ساعة هاتفك.`}
-                    </span>
-                  </p>
+              {/* Status and Auto-Sync Action */}
+              <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+                <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-lg">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span className="font-semibold">
+                    {language === 'fr' ? 'À jour auto' : language === 'en' ? 'Auto-Updated' : 'محدثة تلقائياً'}
+                  </span>
                 </div>
 
                 <button
-                  type="submit"
-                  className="w-full bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold py-3.5 rounded-xl transition-all duration-200 shadow text-xs cursor-pointer active:scale-95"
+                  type="button"
+                  onClick={handleRefreshSuggestions}
+                  disabled={suggestionsLoading}
+                  className="px-3 py-1 rounded-lg bg-[#06141B] hover:bg-[#253745] border border-[#253745] hover:border-[#4A5C6A] text-[#CCD0CF] text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                  title="Refresh / Sync live upcoming UCL fixtures"
                 >
-                  {language === 'fr' ? 'Publier le match et ouvrir les pronostics' : language === 'en' ? 'Publish Match & Open Predictions' : 'نشر المباراة وإتاحة التوقع للمستخدمين'}
+                  <RotateCw className={`w-3.5 h-3.5 text-amber-400 ${suggestionsLoading ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">
+                    {language === 'fr' ? 'Actualiser' : language === 'en' ? 'Sync Live' : 'تحديث'}
+                  </span>
                 </button>
-              </form>
+              </div>
+            </div>
+
+            {/* TAB 1: AUTO-UPDATED MATCH SUGGESTIONS */}
+            {activeAddTab === 'suggestions' && (
+              <div className="space-y-4">
+                {/* Search & Filter Bar */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  <div className="relative flex-1">
+                    <Search className="w-3.5 h-3.5 text-[#9BA8AB] absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={suggestionsSearch}
+                      onChange={(e) => setSuggestionsSearch(e.target.value)}
+                      placeholder={
+                        language === 'fr'
+                          ? 'Rechercher une équipe (Madrid, Paris, City, Bayern...)'
+                          : language === 'en'
+                          ? 'Search team or club (Madrid, City, Bayern, PSG...)'
+                          : 'ابحث باسم الفريق (ريال، برشلونة، سيتي، بايرن، أرسنال...)'
+                      }
+                      className="w-full bg-[#06141B] border border-[#253745] rounded-xl pl-9 pr-3 py-2 text-xs text-[#CCD0CF] placeholder:text-[#9BA8AB]/60 focus:border-[#4A5C6A] outline-none transition-all"
+                    />
+                  </div>
+
+                  {/* Filter Chips */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-[11px]">
+                    <button
+                      type="button"
+                      onClick={() => setSuggestionsFilter('all')}
+                      className={`px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all cursor-pointer ${
+                        suggestionsFilter === 'all'
+                          ? 'bg-[#CCD0CF] text-[#06141B]'
+                          : 'bg-[#06141B] text-[#9BA8AB] hover:text-[#CCD0CF] border border-[#253745]'
+                      }`}
+                    >
+                      {language === 'fr' ? 'Tous' : language === 'en' ? 'All' : 'الكل'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSuggestionsFilter('derbies')}
+                      className={`px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all flex items-center gap-1 cursor-pointer ${
+                        suggestionsFilter === 'derbies'
+                          ? 'bg-amber-400 text-[#06141B]'
+                          : 'bg-[#06141B] text-amber-300 hover:text-amber-200 border border-amber-500/30'
+                      }`}
+                    >
+                      <Flame className="w-3 h-3 text-amber-500 fill-amber-500" />
+                      <span>{language === 'fr' ? 'Grands Chocs 🔥' : language === 'en' ? 'Top Derbies 🔥' : 'قمم نارية 🔥'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSuggestionsFilter('thisWeek')}
+                      className={`px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all cursor-pointer ${
+                        suggestionsFilter === 'thisWeek'
+                          ? 'bg-[#CCD0CF] text-[#06141B]'
+                          : 'bg-[#06141B] text-[#9BA8AB] hover:text-[#CCD0CF] border border-[#253745]'
+                      }`}
+                    >
+                      {language === 'fr' ? 'Cette semaine' : language === 'en' ? 'This Week' : 'هذا الأسبوع'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSuggestionsFilter('nextWeek')}
+                      className={`px-3 py-1.5 rounded-lg font-semibold shrink-0 transition-all cursor-pointer ${
+                        suggestionsFilter === 'nextWeek'
+                          ? 'bg-[#CCD0CF] text-[#06141B]'
+                          : 'bg-[#06141B] text-[#9BA8AB] hover:text-[#CCD0CF] border border-[#253745]'
+                      }`}
+                    >
+                      {language === 'fr' ? 'Semaine prochaine' : language === 'en' ? 'Next Week' : 'الأسبوع القادم'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Suggestions Grid */}
+                {suggestionsLoading ? (
+                  <div className="py-12 text-center space-y-2">
+                    <Loader2 className="w-7 h-7 text-amber-400 animate-spin mx-auto" />
+                    <p className="text-xs text-[#CCD0CF] font-semibold">
+                      {language === 'fr' ? 'Chargement des prochains matchs de Champions League...' : language === 'en' ? 'Loading upcoming Champions League fixtures...' : 'جاري تحميل مقترحات مباريات دوري أبطال أوروبا القادمة...'}
+                    </p>
+                  </div>
+                ) : filteredSuggestions.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-[#9BA8AB] bg-[#06141B] rounded-xl border border-[#253745]">
+                    {language === 'fr' ? 'Aucun match trouvé pour ce filtre.' : language === 'en' ? 'No matches found matching criteria.' : 'لم يتم العثور على مباريات مطابقة للبحث.'}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    {filteredSuggestions.map((sug) => {
+                      const isAlreadyScheduled = matches.some(
+                        m => (m.homeTeam === sug.homeTeam && m.awayTeam === sug.awayTeam) ||
+                             (m.homeTeam === sug.awayTeam && m.awayTeam === sug.homeTeam)
+                      );
+
+                      return (
+                        <div
+                          key={sug.id}
+                          className={`rounded-2xl border p-4 transition-all duration-200 flex flex-col justify-between gap-3 relative overflow-hidden ${
+                            isAlreadyScheduled
+                              ? 'bg-[#0d1c26]/60 border-emerald-500/40'
+                              : sug.isHot
+                              ? 'bg-gradient-to-br from-[#162737] to-[#11212D] border-amber-500/40 shadow-lg shadow-amber-500/5'
+                              : 'bg-[#06141B] border-[#253745] hover:border-[#4A5C6A]'
+                          }`}
+                        >
+                          {/* Card Header: Stage & Kickoff Time */}
+                          <div className="flex items-center justify-between gap-2 text-[11px]">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-semibold text-[#9BA8AB] bg-[#11212D] border border-[#253745] px-2 py-0.5 rounded-md">
+                                {isRtl ? sug.stage : sug.stageEn}
+                              </span>
+                              {sug.isHot && (
+                                <span className="font-extrabold text-amber-300 bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                  <Flame className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                  <span>{language === 'fr' ? 'Choc' : language === 'en' ? 'Derby' : 'قمة'}</span>
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1 text-[#CCD0CF] font-mono text-[10.5px] bg-[#11212D] px-2 py-0.5 rounded-md border border-[#253745]">
+                              <Clock className="w-3 h-3 text-amber-400" />
+                              <span>{isRtl ? sug.formattedDate : sug.formattedDateEn}</span>
+                            </div>
+                          </div>
+
+                          {/* Matchup Banner: Home VS Away */}
+                          <div className="py-2.5 px-3 bg-[#11212D]/80 rounded-xl border border-[#253745] flex items-center justify-between gap-3">
+                            {/* Home Team */}
+                            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                              <div className="w-9 h-9 rounded-lg bg-[#06141B] border border-[#253745] p-1 flex items-center justify-center shrink-0">
+                                <img
+                                  src={sug.homeLogo}
+                                  alt={sug.homeTeam}
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = generateFallbackLogo(sug.homeTeam);
+                                  }}
+                                />
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="text-xs sm:text-sm font-bold text-white truncate" title={sug.homeTeam}>
+                                  {isRtl ? sug.homeTeam : sug.homeTeamEn}
+                                </h4>
+                                <span className="text-[10px] text-[#9BA8AB] truncate block">
+                                  {isRtl ? sug.homeTeamEn : sug.homeTeam}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* VS Pill */}
+                            <div className="shrink-0 px-2.5 py-1 rounded-full bg-[#06141B] border border-[#4A5C6A] text-[10px] font-black text-amber-300 font-mono shadow-inner">
+                              VS
+                            </div>
+
+                            {/* Away Team */}
+                            <div className="flex items-center gap-2.5 flex-1 min-w-0 justify-end text-right">
+                              <div className="min-w-0">
+                                <h4 className="text-xs sm:text-sm font-bold text-white truncate" title={sug.awayTeam}>
+                                  {isRtl ? sug.awayTeam : sug.awayTeamEn}
+                                </h4>
+                                <span className="text-[10px] text-[#9BA8AB] truncate block">
+                                  {isRtl ? sug.awayTeamEn : sug.awayTeam}
+                                </span>
+                              </div>
+                              <div className="w-9 h-9 rounded-lg bg-[#06141B] border border-[#253745] p-1 flex items-center justify-center shrink-0">
+                                <img
+                                  src={sug.awayLogo}
+                                  alt={sug.awayTeam}
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = generateFallbackLogo(sug.awayTeam);
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex items-center gap-2 pt-1">
+                            {isAlreadyScheduled ? (
+                              <div className="w-full py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                <span>
+                                  {language === 'fr' 
+                                    ? 'Déjà programmé dans la compétition ✓' 
+                                    : language === 'en' 
+                                    ? 'Already Added to Schedule ✓' 
+                                    : 'مباراة مضافة للمنافسة بالفعل ✓'}
+                                </span>
+                              </div>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleApplySuggestion(sug)}
+                                  className="flex-1 py-2 px-3 rounded-xl bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] hover:text-white border border-[#4A5C6A] text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
+                                  title="Fill match details in the form above to edit"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                  <span>
+                                    {language === 'fr' ? 'Remplir formulaire' : language === 'en' ? 'Use in Form' : 'تعبئة في النموذج'}
+                                  </span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleQuickAddSuggestion(sug)}
+                                  className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-[#06141B] font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-md shadow-emerald-500/20"
+                                  title="Add match immediately with 1 click"
+                                >
+                                  <Zap className="w-3.5 h-3.5 fill-[#06141B]" />
+                                  <span>
+                                    {language === 'fr' ? '+ Ajout rapide' : language === 'en' ? '+ Quick Add' : '+ إضافة فورية'}
+                                  </span>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 2: MANUAL MATCH CREATION FORM */}
+            {activeAddTab === 'manual' && (
+              <div>
+                {teamKeys.length < 2 ? (
+                  <div className="p-4 my-3 bg-[#06141B] border border-amber-500/30 rounded-xl text-xs text-amber-200 leading-relaxed space-y-2">
+                    <p>
+                      {language === 'fr'
+                        ? 'Attention : Au moins 2 équipes sont requises pour créer un match manuellement.'
+                        : language === 'en'
+                        ? 'Notice: At least 2 teams are required to create a match manually.'
+                        : 'تنبيه: يلزم تسجيل فريقين على الأقل لإنشاء مباراة يدوياً.'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setActiveAddTab('suggestions')}
+                      className="inline-flex items-center gap-1 text-amber-300 underline font-bold cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>
+                        {language === 'fr' 
+                          ? 'Utiliser les suggestions de matchs (Crée les équipes automatiquement)' 
+                          : language === 'en' 
+                          ? 'Use Match Suggestions instead (Auto-creates teams)' 
+                          : 'استخدم مقترحات المباريات القادمة (تنشئ الفرق تلقائياً)'}
+                      </span>
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleCreateMatch} className="space-y-4 pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-[#CCD0CF] mb-1.5">
+                          {language === 'fr' ? 'Équipe à domicile (Home)' : language === 'en' ? 'Home Team' : 'الفريق المستضيف (Home)'}
+                        </label>
+                        <select
+                          value={newHomeTeam}
+                          onChange={(e) => setNewHomeTeam(e.target.value)}
+                          className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-[#CCD0CF] font-semibold focus:border-[#4A5C6A] outline-none text-xs transition-all duration-200"
+                          required
+                        >
+                          {teamKeys.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-[#CCD0CF] mb-1.5">
+                          {language === 'fr' ? 'Équipe à l\'extérieur (Away)' : language === 'en' ? 'Away Team' : 'الفريق الضيف (Away)'}
+                        </label>
+                        <select
+                          value={newAwayTeam}
+                          onChange={(e) => setNewAwayTeam(e.target.value)}
+                          className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-[#CCD0CF] font-semibold focus:border-[#4A5C6A] outline-none text-xs transition-all duration-200"
+                          required
+                        >
+                          {teamKeys.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <div>
+                          <label className="block text-xs font-semibold text-[#CCD0CF]">
+                            {language === 'fr' 
+                              ? `Date & heure du match (🇲🇦 Heure du Maroc - GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset})` 
+                              : language === 'en' 
+                              ? `Kickoff date/time & deadline (🇲🇦 Morocco Time - GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset})` 
+                              : `موعد المباراة ووقت إغلاق التوقع (🇲🇦 بتوقيت المغرب - GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset})`}
+                          </label>
+                          <span className="text-[11px] text-[#9BA8AB]">
+                            {language === 'fr' ? 'Conforme à l\'heure de votre téléphone au Maroc' : language === 'en' ? 'Matches your phone\'s time in Morocco' : 'يطابق توقيت هاتفك في المغرب تماماً'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 bg-[#06141B] p-0.5 rounded-lg border border-[#253745] text-[10px]">
+                            <button
+                              type="button"
+                              onClick={() => handleOffsetChange(0)}
+                              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
+                                moroccoOffset === 0 
+                                  ? 'bg-emerald-600 text-white shadow-sm' 
+                                  : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
+                              }`}
+                              title="Morocco Official GMT (UTC+0)"
+                            >
+                              GMT (Officiel)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOffsetChange(1)}
+                              className={`px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
+                                moroccoOffset === 1 
+                                  ? 'bg-emerald-600 text-white shadow-sm' 
+                                  : 'text-[#9BA8AB] hover:text-[#CCD0CF]'
+                              }`}
+                              title="GMT+1"
+                            >
+                              GMT+1
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-[#06141B] px-2.5 py-1 rounded-lg border border-[#253745] shadow-inner">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span>🇲🇦 {moroccoNowTime}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <input
+                        type="datetime-local"
+                        value={newDeadline}
+                        onChange={(e) => setNewDeadline(e.target.value)}
+                        style={{ colorScheme: 'dark' }}
+                        className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-3 text-[#CCD0CF] font-semibold focus:border-[#4A5C6A] outline-none text-xs font-mono transition-all duration-200"
+                        required
+                      />
+                      <p className="text-[11px] text-[#9BA8AB] mt-1.5 flex items-center gap-1.5">
+                        <span className="text-amber-400">🇲🇦</span>
+                        <span>
+                          {language === 'fr' 
+                            ? `L'heure saisie est enregistrée selon le fuseau sélectionné (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}) et reste synchronisée avec l'heure réelle de votre téléphone.` 
+                            : language === 'en' 
+                            ? `The entered time is saved according to the selected timezone (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}) and matches your phone's real-time clock.` 
+                            : `يتم تسجيل الوقت وفق التوقيت المختار (GMT${moroccoOffset === 0 ? '' : '+' + moroccoOffset}) ليتطابق مع ساعة هاتفك.`}
+                        </span>
+                      </p>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold py-3.5 rounded-xl transition-all duration-200 shadow text-xs cursor-pointer active:scale-95"
+                    >
+                      {language === 'fr' ? 'Publier le match et ouvrir les pronostics' : language === 'en' ? 'Publish Match & Open Predictions' : 'نشر المباراة وإتاحة التوقع للمستخدمين'}
+                    </button>
+                  </form>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -2290,22 +2801,44 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   : 'إضافة وتعديل الفرق، قوائم اللاعبين، وحذف الفرق كلياً'}
               </p>
 
-              {teamKeys.length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
-                  onClick={() => setDeleteAllTeamsConfirm(true)}
-                  className="bg-[#253745] hover:bg-rose-950/60 text-rose-300 border border-[#253745] text-xs px-3.5 py-2 rounded-xl transition-all duration-200 flex items-center gap-1.5 font-bold cursor-pointer active:scale-95 shrink-0"
+                  onClick={handleImportAllUclClubs}
+                  disabled={isImportingUclClubs}
+                  className="bg-gradient-to-r from-[#1e1b4b] to-[#0284c7] hover:brightness-110 text-white border border-sky-500/30 text-xs px-3.5 py-2 rounded-xl transition-all duration-200 flex items-center gap-2 font-bold cursor-pointer active:scale-95 shadow-md shrink-0"
                 >
-                  <Trash2 className="w-4 h-4 text-rose-400" />
+                  {isImportingUclClubs ? (
+                    <Loader2 className="w-4 h-4 text-white animate-spin" />
+                  ) : (
+                    <Trophy className="w-4 h-4 text-amber-300" />
+                  )}
                   <span>
                     {language === 'fr' 
-                      ? 'Supprimer toutes les équipes' 
+                      ? 'Recharger les 36 clubs UCL (effectifs & logos)' 
                       : language === 'en' 
-                      ? 'Delete All Teams & Squads' 
-                      : 'حذف جميع الفرق واللاعبين'}
+                      ? 'Sync All 36 UCL Clubs (squads & crests)' 
+                      : 'تحميل ومزامنة أندية دوري الأبطال الـ 36 كاملة'}
                   </span>
                 </button>
-              )}
+
+                {teamKeys.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setDeleteAllTeamsConfirm(true)}
+                    className="bg-[#253745] hover:bg-rose-950/60 text-rose-300 border border-[#253745] text-xs px-3.5 py-2 rounded-xl transition-all duration-200 flex items-center gap-1.5 font-bold cursor-pointer active:scale-95 shrink-0"
+                  >
+                    <Trash2 className="w-4 h-4 text-rose-400" />
+                    <span>
+                      {language === 'fr' 
+                        ? 'Supprimer tout' 
+                        : language === 'en' 
+                        ? 'Clear All' 
+                        : 'إفراغ الكل'}
+                    </span>
+                  </button>
+                )}
+              </div>
             </div>
 
         {/* Add Team */}
@@ -2399,11 +2932,23 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                       }}
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-bold text-[#CCD0CF] truncate group-hover:text-white">
-                        {language === 'en' ? preset.enName : preset.name}
+                      <div className="flex items-center justify-between gap-1">
+                        <div className="text-xs font-bold text-[#CCD0CF] truncate group-hover:text-white">
+                          {language === 'en' ? preset.enName : preset.name}
+                        </div>
+                        {preset.country && (
+                          <span className="text-[8px] bg-[#253745] text-[#9BA8AB] px-1 py-0.5 rounded font-mono shrink-0">
+                            {preset.country}
+                          </span>
+                        )}
                       </div>
-                      <div className="text-[9px] text-[#9BA8AB] truncate font-mono">
-                        {language === 'en' ? preset.name : preset.enName}
+                      <div className="text-[9px] text-[#9BA8AB] truncate flex items-center justify-between gap-1">
+                        <span className="truncate">{language === 'en' ? preset.name : preset.enName}</span>
+                        {preset.squad && preset.squad.length > 0 && (
+                          <span className="text-[8px] text-[#4A5C6A] font-semibold shrink-0">
+                            {preset.squad.length}p
+                          </span>
+                        )}
                       </div>
                     </div>
                   </button>

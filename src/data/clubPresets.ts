@@ -1,181 +1,254 @@
+import { UCL_36_CLUBS_LIST } from './uclTeams36';
+
 export interface ClubPreset {
   name: string;
   enName: string;
   logo: string;
+  squad?: string[];
+  country?: string;
 }
 
-export const POPULAR_CLUB_PRESETS: ClubPreset[] = [
-  {
-    name: 'ريال مدريد',
-    enName: 'Real Madrid',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg'
-  },
-  {
-    name: 'برشلونة',
-    enName: 'FC Barcelona',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg'
-  },
-  {
-    name: 'مانشستر سيتي',
-    enName: 'Manchester City',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg'
-  },
-  {
-    name: 'ليفربول',
-    enName: 'Liverpool',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg'
-  },
-  {
-    name: 'أرسنال',
-    enName: 'Arsenal',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/5/53/Arsenal_FC.svg'
-  },
-  {
-    name: 'بايرن ميونخ',
-    enName: 'Bayern Munich',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/1/1b/FC_Bayern_M%C3%BCnchen_logo_%282017%29.svg'
-  },
-  {
-    name: 'باريس سان جيرمان',
-    enName: 'PSG',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg'
-  },
-  {
-    name: 'إنتر ميلان',
-    enName: 'Inter Milan',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/0/05/FC_Internazionale_Milano_2021.svg'
-  },
-  {
-    name: 'ميلان',
-    enName: 'AC Milan',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/Logo_of_AC_Milan.svg'
-  },
-  {
-    name: 'أتلتيكو مدريد',
-    enName: 'Atletico Madrid',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/f/f4/Atletico_Madrid_2017_logo.svg'
-  },
-  {
-    name: 'بوروسيا دورتموند',
-    enName: 'Borussia Dortmund',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/6/67/Borussia_Dortmund_logo.svg'
-  },
-  {
-    name: 'يوفنتوس',
-    enName: 'Juventus',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/b/bc/Juventus_FC_2017_icon_%28black%29.svg'
-  },
-  {
-    name: 'باير ليفركوزن',
-    enName: 'Bayer Leverkusen',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/5/59/Bayer_04_Leverkusen_logo.svg'
-  },
-  {
-    name: 'تشيلسي',
-    enName: 'Chelsea',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg'
-  },
-  {
-    name: 'أستون فيلا',
-    enName: 'Aston Villa',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/9/9f/Aston_Villa_logo.svg'
-  },
-  {
-    name: 'سبورتينغ لشبونة',
-    enName: 'Sporting CP',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/e/e1/Sporting_Clube_de_Portugal_%28Logo%29.svg'
-  },
-  {
-    name: 'بنفيكا',
-    enName: 'Benfica',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/a/a2/SL_Benfica_logo.svg'
-  },
-  {
-    name: 'أتالانتا',
-    enName: 'Atalanta',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/6/66/AtalantaBC.svg'
-  },
-  {
-    name: 'Monaco',
-    enName: 'Monaco',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/b/ba/AS_Monaco_FC.svg'
-  },
-  {
-    name: 'Napoli',
-    enName: 'Napoli',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/b/ba/SSC_Napoli_2024_%28deep_blue_navy%29.svg'
-  }
-];
+/**
+ * All 36 Official Participant Clubs of the UEFA Champions League League Phase
+ * Complete with official verified crests, English/Arabic names, countries, and full 2024/25 squads.
+ */
+export const POPULAR_CLUB_PRESETS: ClubPreset[] = UCL_36_CLUBS_LIST.map((club) => ({
+  name: club.name,
+  enName: club.enName,
+  logo: club.logo,
+  squad: club.squad,
+  country: club.country
+}));
 
 // Comprehensive English Name Mapping Dictionary for all UCL Teams & Arabic variations
 export const ARABIC_TO_ENGLISH_TEAMS: Record<string, string> = {
+  // Real Madrid
   'ريال مدريد': 'Real Madrid',
   'الريال': 'Real Madrid',
+  'نادي ريال مدريد': 'Real Madrid',
+  'Real Madrid': 'Real Madrid',
+
+  // Barcelona
   'برشلونة': 'FC Barcelona',
   'البارسا': 'FC Barcelona',
+  'نادي برشلونة': 'FC Barcelona',
+  'Barcelona': 'FC Barcelona',
+  'FC Barcelona': 'FC Barcelona',
+
+  // Manchester City
   'مانشستر سيتي': 'Manchester City',
   'السيتي': 'Manchester City',
+  'Manchester City': 'Manchester City',
+  'Man City': 'Manchester City',
+
+  // Liverpool
   'ليفربول': 'Liverpool',
+  'الريدز': 'Liverpool',
+  'Liverpool': 'Liverpool',
+
+  // Arsenal
   'أرسنال': 'Arsenal',
   'ارسنال': 'Arsenal',
+  'الغانرز': 'Arsenal',
+  'Arsenal': 'Arsenal',
+
+  // Bayern Munich
   'بايرن ميونخ': 'Bayern Munich',
   'البايرن': 'Bayern Munich',
+  'Bayern Munich': 'Bayern Munich',
+  'FC Bayern': 'Bayern Munich',
+
+  // Paris Saint-Germain
   'باريس سان جيرمان': 'Paris Saint-Germain',
   'باريس': 'Paris Saint-Germain',
+  'PSG': 'Paris Saint-Germain',
+  'Paris Saint-Germain': 'Paris Saint-Germain',
+
+  // Inter Milan
   'إنتر ميلان': 'Inter Milan',
+  'انتر ميلان': 'Inter Milan',
   'الانتر': 'Inter Milan',
+  'Inter Milan': 'Inter Milan',
+  'Inter': 'Inter Milan',
+
+  // AC Milan
   'ميلان': 'AC Milan',
   'إيه سي ميلان': 'AC Milan',
+  'اي سي ميلان': 'AC Milan',
+  'AC Milan': 'AC Milan',
+
+  // Atletico Madrid
   'أتلتيكو مدريد': 'Atletico Madrid',
   'اتلتيكو مدريد': 'Atletico Madrid',
   'أتليتكو مدريد': 'Atletico Madrid',
+  'Atletico Madrid': 'Atletico Madrid',
+  'Atlético Madrid': 'Atletico Madrid',
+
+  // Borussia Dortmund
   'بوروسيا دورتموند': 'Borussia Dortmund',
   'دورتموند': 'Borussia Dortmund',
+  'Borussia Dortmund': 'Borussia Dortmund',
+  'BVB': 'Borussia Dortmund',
+
+  // Juventus
   'يوفنتوس': 'Juventus',
   'اليوفي': 'Juventus',
+  'Juventus': 'Juventus',
+
+  // Bayer Leverkusen
   'باير ليفركوزن': 'Bayer Leverkusen',
   'ليفركوزن': 'Bayer Leverkusen',
-  'تشيلسي': 'Chelsea',
+  'Bayer Leverkusen': 'Bayer Leverkusen',
+
+  // Aston Villa
   'أستون فيلا': 'Aston Villa',
   'استون فيلا': 'Aston Villa',
+  'Aston Villa': 'Aston Villa',
+
+  // Sporting CP
   'سبورتينغ لشبونة': 'Sporting CP',
   'سبورتنج لشبونة': 'Sporting CP',
+  'Sporting CP': 'Sporting CP',
+
+  // Benfica
   'بنفيكا': 'Benfica',
+  'Benfica': 'Benfica',
+
+  // Atalanta
   'أتالانتا': 'Atalanta',
   'اتالانتا': 'Atalanta',
+  'Atalanta': 'Atalanta',
+
+  // Monaco
   'موناكو': 'AS Monaco',
-  'نابولي': 'Napoli',
+  'Monaco': 'AS Monaco',
+  'AS Monaco': 'AS Monaco',
+
+  // Feyenoord
   'فاينورد': 'Feyenoord',
+  'Feyenoord': 'Feyenoord',
+
+  // PSV Eindhoven
   'بي إس في آيندهوفن': 'PSV Eindhoven',
   'آيندهوفن': 'PSV Eindhoven',
   'ايندهوفن': 'PSV Eindhoven',
+  'PSV Eindhoven': 'PSV Eindhoven',
+  'PSV': 'PSV Eindhoven',
+
+  // RB Leipzig
   'لايبزيغ': 'RB Leipzig',
   'لايبتزغ': 'RB Leipzig',
   'ريد بول لايبزيغ': 'RB Leipzig',
+  'RB Leipzig': 'RB Leipzig',
+
+  // Girona
   'جيرونا': 'Girona',
+  'Girona': 'Girona',
+
+  // VfB Stuttgart
   'شتوتغارت': 'VfB Stuttgart',
+  'VfB Stuttgart': 'VfB Stuttgart',
+  'Stuttgart': 'VfB Stuttgart',
+
+  // Bologna
   'بولونيا': 'Bologna',
+  'Bologna': 'Bologna',
+
+  // Shakhtar Donetsk
   'شاختار دونيتسك': 'Shakhtar Donetsk',
   'شاختار': 'Shakhtar Donetsk',
-  'سلتيك': 'Celtic',
+  'Shakhtar Donetsk': 'Shakhtar Donetsk',
+
+  // Celtic
+  'سلتيك': 'Celtic FC',
+  'Celtic': 'Celtic FC',
+  'Celtic FC': 'Celtic FC',
+
+  // Dinamo Zagreb
   'دينامو زغرب': 'Dinamo Zagreb',
+  'Dinamo Zagreb': 'Dinamo Zagreb',
+
+  // Red Star Belgrade
   'النجم الأحمر': 'Red Star Belgrade',
+  'Red Star Belgrade': 'Red Star Belgrade',
+  'Crvena Zvezda': 'Red Star Belgrade',
+
+  // Club Brugge
   'كلوب بروج': 'Club Brugge',
-  'سالزبورغ': 'RB Salzburg',
-  'ليل': 'Lille',
-  'يونغ بويز': 'Young Boys',
+  'Club Brugge': 'Club Brugge',
+
+  // Red Bull Salzburg
+  'سالزبورغ': 'Red Bull Salzburg',
+  'Red Bull Salzburg': 'Red Bull Salzburg',
+  'Salzburg': 'Red Bull Salzburg',
+
+  // Lille
+  'ليل': 'LOSC Lille',
+  'Lille': 'LOSC Lille',
+  'LOSC Lille': 'LOSC Lille',
+
+  // Young Boys
+  'يونغ بويز': 'BSC Young Boys',
+  'Young Boys': 'BSC Young Boys',
+  'BSC Young Boys': 'BSC Young Boys',
+
+  // Sparta Prague
   'سبارتا براغ': 'Sparta Prague',
-  'ستورم غراتس': 'Sturm Graz',
+  'Sparta Prague': 'Sparta Prague',
+  'Sparta Praha': 'Sparta Prague',
+
+  // Sturm Graz
+  'ستورم غراتس': 'SK Sturm Graz',
+  'Sturm Graz': 'SK Sturm Graz',
+  'SK Sturm Graz': 'SK Sturm Graz',
+
+  // Slovan Bratislava
   'سلوفان براتيسلافا': 'Slovan Bratislava',
+  'Slovan Bratislava': 'Slovan Bratislava',
+
+  // Stade Brestois 29
+  'ستاد بريست': 'Stade Brestois 29',
+  'بريست': 'Stade Brestois 29',
+  'Stade Brestois 29': 'Stade Brestois 29',
+  'Brest': 'Stade Brestois 29',
+
+  // Other European clubs for historical or fallback matches
+  'تشيلسي': 'Chelsea',
+  'Chelsea': 'Chelsea',
   'مانشستر يونايتد': 'Manchester United',
   'اليونايتد': 'Manchester United',
+  'Manchester United': 'Manchester United',
   'توتنهام': 'Tottenham Hotspur',
+  'Tottenham Hotspur': 'Tottenham Hotspur',
   'روما': 'AS Roma',
+  'AS Roma': 'AS Roma',
+  'نابولي': 'Napoli',
+  'Napoli': 'Napoli',
   'بورتو': 'FC Porto',
+  'FC Porto': 'FC Porto',
+  'فياريال': 'Villarreal',
+  'Villarreal': 'Villarreal',
+  'أتلتيك بيلباو': 'Athletic Club',
+  'بيلباو': 'Athletic Club',
+  'Athletic Club': 'Athletic Club',
+  'ريال بيتيس': 'Real Betis',
+  'بيتيس': 'Real Betis',
+  'Real Betis': 'Real Betis',
+  'مارسيليا': 'Olympique de Marseille',
+  'اولمبيك مارسيليا': 'Olympique de Marseille',
+  'Olympique de Marseille': 'Olympique de Marseille',
+  'Marseille': 'Olympique de Marseille',
+  'غلطة سراي': 'Galatasaray',
+  'Galatasaray': 'Galatasaray',
+  'فنربخشة': 'Fenerbahçe',
+  'Fenerbahçe': 'Fenerbahçe',
+  'Fenerbahce': 'Fenerbahçe',
   'أياكس': 'Ajax',
   'اياكس': 'Ajax',
+  'Ajax': 'Ajax',
   'إشبيلية': 'Sevilla',
-  'اشبيلية': 'Sevilla'
+  'اشبيلية': 'Sevilla',
+  'Sevilla': 'Sevilla'
 };
 
 /**

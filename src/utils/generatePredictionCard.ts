@@ -72,7 +72,8 @@ async function loadImgSafe(url?: string): Promise<HTMLImageElement | null> {
 }
 
 /**
- * Draw a rounded rectangle path
+ * Draw a rounded rectangle path with 100% glitch-free geometry.
+ * Uses native ctx.roundRect when available or quadratic curves (never arcTo, which has WebKit tangent bugs).
  */
 function roundRect(
   ctx: CanvasRenderingContext2D,
@@ -83,11 +84,20 @@ function roundRect(
   r: number
 ) {
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
+  const radius = Math.max(0, Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2));
+  if (typeof ctx.roundRect === 'function') {
+    ctx.roundRect(x, y, w, h, radius);
+  } else {
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + w - radius, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+    ctx.lineTo(x + w, y + h - radius);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+    ctx.lineTo(x + radius, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+  }
   ctx.closePath();
 }
 
@@ -211,6 +221,7 @@ function drawXlmzalitVector(ctx: CanvasRenderingContext2D, startX: number, start
   ctx.fillRect(360, 20, 16, 70);
   ctx.fillRect(352, 38, 38, 12);
 
+  ctx.beginPath(); // Clear path before restore
   ctx.restore();
 }
 
