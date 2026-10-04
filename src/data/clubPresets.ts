@@ -278,6 +278,44 @@ export const getTeamEnglishName = (rawName: string | undefined | null): string =
 };
 
 /**
+ * Returns the team name matching the currently selected app language ('ar' | 'en' | 'fr')
+ */
+export const getLocalizedTeamName = (
+  rawName: string | undefined | null,
+  language: 'ar' | 'en' | 'fr' = 'ar'
+): string => {
+  if (!rawName) return '';
+  const trimmed = rawName.trim();
+  if (!trimmed) return '';
+
+  if (language === 'ar') {
+    // 1. Direct match in POPULAR_CLUB_PRESETS by Arabic or English name
+    const presetMatch = POPULAR_CLUB_PRESETS.find(
+      p => p.name.toLowerCase() === trimmed.toLowerCase() || p.enName.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (presetMatch) {
+      return presetMatch.name;
+    }
+
+    // 2. Check if trimmed maps to an English name that matches a preset
+    const enResolved = ARABIC_TO_ENGLISH_TEAMS[trimmed];
+    if (enResolved) {
+      const presetByEn = POPULAR_CLUB_PRESETS.find(
+        p => p.enName.toLowerCase() === enResolved.toLowerCase()
+      );
+      if (presetByEn) {
+        return presetByEn.name;
+      }
+    }
+
+    return trimmed;
+  }
+
+  // For 'en' and 'fr', return the standard international club name
+  return getTeamEnglishName(trimmed);
+};
+
+/**
  * Parses raw text containing player names into a clean, unique list of player names.
  * Supports separation by newlines, English & Arabic commas (,), semicolons (;)، numbers (1. 2.), bullets, etc.
  */

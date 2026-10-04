@@ -19,8 +19,9 @@ import {
 } from 'lucide-react';
 import { Match, Team, Prediction, AppUser } from '../types';
 import { PredictionCardModal } from './PredictionCardModal';
+import { MatchesCardModal } from './MatchesCardModal';
 import { useLanguage } from '../i18n/LanguageContext';
-import { getTeamEnglishName } from '../data/clubPresets';
+import { getTeamEnglishName, getLocalizedTeamName } from '../data/clubPresets';
 import { formatEnglishDeadlineMorocco } from '../utils/moroccoTime';
 
 interface MatchesSectionProps {
@@ -154,6 +155,17 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
     prediction: Prediction;
     memberName: string;
   } | null>(null);
+
+  // Active matches card modal (Share & Download available matches to predict)
+  const [matchesCardModal, setMatchesCardModal] = useState<{
+    matches: Match[];
+    action: 'share' | 'download' | null;
+  } | null>(null);
+
+  const availableMatches = matches.filter(
+    (m) => m.status !== 'SETTLED' && new Date(m.deadline).getTime() > Date.now()
+  );
+  const exportableMatches = availableMatches.length > 0 ? availableMatches : matches;
 
   const openPredictionCard = (match: Match, pred: Prediction) => {
     const home = teams[match.homeTeam] || { name: match.homeTeam, logo: '', squad: [] };
@@ -359,12 +371,45 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
           <span>{t('tabMatches')}</span>
         </h2>
 
-        {currentUser && (
-          <div className="bg-[#253745] border border-[#4A5C6A] px-3.5 py-1 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 shadow-xs text-[#CCD0CF]">
-            <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-            <span><strong className="text-[#CCD0CF] text-sm sm:text-base font-mono">{currentUser.points || 0}</strong> {t('pointsCount')}</span>
-          </div>
-        )}
+        <div className="flex items-center flex-wrap gap-2.5">
+          {/* Admin Only: Share & Download Matches Available to Predict */}
+          {currentUser && currentUser.role === 'admin' && matches.length > 0 && (
+            <div className="flex items-center gap-1.5 bg-[#06141B] p-1 rounded-xl border border-[#253745]">
+              {/* Share Matches Button */}
+              <button
+                type="button"
+                onClick={() => setMatchesCardModal({ matches: exportableMatches, action: 'share' })}
+                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-[#253745] hover:bg-[#4A5C6A] border border-[#4A5C6A] text-[#CCD0CF] hover:text-white transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-95 shadow-sm"
+                title={language === 'fr' ? 'Partager les matchs disponibles' : language === 'en' ? 'Share Available Matches' : 'مشاركة صورة المباريات المتاحة للتوقع'}
+                aria-label="Share Matches"
+              >
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z" />
+                </svg>
+              </button>
+
+              {/* Download Matches Button */}
+              <button
+                type="button"
+                onClick={() => setMatchesCardModal({ matches: exportableMatches, action: 'download' })}
+                className="text-xs bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] hover:text-white border border-[#4A5C6A] px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                title={language === 'fr' ? 'Télécharger la carte des matchs' : language === 'en' ? 'Download Matches Card' : 'تحميل صورة المباريات المتاحة'}
+              >
+                <Download className="w-3.5 h-3.5 text-[#CCD0CF]" />
+                <span className="hidden sm:inline">
+                  {language === 'fr' ? 'Télécharger les matchs' : language === 'en' ? 'Download Matches' : 'تحميل المباريات'}
+                </span>
+              </button>
+            </div>
+          )}
+
+          {currentUser && (
+            <div className="bg-[#253745] border border-[#4A5C6A] px-3.5 py-1 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 shadow-xs text-[#CCD0CF]">
+              <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <span><strong className="text-[#CCD0CF] text-sm sm:text-base font-mono">{currentUser.points || 0}</strong> {t('pointsCount')}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Matches Grid */}
@@ -405,6 +450,32 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {/* Admin Only: Single Match Share & Download Buttons */}
+                    {currentUser && currentUser.role === 'admin' && (
+                      <div className="flex items-center gap-1 bg-[#06141B] p-0.5 rounded-lg border border-[#253745]">
+                        <button
+                          type="button"
+                          onClick={() => setMatchesCardModal({ matches: [match], action: 'share' })}
+                          className="p-1.5 rounded-md bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] hover:text-white transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-95"
+                          title={language === 'fr' ? 'Partager ce match' : language === 'en' ? 'Share Match' : 'مشاركة بطاقة المباراة'}
+                          aria-label="Share Match"
+                        >
+                          <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                            <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92c0-1.61-1.31-2.92-2.92-2.92z" />
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMatchesCardModal({ matches: [match], action: 'download' })}
+                          className="p-1.5 rounded-md bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] hover:text-white transition-all duration-200 flex items-center justify-center cursor-pointer active:scale-95"
+                          title={language === 'fr' ? 'Télécharger ce match' : language === 'en' ? 'Download Match' : 'تحميل بطاقة المباراة'}
+                          aria-label="Download Match"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
                     {currentUser && currentUser.role === 'admin' && (
                       <button
                         type="button"
@@ -443,7 +514,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/1e293b/ffffff?text=Logo'; }}
                       />
                     </div>
-                    <span className="font-bold text-xs sm:text-sm text-[#CCD0CF]">{getTeamEnglishName(home.name)}</span>
+                    <span className="font-bold text-xs sm:text-sm text-[#CCD0CF]">{getLocalizedTeamName(home.name, language)}</span>
                   </div>
 
                   {/* VS / Score Result */}
@@ -468,7 +539,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/100x100/1e293b/ffffff?text=Logo'; }}
                       />
                     </div>
-                    <span className="font-bold text-xs sm:text-sm text-[#CCD0CF]">{getTeamEnglishName(away.name)}</span>
+                    <span className="font-bold text-xs sm:text-sm text-[#CCD0CF]">{getLocalizedTeamName(away.name, language)}</span>
                   </div>
                 </div>
 
@@ -836,6 +907,17 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
           prediction={activeCardModal.prediction}
           memberName={activeCardModal.memberName}
           users={users}
+        />
+      )}
+
+      {/* Available Matches Share & Download Modal */}
+      {matchesCardModal && (
+        <MatchesCardModal
+          isOpen={Boolean(matchesCardModal)}
+          onClose={() => setMatchesCardModal(null)}
+          matches={matchesCardModal.matches}
+          teams={teams}
+          initialAction={matchesCardModal.action}
         />
       )}
     </div>
