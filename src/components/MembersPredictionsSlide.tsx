@@ -15,6 +15,7 @@ import { PredictionCardModal } from './PredictionCardModal';
 import { useLanguage } from '../i18n/LanguageContext';
 import { getTeamEnglishName } from '../data/clubPresets';
 import { formatEnglishDeadlineMorocco } from '../utils/moroccoTime';
+import { isPlayerMatch, extractScorers } from '../utils/calculateStats';
 
 interface MembersPredictionsSlideProps {
   matches: Match[];
@@ -104,27 +105,34 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
     let correctMvp = false;
 
     // Rule 1: Exact Score (+5)
-    if (pred.homeScore === res.homeScore && pred.awayScore === res.awayScore) {
+    if (Number(pred.homeScore) === Number(res.homeScore) && Number(pred.awayScore) === Number(res.awayScore)) {
       total += 5;
       exactScore = true;
     }
 
     // Rule 2: Goal Scorers (+1 per scorer)
-    (pred.homeScorers || []).forEach(sc => {
-      if (sc && res.homeScorers.includes(sc)) {
-        total += 1;
-        scorersCount++;
-      }
-    });
-    (pred.awayScorers || []).forEach(sc => {
-      if (sc && res.awayScorers.includes(sc)) {
-        total += 1;
-        scorersCount++;
+    const predScorers = [
+      ...extractScorers(pred.homeScorers),
+      ...extractScorers(pred.awayScorers)
+    ];
+    const allActualScorers = [
+      ...extractScorers(res.homeScorers),
+      ...extractScorers(res.awayScorers)
+    ];
+    const usedIndices = new Set<number>();
+    predScorers.forEach(ps => {
+      for (let i = 0; i < allActualScorers.length; i++) {
+        if (!usedIndices.has(i) && isPlayerMatch(ps, allActualScorers[i])) {
+          usedIndices.add(i);
+          total += 1;
+          scorersCount++;
+          break;
+        }
       }
     });
 
     // Rule 3: Man of the Match MVP (+3)
-    if (pred.mvp && res.mvp && pred.mvp.trim().toLowerCase() === res.mvp.trim().toLowerCase()) {
+    if (pred.mvp && res.mvp && isPlayerMatch(pred.mvp, res.mvp)) {
       total += 3;
       correctMvp = true;
     }
@@ -265,20 +273,43 @@ export const MembersPredictionsSlide: React.FC<MembersPredictionsSlideProps> = (
                 </div>
               </div>
 
-              {/* Match Result if settled */}
-              {match.status === 'SETTLED' && match.result && (
-                <div className="bg-[#06141B] border border-[#253745] px-3 py-1.5 rounded-xl flex items-center gap-2.5">
-                  <span className="text-xs text-[#9BA8AB]">{t('finalResultLabel')}</span>
-                  <span className="text-base font-bold text-[#CCD0CF] font-mono">
-                    {match.result.homeScore} - {match.result.awayScore}
-                  </span>
-                  {match.result.mvp && (
-                    <span className="text-[10px] text-[#CCD0CF] bg-[#253745] border border-[#4A5C6A] px-1.5 py-0.5 rounded font-medium">
-                      MVP: {match.result.mvp}
-                    </span>
-                  )}
-                </div>
-              )}
+              {/* Match Result if settled with full score, scorers, and MVP */}
+              {match.status === 'SETTLED' && match.result && (() => {
+                const homeScorersList = extractScorers(match.result.homeScorers);
+                const awayScorersList = extractScorers(match.result.awayScorers);
+                return (
+                  <div className="bg-[#06141B] border border-emerald-500/40 p-2.5 sm:p-3 rounded-xl space-y-1.5 shrink-0 max-w-full sm:max-w-md">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[11px] text-[#9BA8AB]">{t('finalResultLabel')}:</span>
+                      <span className="text-sm sm:text-base font-black text-emerald-400 font-mono bg-[#11212D] px-2.5 py-0.5 rounded-lg border border-[#253745]">
+                        {match.result.homeScore} - {match.result.awayScore}
+                      </span>
+                      {match.result.mvp && (
+                        <span className="text-[10px] text-amber-300 bg-amber-950/40 border border-amber-600/40 px-2 py-0.5 rounded-lg font-bold flex items-center gap-1">
+                          <Award className="w-3 h-3 text-amber-400" />
+                          <span>MVP: {match.result.mvp}</span>
+                        </span>
+                      )}
+                    </div>
+                    {(homeScorersList.length > 0 || awayScorersList.length > 0) && (
+                      <div className="text-[10px] text-[#CCD0CF] pt-1 border-t border-[#253745] space-y-0.5">
+                        {homeScorersList.length > 0 && (
+                          <div className="truncate">
+                            <span className="text-[#9BA8AB] font-medium">{homeEnglishName}: </span>
+                            <span>⚽ {homeScorersList.join('، ')}</span>
+                          </div>
+                        )}
+                        {awayScorersList.length > 0 && (
+                          <div className="truncate">
+                            <span className="text-[#9BA8AB] font-medium">{awayEnglishName}: </span>
+                            <span>⚽ {awayScorersList.join('، ')}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* List of Predictions for this match */}

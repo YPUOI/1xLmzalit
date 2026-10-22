@@ -41,6 +41,9 @@ export interface AppUser {
   status: 'pending' | 'approved';
   password?: string;
   createdAt?: string;
+  exactScoreCount?: number;
+  correctMvpCount?: number;
+  correctScorersCount?: number;
 }
 
 export interface SecurityConfig {

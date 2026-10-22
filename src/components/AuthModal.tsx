@@ -499,7 +499,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         username: language === 'fr' ? 'Admin Système' : language === 'en' ? 'Master Admin' : 'الآدمن (Admin)',
         role: 'admin',
         points: 0,
-        status: 'approved'
+        status: 'approved',
+        createdAt: new Date().toISOString()
       };
     }
 
@@ -1044,8 +1045,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <span className="font-bold text-white font-mono">{targetRecoveryUser.username}</span>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-[#9BA8AB] bg-[#253745] px-2 py-0.5 rounded">
-                    {targetRecoveryUser.email}
+                  <span className="text-[10px] font-medium text-emerald-400 bg-[#253745] px-2 py-0.5 rounded flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    <span>{language === 'ar' ? 'تم تأكيد الحساب' : language === 'fr' ? 'Compte vérifié' : 'Account verified'}</span>
                   </span>
                 </div>
 

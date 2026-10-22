@@ -47,6 +47,7 @@ import { SecuritySettingsModal } from './components/SecuritySettingsModal';
 import { ToastContainer, ToastMessage } from './components/ToastContainer';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { useLanguage } from './i18n/LanguageContext';
+import { getInitialMemberScorers } from './utils/calculateStats';
 
 const DB_VERSION = "2026_2027_UCL_LATEST_ROSTER";
 
@@ -140,8 +141,26 @@ export default function App() {
     // Load Users
     const storedUsers = localStorage.getItem('cl_users');
     let loadedUsers: AppUser[] = storedUsers ? JSON.parse(storedUsers) : [];
-    // Clean legacy amine
-    loadedUsers = loadedUsers.filter(u => u.username.toLowerCase() !== 'amine');
+    // Clean legacy amine, ensure each member has a goal scorer guessed per point, and adopt ilyass as first registered
+    loadedUsers = loadedUsers
+      .filter(u => u.username.toLowerCase() !== 'amine')
+      .map(u => {
+        const isIlyass = (u.username || '').toLowerCase().replace(/^@+/, '').startsWith('ilyas') ||
+                         (u.originalUsername || '').toLowerCase().replace(/^@+/, '').startsWith('ilyas');
+        const pts = Number(u.points) || 0;
+        const initialScorers = getInitialMemberScorers(u.username, u.originalUsername);
+        const currentScorers = (u.correctScorersCount !== undefined && u.correctScorersCount !== null)
+          ? Number(u.correctScorersCount) || 0
+          : initialScorers;
+        return {
+          ...u,
+          points: pts,
+          exactScoreCount: Number(u.exactScoreCount) || 0,
+          correctMvpCount: Number(u.correctMvpCount) || 0,
+          correctScorersCount: currentScorers,
+          createdAt: isIlyass ? '2020-01-01T00:00:00.000Z' : (u.createdAt || new Date().toISOString())
+        };
+      });
     setUsers(loadedUsers);
 
     // Load Logged User
@@ -211,7 +230,25 @@ export default function App() {
 
     const unsubUsers = subscribeUsers((firestoreUsers) => {
       if (firestoreUsers && firestoreUsers.length > 0) {
-        const cleanUsers = firestoreUsers.filter(u => u.username.toLowerCase() !== 'amine');
+        const cleanUsers = firestoreUsers
+          .filter(u => u.username.toLowerCase() !== 'amine')
+          .map(u => {
+            const isIlyass = (u.username || '').toLowerCase().replace(/^@+/, '').startsWith('ilyas') ||
+                             (u.originalUsername || '').toLowerCase().replace(/^@+/, '').startsWith('ilyas');
+            const pts = Number(u.points) || 0;
+            const initialScorers = getInitialMemberScorers(u.username, u.originalUsername);
+            const currentScorers = (u.correctScorersCount !== undefined && u.correctScorersCount !== null)
+              ? Number(u.correctScorersCount) || 0
+              : initialScorers;
+            return {
+              ...u,
+              points: pts,
+              exactScoreCount: Number(u.exactScoreCount) || 0,
+              correctMvpCount: Number(u.correctMvpCount) || 0,
+              correctScorersCount: currentScorers,
+              createdAt: isIlyass ? '2020-01-01T00:00:00.000Z' : (u.createdAt || new Date().toISOString())
+            };
+          });
         setUsers(cleanUsers);
         localStorage.setItem('cl_users', JSON.stringify(cleanUsers));
       }
@@ -249,13 +286,17 @@ export default function App() {
 
   // Update handlers with Firestore real-time synchronization
   const handleUpdateUsers = (nextUsers: AppUser[]) => {
-    setUsers(nextUsers);
-    localStorage.setItem('cl_users', JSON.stringify(nextUsers));
-    nextUsers.forEach(u => {
+    const cleanUsers = nextUsers.map(u => ({
+      ...u,
+      createdAt: u.createdAt || new Date().toISOString()
+    }));
+    setUsers(cleanUsers);
+    localStorage.setItem('cl_users', JSON.stringify(cleanUsers));
+    cleanUsers.forEach(u => {
       syncSaveUser(u).catch(err => console.error("Firebase save user error:", err));
     });
     if (currentUser) {
-      const updatedCurrent = nextUsers.find(u => u.username.toLowerCase() === currentUser.username.toLowerCase());
+      const updatedCurrent = cleanUsers.find(u => u.username.toLowerCase() === currentUser.username.toLowerCase());
       if (updatedCurrent) {
         setCurrentUser(updatedCurrent);
         if (localStorage.getItem('cl_logged_user')) {

@@ -4,13 +4,16 @@
  * Palette: #06141B (Dark Base), #11212D (Card Surface), #253745 (Border), #4A5C6A (Steel Accent),
  * #9BA8AB (Muted Text), #CCD0CF (Primary Text), #EAA81B (Gold Accent), #10B981 (Emerald)
  * 
- * Generates an official, publication-ready HD image dynamically and tightly sized.
- * Employs rock-solid, glitch-free quadratic curve geometry and native roundRect
- * to eliminate stray lines, ghost artifacts, and edge bleeding across all devices.
+ * Generates an official, publication-ready HD image for WhatsApp sharing on phone.
+ * Compact square-proportioned layout:
+ * - Clears the empty void between member names and stats columns
+ * - Dynamically hugs actual content rows with ZERO empty space at the bottom
+ * - High-contrast typography and capsules optimized for mobile messaging
  */
 
 import { AppUser } from '../types';
 import { formatDateTimeMoroccoGmt } from './moroccoTime';
+import { getUserStats, getUserEffectivePoints } from './calculateStats';
 
 export interface StandingsCardOptions {
   users: AppUser[];
@@ -51,7 +54,7 @@ function roundRect(
 /**
  * Draw the official 1xlmzalit vector logo directly onto canvas with isolated path state
  */
-function drawXlmzalitVector(ctx: CanvasRenderingContext2D, startX: number, startY: number, scale: number = 0.55) {
+function drawXlmzalitVector(ctx: CanvasRenderingContext2D, startX: number, startY: number, scale: number = 0.52) {
   ctx.save();
   ctx.translate(startX, startY);
   ctx.scale(scale, scale);
@@ -170,36 +173,38 @@ function drawXlmzalitVector(ctx: CanvasRenderingContext2D, startX: number, start
   ctx.fillRect(360, 20, 16, 70);
   ctx.fillRect(352, 38, 38, 12);
 
-  ctx.beginPath(); // Clear path before restore
+  ctx.beginPath();
   ctx.restore();
 }
 
 /**
- * Generate a dynamic high-definition PNG Data URL for the current standings
- * dynamically and tightly sized without any glitches or unused space.
+ * Generate a dynamic high-definition PNG Data URL for current standings.
+ * Tailored for WhatsApp sharing on phone:
+ * - Snugly proportioned width (740px) eliminating horizontal dead space
+ * - Compact height that tightly fits the actual rows without empty space at the bottom
  */
 export async function generateStandingsCardImage(options: StandingsCardOptions): Promise<string> {
   const { users, userStats, generatedDate } = options;
 
-  const width = 1080;
-  const margin = 28;
+  const width = 740;
+  const margin = 20;
   const cardW = width - margin * 2;
 
-  // Header & Banner layout (compact and clean)
-  const bannerY = margin + 92;
-  const bannerH = 40;
+  // Header & Banner layout
+  const headerH = 78;
+  const bannerY = margin + headerH + 10;
+  const bannerH = 36;
 
-  // Standings table: directly below banner
-  const displayedUsers = users.slice(0, 18);
-  const rowCount = displayedUsers.length;
-  const rowH = 48;
-  const tableHeaderH = 46;
-  const tablePadding = 12;
-  const tableH = rowCount > 0 ? (tableHeaderH + rowCount * rowH + tablePadding) : 90;
-  const tableY = bannerY + bannerH + 16;
+  // Standings table layout
+  const displayedUsers = users.slice(0, 14);
+  const rowCount = Math.max(1, displayedUsers.length);
+  const tableY = bannerY + bannerH + 12;
+  const tableHeaderH = 40;
+  const rowH = 56;
+  const tableH = tableHeaderH + (rowCount * rowH) + 12;
 
-  // Footer: placed below table with clean 22px breathing room from the card border
-  const footerY = tableY + tableH + 30;
+  // Dynamic canvas height: snugly hugs the content with ZERO dead space at the bottom
+  const footerY = tableY + tableH + 24;
   const cardH = footerY + 22 - margin;
   const height = cardH + margin * 2;
 
@@ -213,24 +218,26 @@ export async function generateStandingsCardImage(options: StandingsCardOptions):
   ctx.fillStyle = '#06141B';
   ctx.fillRect(0, 0, width, height);
 
-  // Smooth ambient radial vignette tailored to dynamic height
-  const centerGlow = ctx.createRadialGradient(width / 2, height * 0.35, 60, width / 2, height * 0.35, width * 0.7);
-  centerGlow.addColorStop(0, '#0D212D');
+  // Smooth ambient radial vignette
+  const centerGlow = ctx.createRadialGradient(width / 2, height * 0.4, 60, width / 2, height * 0.4, width * 0.75);
+  centerGlow.addColorStop(0, '#0E2330');
   centerGlow.addColorStop(0.65, '#06141B');
-  centerGlow.addColorStop(1, '#030B0F');
+  centerGlow.addColorStop(1, '#030A0E');
   ctx.fillStyle = centerGlow;
   ctx.fillRect(0, 0, width, height);
 
   // Subtle starry constellation pattern
   const starSeeds = [
-    [90, 60], [280, 50], [920, 65], [160, 220], [950, 200],
-    [90, 420], [990, 400], [180, 580], [890, 540], [540, 140]
+    [70, 45], [210, 40], [530, 50], [670, 42],
+    [110, 160], [630, 150], [80, 290], [660, 280],
+    [130, 410], [610, 390], [370, 95], [90, 520],
+    [640, 510], [220, 620], [520, 610]
   ];
   ctx.fillStyle = '#CCD0CF';
   for (const [sx, sy] of starSeeds) {
-    if (sy < height - 30) {
+    if (sy < height - 25) {
       ctx.save();
-      ctx.globalAlpha = 0.25;
+      ctx.globalAlpha = 0.22;
       ctx.beginPath();
       ctx.arc(sx, sy, 1.8, 0, Math.PI * 2);
       ctx.closePath();
@@ -247,25 +254,25 @@ export async function generateStandingsCardImage(options: StandingsCardOptions):
   borderGrad.addColorStop(1, '#EAA81B');
 
   ctx.strokeStyle = borderGrad;
-  ctx.lineWidth = 2;
-  roundRect(ctx, margin, margin, cardW, cardH, 20);
+  ctx.lineWidth = 2.2;
+  roundRect(ctx, margin, margin, cardW, cardH, 18);
   ctx.stroke();
 
   // 3. HEADER: 1XLMZALIT LOGO & UCL BADGE
-  drawXlmzalitVector(ctx, margin + 24, margin + 20, 0.54);
+  drawXlmzalitVector(ctx, margin + 20, margin + 14, 0.52);
 
   ctx.fillStyle = '#9BA8AB';
-  ctx.font = 'bold 12.5px "Segoe UI", sans-serif';
+  ctx.font = 'bold 12px "Segoe UI", sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('OFFICIAL LEADERBOARD • UCL 2026/2027', margin + 26, margin + 82);
+  ctx.fillText('OFFICIAL LEADERBOARD • UCL 2026/2027', margin + 22, margin + 70);
 
   // Tournament Badge (Top Right)
-  const badgeRight = margin + cardW - 24;
-  const badgeY = margin + 20;
-  const badgeW = 310;
+  const badgeRight = margin + cardW - 18;
+  const badgeY = margin + 14;
+  const badgeW = 280;
   const badgeH = 46;
 
-  roundRect(ctx, badgeRight - badgeW, badgeY, badgeW, badgeH, 12);
+  roundRect(ctx, badgeRight - badgeW, badgeY, badgeW, badgeH, 11);
   ctx.fillStyle = '#11212D';
   ctx.fill();
   ctx.strokeStyle = '#253745';
@@ -273,100 +280,113 @@ export async function generateStandingsCardImage(options: StandingsCardOptions):
   ctx.stroke();
 
   // UCL Pill
-  roundRect(ctx, badgeRight - badgeW + 8, badgeY + 7, 56, 32, 8);
+  roundRect(ctx, badgeRight - badgeW + 8, badgeY + 6, 52, 34, 8);
   ctx.fillStyle = '#06141B';
   ctx.fill();
   ctx.strokeStyle = '#4A5C6A';
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 1.2;
   ctx.stroke();
 
   ctx.fillStyle = '#EAA81B';
-  ctx.font = '900 12.5px "Segoe UI", sans-serif';
+  ctx.font = '900 13px "Segoe UI", sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('UCL', badgeRight - badgeW + 36, badgeY + 28);
+  ctx.fillText('UCL', badgeRight - badgeW + 34, badgeY + 28);
 
   ctx.fillStyle = '#CCD0CF';
-  ctx.font = 'bold 14.5px "Cairo", sans-serif';
+  ctx.font = 'bold 14px "Cairo", sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText('ترتيب بطولة دوري أبطال أوروبا', badgeRight - 14, badgeY + 29);
+  ctx.fillText('ترتيب دوري أبطال أوروبا', badgeRight - 12, badgeY + 29);
 
-  // 4. TIMESTAMP BANNER (Strictly Morocco GMT)
-  roundRect(ctx, margin + 20, bannerY, cardW - 40, bannerH, 10);
+  // 4. TIMESTAMP BANNER (Strictly Morocco GMT, bold & clear)
+  roundRect(ctx, margin + 14, bannerY, cardW - 28, bannerH, 9);
   ctx.fillStyle = '#11212D';
   ctx.fill();
   ctx.strokeStyle = '#253745';
-  ctx.lineWidth = 1.2;
+  ctx.lineWidth = 1.3;
   ctx.stroke();
 
   const formattedDate = formatDateTimeMoroccoGmt(generatedDate || new Date(), 0);
   ctx.fillStyle = '#10B981';
-  ctx.font = 'bold 12.5px "Segoe UI", monospace';
+  ctx.font = 'bold 13px "Segoe UI", monospace';
   ctx.textAlign = 'center';
-  ctx.fillText(`🏆 CURRENT STANDINGS • AS OF: ${formattedDate.toUpperCase()}`, width / 2, bannerY + 25);
+  ctx.fillText(`🏆 CURRENT STANDINGS • AS OF: ${formattedDate.toUpperCase()}`, width / 2, bannerY + 23);
 
-  // 5. OFFICIAL STANDINGS TABLE (Clean, direct, and tightly proportioned)
-  roundRect(ctx, margin + 20, tableY, cardW - 40, tableH, 16);
+  // 5. OFFICIAL STANDINGS TABLE (Tightly packed columns, no wasted space)
+  const tableX = margin + 14;
+  const tableW = cardW - 28;
+
+  roundRect(ctx, tableX, tableY, tableW, tableH, 14);
   ctx.fillStyle = '#11212D';
   ctx.fill();
   ctx.strokeStyle = '#253745';
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
+  // Column X Coordinates - Tightly packed to eliminate dead space between member names and stats
+  const colRank = tableX + 16;
+  const colAvatar = tableX + 54;
+  const colMember = tableX + 90;
+  const colScores = tableX + 316;
+  const colMvp = tableX + 414;
+  const colScorers = tableX + 512;
+  const colPts = tableX + tableW - 16;
+
   // Table Header Row
-  const thY = tableY + 30;
+  const thY = tableY + 26;
   ctx.fillStyle = '#9BA8AB';
   ctx.font = '900 12px "Segoe UI", sans-serif';
-
-  const colRank = margin + 44;
-  const colMember = margin + 120;
-  const colScores = margin + 550;
-  const colMvp = margin + 680;
-  const colScorers = margin + 800;
-  const colPts = margin + cardW - 44;
 
   ctx.textAlign = 'left';
   ctx.fillText('RANK', colRank, thY);
   ctx.fillText('MEMBER', colMember, thY);
 
   ctx.textAlign = 'center';
-  ctx.fillText('EXACT SCORES', colScores, thY);
+  ctx.fillText('EXACT', colScores, thY);
   ctx.fillText('MVPs', colMvp, thY);
   ctx.fillText('SCORERS', colScorers, thY);
 
   ctx.textAlign = 'right';
-  ctx.fillText('TOTAL POINTS', colPts, thY);
+  ctx.fillText('TOTAL PTS', colPts, thY);
 
-  // Divider under TH
+  // Divider under Table Header
   ctx.strokeStyle = '#253745';
   ctx.lineWidth = 1.4;
   ctx.beginPath();
-  ctx.moveTo(margin + 32, tableY + 44);
-  ctx.lineTo(margin + cardW - 32, tableY + 44);
+  ctx.moveTo(tableX + 10, tableY + tableHeaderH);
+  ctx.lineTo(tableX + tableW - 10, tableY + tableHeaderH);
   ctx.stroke();
 
   if (rowCount === 0) {
     ctx.textAlign = 'center';
     ctx.fillStyle = '#9BA8AB';
-    ctx.font = 'bold 14px "Segoe UI", sans-serif';
+    ctx.font = 'bold 15px "Segoe UI", sans-serif';
     ctx.fillText('No contenders registered yet', width / 2, tableY + 70);
   } else {
-    // Table Rows (only the exact number of users, perfectly tight)
+    // Table Rows
     displayedUsers.forEach((user, idx) => {
-      const rowY = tableY + 48 + idx * rowH;
+      const rowY = tableY + tableHeaderH + idx * rowH;
       const rank = idx + 1;
-      const stats = userStats[user.username] || { exactScoreCount: 0, correctMvpCount: 0, correctScorersCount: 0 };
+      const stats = getUserStats(user, userStats);
 
-      // Row alternating background
+      // Alternating row background
       if (idx % 2 === 1) {
         ctx.fillStyle = 'rgba(6, 20, 27, 0.45)';
-        ctx.fillRect(margin + 22, rowY, cardW - 44, rowH);
+        ctx.fillRect(tableX + 4, rowY, tableW - 8, rowH);
       }
 
-      // Rank Badge Box
-      const rankBadgeW = 38;
-      const rankBadgeH = 26;
+      // Subtle row border line
+      ctx.strokeStyle = 'rgba(37, 55, 69, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(tableX + 10, rowY + rowH);
+      ctx.lineTo(tableX + tableW - 10, rowY + rowH);
+      ctx.stroke();
+
+      // 1. Rank Badge Box
+      const rankBadgeH = 30;
+      const rankBadgeW = 34;
       const rankBadgeY = rowY + (rowH - rankBadgeH) / 2;
-      roundRect(ctx, colRank, rankBadgeY, rankBadgeW, rankBadgeH, 6);
+      roundRect(ctx, colRank, rankBadgeY, rankBadgeW, rankBadgeH, 7);
 
       if (rank === 1) {
         ctx.fillStyle = '#EAA81B';
@@ -383,13 +403,29 @@ export async function generateStandingsCardImage(options: StandingsCardOptions):
       } else {
         ctx.fillStyle = '#253745';
         ctx.fill();
-        ctx.fillStyle = '#9BA8AB';
+        ctx.fillStyle = '#CCD0CF';
       }
-      ctx.font = '900 13px "Segoe UI", monospace';
+      ctx.font = '900 14px "Segoe UI", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(`#${rank}`, colRank + rankBadgeW / 2, rankBadgeY + 18);
+      ctx.fillText(`#${rank}`, colRank + rankBadgeW / 2, rankBadgeY + rankBadgeH * 0.70);
 
-      // Member Name & Special Embellishment for Top 3
+      // 2. Member Avatar Initial Box
+      const avatarSize = 28;
+      const avatarY = rowY + (rowH - avatarSize) / 2;
+      roundRect(ctx, colAvatar, avatarY, avatarSize, avatarSize, 7);
+      ctx.fillStyle = rank === 1 ? 'rgba(234, 168, 27, 0.25)' : 'rgba(37, 55, 69, 0.7)';
+      ctx.fill();
+      ctx.strokeStyle = rank === 1 ? '#EAA81B' : '#4A5C6A';
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
+
+      ctx.fillStyle = rank === 1 ? '#FDE047' : '#CCD0CF';
+      ctx.font = '900 13px "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      const initial = (user.username || 'C').slice(0, 1).toUpperCase();
+      ctx.fillText(initial, colAvatar + avatarSize / 2, avatarY + avatarSize * 0.70);
+
+      // 3. Member Name (tightly placed before stats)
       ctx.textAlign = 'left';
       let namePrefix = '';
       if (rank === 1) {
@@ -406,50 +442,83 @@ export async function generateStandingsCardImage(options: StandingsCardOptions):
       }
       ctx.font = 'bold 15px "Cairo", "Segoe UI", sans-serif';
       const cleanName = (user.username || 'Contestant').replace(/^@+/, '');
-      const truncatedName = cleanName.length > 18 ? cleanName.substring(0, 17) + '…' : cleanName;
+      const truncatedName = cleanName.length > 15 ? cleanName.substring(0, 14) + '…' : cleanName;
       ctx.fillText(`${namePrefix}@${truncatedName}`, colMember, rowY + rowH * 0.62);
 
-      // Stats Columns (centered cleanly under each column header)
-      ctx.fillStyle = '#CCD0CF';
-      ctx.font = 'bold 13.5px "Segoe UI", monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(`${stats.exactScoreCount || 0}`, colScores, rowY + rowH * 0.62);
-      ctx.fillText(`${stats.correctMvpCount || 0}`, colMvp, rowY + rowH * 0.62);
-      ctx.fillText(`${stats.correctScorersCount || 0}`, colScorers, rowY + rowH * 0.62);
+      // 4. Stats Capsules (EXACT, MVPs, SCORERS)
+      const statPillW = 48;
+      const statPillH = 28;
+      const statPillY = rowY + (rowH - statPillH) / 2;
 
-      // Points Badge on Right
+      // Exact Scores Capsule
+      roundRect(ctx, colScores - statPillW / 2, statPillY, statPillW, statPillH, 6);
+      ctx.fillStyle = 'rgba(6, 20, 27, 0.6)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(74, 92, 106, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = '#CCD0CF';
+      ctx.font = '900 14px "Segoe UI", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${stats.exactScoreCount || 0}`, colScores, statPillY + statPillH * 0.70);
+
+      // MVPs Capsule
+      roundRect(ctx, colMvp - statPillW / 2, statPillY, statPillW, statPillH, 6);
+      ctx.fillStyle = 'rgba(6, 20, 27, 0.6)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(74, 92, 106, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = '#CCD0CF';
+      ctx.fillText(`${stats.correctMvpCount || 0}`, colMvp, statPillY + statPillH * 0.70);
+
+      // Scorers Capsule
+      roundRect(ctx, colScorers - statPillW / 2, statPillY, statPillW, statPillH, 6);
+      ctx.fillStyle = 'rgba(6, 20, 27, 0.6)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(74, 92, 106, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = '#CCD0CF';
+      ctx.fillText(`${stats.correctScorersCount || 0}`, colScorers, statPillY + statPillH * 0.70);
+
+      // 5. Total Points Badge on Right
       ctx.textAlign = 'right';
-      const ptsBadgeW = 88;
+      const ptsBadgeW = 96;
       const ptsBadgeH = 30;
       const ptsBadgeY = rowY + (rowH - ptsBadgeH) / 2;
       roundRect(ctx, colPts - ptsBadgeW, ptsBadgeY, ptsBadgeW, ptsBadgeH, 8);
 
       if (rank === 1) {
-        ctx.fillStyle = 'rgba(234, 168, 27, 0.2)';
+        ctx.fillStyle = 'rgba(234, 168, 27, 0.22)';
         ctx.fill();
         ctx.strokeStyle = '#EAA81B';
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = 1.5;
         ctx.stroke();
         ctx.fillStyle = '#EAA81B';
       } else {
-        ctx.fillStyle = 'rgba(37, 55, 69, 0.65)';
+        ctx.fillStyle = 'rgba(37, 55, 69, 0.75)';
         ctx.fill();
-        ctx.strokeStyle = '#253745';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#4A5C6A';
+        ctx.lineWidth = 1.1;
         ctx.stroke();
         ctx.fillStyle = rank === 2 ? '#CCD0CF' : rank === 3 ? '#CD7F32' : '#CCD0CF';
       }
 
-      ctx.font = '900 13.5px "Segoe UI", monospace';
-      ctx.fillText(`${user.points || 0} pts`, colPts - 10, ptsBadgeY + 20);
+      ctx.font = '900 15px "Segoe UI", monospace';
+      const effectivePts = getUserEffectivePoints(user, userStats);
+      ctx.fillText(`${effectivePts} pts`, colPts - 10, ptsBadgeY + ptsBadgeH * 0.70);
     });
   }
 
-  // 6. FOOTER AUTHENTICITY CODE (Clean and well-padded)
+  // 6. FOOTER AUTHENTICITY CODE
   ctx.textAlign = 'left';
   ctx.fillStyle = '#9BA8AB';
-  ctx.font = 'bold 11px "Segoe UI", monospace';
-  ctx.fillText('1XLMZALIT OFFICIAL STANDINGS • VERIFIED & LOCKED ENTRY', margin + 24, footerY);
+  ctx.font = 'bold 12px "Segoe UI", monospace';
+  ctx.fillText('1XLMZALIT OFFICIAL STANDINGS • VERIFIED & LOCKED ENTRY', margin + 22, footerY);
 
   return canvas.toDataURL('image/png', 1.0);
 }

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { AppUser, Match, Prediction, ArchivedSeason } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
+import { calculateAllUserStats, getUserStats, getUserEffectivePoints } from '../utils/calculateStats';
 import { LeaderboardArchiveModal } from './LeaderboardArchiveModal';
 import { FinishCurrentSeasonModal } from './FinishCurrentSeasonModal';
 import { AddPastSeasonModal } from './AddPastSeasonModal';
@@ -60,42 +61,8 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
 
   // Calculate statistics per user (exact score count, correct MVP count, and correct Scorers count)
   const userStats = useMemo(() => {
-    const stats: Record<string, { exactScoreCount: number; correctMvpCount: number; correctScorersCount: number }> = {};
-
-    matches.forEach(match => {
-      if (match.status === 'SETTLED' && match.result) {
-        const res = match.result;
-        Object.values(predictions).forEach(pred => {
-          if (pred.matchId === match.id) {
-            if (!stats[pred.username]) {
-              stats[pred.username] = { exactScoreCount: 0, correctMvpCount: 0, correctScorersCount: 0 };
-            }
-            // Check Exact Score
-            if (pred.homeScore === res.homeScore && pred.awayScore === res.awayScore) {
-              stats[pred.username].exactScoreCount += 1;
-            }
-            // Check MVP
-            if (pred.mvp && res.mvp && pred.mvp.trim().toLowerCase() === res.mvp.trim().toLowerCase()) {
-              stats[pred.username].correctMvpCount += 1;
-            }
-            // Check Scorers
-            (pred.homeScorers || []).forEach(sc => {
-              if (sc && res.homeScorers.includes(sc)) {
-                stats[pred.username].correctScorersCount += 1;
-              }
-            });
-            (pred.awayScorers || []).forEach(sc => {
-              if (sc && res.awayScorers.includes(sc)) {
-                stats[pred.username].correctScorersCount += 1;
-              }
-            });
-          }
-        });
-      }
-    });
-
-    return stats;
-  }, [matches, predictions]);
+    return calculateAllUserStats(users, matches, predictions);
+  }, [users, matches, predictions]);
 
   // Sort approved users according to strict 4-tier ranking rules:
   // 1. Total Points
@@ -106,21 +73,35 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
     return users
       .filter(u => (u.status === 'approved' || !u.status) && u.role !== 'admin')
       .sort((a, b) => {
-        // 1. Total Points (descending)
-        const ptsDiff = (b.points || 0) - (a.points || 0);
+        const aStats = getUserStats(a, userStats);
+        const bStats = getUserStats(b, userStats);
+
+        // 1. Total Points (descending) - synchronized effective points
+        const aPts = getUserEffectivePoints(a, userStats);
+        const bPts = getUserEffectivePoints(b, userStats);
+        const ptsDiff = bPts - aPts;
         if (ptsDiff !== 0) return ptsDiff;
 
         // 2. Most MVP predicted (descending)
-        const aMvp = userStats[a.username]?.correctMvpCount || 0;
-        const bMvp = userStats[b.username]?.correctMvpCount || 0;
-        if (bMvp !== aMvp) return bMvp - aMvp;
+        const mvpDiff = bStats.correctMvpCount - aStats.correctMvpCount;
+        if (mvpDiff !== 0) return mvpDiff;
 
         // 3. Most scorers predicted (descending)
-        const aScorers = userStats[a.username]?.correctScorersCount || 0;
-        const bScorers = userStats[b.username]?.correctScorersCount || 0;
-        if (bScorers !== aScorers) return bScorers - aScorers;
+        const scorersDiff = bStats.correctScorersCount - aStats.correctScorersCount;
+        if (scorersDiff !== 0) return scorersDiff;
 
-        // 4. Account creation date (ascending: earlier date wins)
+        // 4. Most exact scores predicted (descending)
+        const exactDiff = bStats.exactScoreCount - aStats.exactScoreCount;
+        if (exactDiff !== 0) return exactDiff;
+
+        // 5. Account creation date (User ilyass is adopted as the very first registered account)
+        const isIlyassA = (a.username || '').toLowerCase().replace(/^@+/, '').startsWith('ilyas') ||
+                          (a.originalUsername || '').toLowerCase().replace(/^@+/, '').startsWith('ilyas');
+        const isIlyassB = (b.username || '').toLowerCase().replace(/^@+/, '').startsWith('ilyas') ||
+                          (b.originalUsername || '').toLowerCase().replace(/^@+/, '').startsWith('ilyas');
+        if (isIlyassA && !isIlyassB) return -1;
+        if (isIlyassB && !isIlyassA) return 1;
+
         const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 9999999999999;
         const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 9999999999999;
         if (aTime !== bTime) return aTime - bTime;
@@ -351,7 +332,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                     <div className="mt-3 pt-2.5 border-t border-[#253745] flex items-center justify-between">
                       <span className="text-[10px] text-[#9BA8AB]">{t('totalPoints')}</span>
                       <span className="font-mono font-black text-base text-slate-200 bg-slate-300/15 px-2.5 py-0.5 rounded-lg border border-slate-300/30">
-                        {top3[1].points || 0} pts
+                        {getUserEffectivePoints(top3[1], userStats)} pts
                       </span>
                     </div>
                   </div>
@@ -381,7 +362,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                     <div className="mt-4 pt-3 border-t border-[#253745] flex items-center justify-between">
                       <span className="text-xs text-[#9BA8AB]">{t('totalPoints')}</span>
                       <span className="font-mono font-black text-lg text-amber-300 bg-amber-400/20 px-3 py-1 rounded-lg border border-amber-400/50 shadow-sm">
-                        {top3[0].points || 0} pts
+                        {getUserEffectivePoints(top3[0], userStats)} pts
                       </span>
                     </div>
                   </div>
@@ -411,7 +392,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                     <div className="mt-3 pt-2 border-t border-[#253745] flex items-center justify-between">
                       <span className="text-[10px] text-[#9BA8AB]">{t('totalPoints')}</span>
                       <span className="font-mono font-black text-sm text-amber-400 bg-amber-700/20 px-2 py-0.5 rounded-lg border border-amber-600/40">
-                        {top3[2].points || 0} pts
+                        {getUserEffectivePoints(top3[2], userStats)} pts
                       </span>
                     </div>
                   </div>
@@ -440,7 +421,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                       </div>
                       <div className="text-right shrink-0">
                         <span className="font-mono font-black text-base text-amber-300 block">
-                          {top3[0].points || 0} pts
+                          {getUserEffectivePoints(top3[0], userStats)} pts
                         </span>
                         <span className="text-[9px] text-amber-300/80 font-bold uppercase">#{1} {t('rank')}</span>
                       </div>
@@ -464,7 +445,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                         {top3[1].username}
                       </h4>
                       <span className="font-mono font-bold text-xs text-slate-200 block mt-1">
-                        {top3[1].points || 0} pts
+                        {getUserEffectivePoints(top3[1], userStats)} pts
                       </span>
                     </div>
                   )}
@@ -483,7 +464,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                         {top3[2].username}
                       </h4>
                       <span className="font-mono font-bold text-xs text-amber-400 block mt-1">
-                        {top3[2].points || 0} pts
+                        {getUserEffectivePoints(top3[2], userStats)} pts
                       </span>
                     </div>
                   )}
@@ -499,7 +480,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
             {approvedUsers.map((user, index) => {
               const rank = index + 1;
               const place = getPlaceConfig(rank);
-              const stats = userStats[user.username] || { exactScoreCount: 0, correctMvpCount: 0, correctScorersCount: 0 };
+              const stats = getUserStats(user, userStats);
 
               return (
                 <div 
@@ -554,7 +535,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                     {/* Points Badge */}
                     <div className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono text-xs sm:text-sm ${place.pointsBadge}`}>
                       <Star className="w-3.5 h-3.5 shrink-0" />
-                      <span>{user.points || 0} pts</span>
+                      <span>{getUserEffectivePoints(user, userStats)} pts</span>
                     </div>
                   </div>
 
@@ -598,7 +579,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                 {approvedUsers.map((user, index) => {
                   const rank = index + 1;
                   const place = getPlaceConfig(rank);
-                  const stats = userStats[user.username] || { exactScoreCount: 0, correctMvpCount: 0, correctScorersCount: 0 };
+                  const stats = getUserStats(user, userStats);
 
                   return (
                     <tr 
@@ -673,7 +654,7 @@ export const LeaderboardSection: React.FC<LeaderboardSectionProps> = ({
                       <td className="py-3.5 px-4 text-center font-bold">
                         <div className={`flex items-center justify-center gap-1.5 py-1 px-3 rounded-lg mx-auto w-fit font-mono ${place.pointsBadge}`}>
                           <Star className="w-3.5 h-3.5 shrink-0" />
-                          <span>{user.points || 0}</span>
+                          <span>{getUserEffectivePoints(user, userStats)}</span>
                         </div>
                       </td>
                     </tr>

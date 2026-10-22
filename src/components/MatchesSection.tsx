@@ -15,7 +15,9 @@ import {
   Timer,
   Flame,
   Download,
-  Sparkles
+  Sparkles,
+  Trophy,
+  Check
 } from 'lucide-react';
 import { Match, Team, Prediction, AppUser } from '../types';
 import { PredictionCardModal } from './PredictionCardModal';
@@ -23,6 +25,7 @@ import { MatchesCardModal } from './MatchesCardModal';
 import { useLanguage } from '../i18n/LanguageContext';
 import { getTeamEnglishName, getLocalizedTeamName } from '../data/clubPresets';
 import { formatEnglishDeadlineMorocco } from '../utils/moroccoTime';
+import { isPlayerMatch, extractScorers } from '../utils/calculateStats';
 
 interface MatchesSectionProps {
   matches: Match[];
@@ -165,7 +168,7 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
   const availableMatches = matches.filter(
     (m) => m.status !== 'SETTLED' && new Date(m.deadline).getTime() > Date.now()
   );
-  const exportableMatches = availableMatches.length > 0 ? availableMatches : matches;
+  const exportableMatches = availableMatches.length > 0 ? availableMatches : matches.filter(m => m.status !== 'SETTLED');
 
   const openPredictionCard = (match: Match, pred: Prediction) => {
     const home = teams[match.homeTeam] || { name: match.homeTeam, logo: '', squad: [] };
@@ -521,8 +524,13 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                   <div className="flex flex-col items-center">
                     <span className="text-base sm:text-lg font-bold text-[#9BA8AB] font-mono tracking-widest">VS</span>
                     {match.result ? (
-                      <div className="mt-2 text-base sm:text-lg font-bold bg-[#06141B] px-3.5 py-1 rounded-xl border border-[#253745] text-[#CCD0CF] shadow font-mono">
-                        {match.result.homeScore} - {match.result.awayScore}
+                      <div className="mt-2 text-center">
+                        <div className="text-base sm:text-lg font-black bg-[#06141B] px-3.5 py-1 rounded-xl border border-emerald-500/40 text-emerald-400 shadow font-mono">
+                          {match.result.homeScore} - {match.result.awayScore}
+                        </div>
+                        <span className="text-[10px] text-emerald-300 font-bold block mt-1">
+                          {language === 'ar' ? 'النتيجة الرسمية' : language === 'fr' ? 'Résultat officiel' : 'Official Result'}
+                        </span>
                       </div>
                     ) : (
                       <span className="text-[10px] text-[#9BA8AB] mt-1 font-mono">UCL 2026/2027</span>
@@ -557,6 +565,151 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                         {t('memberLogin')}
                       </button>
                     </div>
+                  ) : match.result ? (
+                    // Display Complete Official Match Details entered by Admin (Score, Scorers, MVP)
+                    (() => {
+                      const res = match.result;
+                      const homeScorersList = extractScorers(res.homeScorers);
+                      const awayScorersList = extractScorers(res.awayScorers);
+                      const allActualScorers = [...homeScorersList, ...awayScorersList];
+
+                      // Calculate member's earned points if they predicted this match
+                      let earnedPts = 0;
+                      let isExact = false;
+                      let matchedScorersCount = 0;
+                      let isMvpCorrect = false;
+
+                      if (userPred) {
+                        if (Number(userPred.homeScore) === Number(res.homeScore) && Number(userPred.awayScore) === Number(res.awayScore)) {
+                          earnedPts += 5;
+                          isExact = true;
+                        }
+                        const predScorers = [
+                          ...extractScorers(userPred.homeScorers),
+                          ...extractScorers(userPred.awayScorers)
+                        ];
+                        const usedIndices = new Set<number>();
+                        predScorers.forEach(ps => {
+                          for (let i = 0; i < allActualScorers.length; i++) {
+                            if (!usedIndices.has(i) && isPlayerMatch(ps, allActualScorers[i])) {
+                              usedIndices.add(i);
+                              earnedPts += 1;
+                              matchedScorersCount++;
+                              break;
+                            }
+                          }
+                        });
+                        if (userPred.mvp && res.mvp && isPlayerMatch(userPred.mvp, res.mvp)) {
+                          earnedPts += 3;
+                          isMvpCorrect = true;
+                        }
+                      }
+
+                      return (
+                        <div className="space-y-3.5">
+                          {/* Official Result Banner */}
+                          <div className="bg-[#11212D] p-3 sm:p-3.5 rounded-xl border border-emerald-500/40 space-y-2.5">
+                            <div className="flex items-center justify-between gap-2 border-b border-[#253745] pb-2">
+                              <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                                <Trophy className="w-4 h-4 text-emerald-400" />
+                                <span>{language === 'ar' ? 'تفاصيل النتيجة الرسمية للمباراة' : language === 'fr' ? 'Détails Officiels du Match' : 'Official Match Details'}</span>
+                              </span>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/70 text-emerald-300 border border-emerald-500/30">
+                                {language === 'ar' ? 'معتمدة رسمياً' : language === 'fr' ? 'Validé' : 'Settled'}
+                              </span>
+                            </div>
+
+                            {/* Score & MVP Row */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                              <div className="bg-[#06141B] p-2 rounded-lg border border-[#253745] flex items-center justify-between">
+                                <span className="text-[#9BA8AB]">{language === 'ar' ? 'النتيجة النهائية:' : language === 'fr' ? 'Score final :' : 'Final Score:'}</span>
+                                <span className="font-black text-emerald-400 font-mono text-sm">{res.homeScore} - {res.awayScore}</span>
+                              </div>
+                              <div className="bg-[#06141B] p-2 rounded-lg border border-[#253745] flex items-center justify-between">
+                                <span className="text-[#9BA8AB] flex items-center gap-1">
+                                  <Star className="w-3.5 h-3.5 text-amber-400" />
+                                  <span>{language === 'ar' ? 'رجل المباراة (MVP):' : language === 'fr' ? 'Homme du match :' : 'MVP:'}</span>
+                                </span>
+                                <span className="font-bold text-amber-300 truncate max-w-[150px]">{res.mvp || (language === 'ar' ? 'غير محدد' : 'N/A')}</span>
+                              </div>
+                            </div>
+
+                            {/* Scorers Section */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
+                              {/* Home Scorers */}
+                              <div className="bg-[#06141B] p-2.5 rounded-lg border border-[#253745]">
+                                <span className="font-semibold text-[#CCD0CF] block mb-1 truncate">
+                                  ⚽ {getLocalizedTeamName(home.name, language)} ({homeScorersList.length})
+                                </span>
+                                {homeScorersList.length === 0 ? (
+                                  <span className="text-[11px] text-[#9BA8AB] italic">{language === 'ar' ? 'لا توجد أهداف' : 'Aucun but'}</span>
+                                ) : (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {homeScorersList.map((sc, i) => (
+                                      <span key={i} className="text-[10px] bg-[#253745] text-[#CCD0CF] px-2 py-0.5 rounded font-medium">
+                                        {sc}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Away Scorers */}
+                              <div className="bg-[#06141B] p-2.5 rounded-lg border border-[#253745]">
+                                <span className="font-semibold text-[#CCD0CF] block mb-1 truncate">
+                                  ⚽ {getLocalizedTeamName(away.name, language)} ({awayScorersList.length})
+                                </span>
+                                {awayScorersList.length === 0 ? (
+                                  <span className="text-[11px] text-[#9BA8AB] italic">{language === 'ar' ? 'لا توجد أهداف' : 'Aucun but'}</span>
+                                ) : (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {awayScorersList.map((sc, i) => (
+                                      <span key={i} className="text-[10px] bg-[#253745] text-[#CCD0CF] px-2 py-0.5 rounded font-medium">
+                                        {sc}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Member's Personal Prediction & Points Earned */}
+                          {userPred ? (
+                            <div className="bg-[#11212D]/80 p-3 rounded-xl border border-[#253745] text-xs space-y-2">
+                              <div className="flex items-center justify-between gap-2 border-b border-[#253745] pb-1.5">
+                                <span className="font-bold text-[#CCD0CF]">{language === 'ar' ? 'حصاد توقعك للمباراة:' : language === 'fr' ? 'Bilan de votre pronostic :' : 'Your Prediction Breakdown:'}</span>
+                                <span className={`font-mono font-black text-xs px-2.5 py-0.5 rounded-lg ${earnedPts > 0 ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/50' : 'bg-[#253745] text-[#9BA8AB]'}`}>
+                                  +{earnedPts} {language === 'ar' ? 'نقطة' : 'pts'}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                                <span className="text-[#9BA8AB]">{t('exactScore')}: <strong className="font-mono text-[#CCD0CF]">{userPred.homeScore} - {userPred.awayScore}</strong></span>
+                                {isExact && (
+                                  <span className="text-[10px] bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 px-1.5 py-0.5 rounded font-bold">
+                                    ✓ {language === 'ar' ? 'نتيجة دقيقة (+5)' : 'Score exact (+5)'}
+                                  </span>
+                                )}
+                                {matchedScorersCount > 0 && (
+                                  <span className="text-[10px] bg-blue-950/80 text-blue-300 border border-blue-500/40 px-1.5 py-0.5 rounded font-bold">
+                                    ✓ {matchedScorersCount} {language === 'ar' ? 'هداف صحيح' : 'buteur(s)'} (+{matchedScorersCount})
+                                  </span>
+                                )}
+                                {isMvpCorrect && (
+                                  <span className="text-[10px] bg-amber-950/80 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded font-bold">
+                                    ✓ {language === 'ar' ? 'رجل المباراة (+3)' : 'MVP (+3)'}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-center py-1 text-xs text-[#9BA8AB]">
+                              {language === 'ar' ? 'لم تقم بتسجيل توقع لهذه المباراة قبل إغلاقها.' : 'Vous n\'avez pas enregistré de pronostic pour ce match.'}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()
                   ) : isLocked ? (
                     <div className="text-center text-xs space-y-1 py-1">
                       {userPred ? (
@@ -568,22 +721,16 @@ export const MatchesSection: React.FC<MatchesSectionProps> = ({
                               {t('manOfTheMatch')}: <strong className="text-[#CCD0CF] font-semibold">{userPred.mvp}</strong>
                             </div>
                           )}
-                          {!match.result && match.status !== 'SETTLED' ? (
-                            <div className="pt-2 flex justify-center">
-                              <button
-                                type="button"
-                                onClick={() => openPredictionCard(match, userPred)}
-                                className="px-3.5 py-1.5 rounded-xl bg-[#253745] hover:bg-[#4A5C6A] border border-[#253745] text-[#CCD0CF] text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow active:scale-[0.98]"
-                              >
-                                <Download className="w-3.5 h-3.5 text-[#CCD0CF]" />
-                                <span>{language === 'fr' ? 'Télécharger la carte de pronostic' : language === 'en' ? 'Download Prediction Card' : 'تحميل بطاقة التوقع (صورة)'}</span>
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="pt-1.5 text-[11px] text-[#9BA8AB]">
-                              {language === 'fr' ? 'Le résultat officiel est publié, le téléchargement est clos.' : language === 'en' ? 'Official result announced; prediction card download closed.' : 'تم إعلان النتيجة الرسمية للمباراة وانتهت فترة تحميل بطاقة التوقع.'}
-                            </div>
-                          )}
+                          <div className="pt-2 flex justify-center">
+                            <button
+                              type="button"
+                              onClick={() => openPredictionCard(match, userPred)}
+                              className="px-3.5 py-1.5 rounded-xl bg-[#253745] hover:bg-[#4A5C6A] border border-[#253745] text-[#CCD0CF] text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow active:scale-[0.98]"
+                            >
+                              <Download className="w-3.5 h-3.5 text-[#CCD0CF]" />
+                              <span>{language === 'fr' ? 'Télécharger la carte de pronostic' : language === 'en' ? 'Download Prediction Card' : 'تحميل بطاقة التوقع (صورة)'}</span>
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <span className="text-[#9BA8AB]">

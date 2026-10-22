@@ -57,6 +57,15 @@ import {
   getStoredMoroccoOffset,
   setStoredMoroccoOffset 
 } from '../utils/moroccoTime';
+import { 
+  calculateAllUserStats, 
+  getUserStats, 
+  getUserEffectivePoints,
+  getInitialMemberScorers,
+  normalizeUsername, 
+  isPlayerMatch,
+  extractScorers 
+} from '../utils/calculateStats';
 
 interface AdminSectionProps {
   matches: Match[];
@@ -102,8 +111,15 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
 
   // Point correction state
   const [selectedUserForPoints, setSelectedUserForPoints] = useState<string>('');
+  const [pointsField, setPointsField] = useState<'points' | 'exact' | 'mvp' | 'scorers'>('points');
   const [pointsAction, setPointsAction] = useState<'add' | 'sub' | 'set'>('add');
   const [pointsValue, setPointsValue] = useState<number>(0);
+  const [isRecalculatingStats, setIsRecalculatingStats] = useState<boolean>(false);
+
+  // Synchronized calculated stats for admin displays
+  const adminUserStats = useMemo(() => {
+    return calculateAllUserStats(users, matches, predictions);
+  }, [users, matches, predictions]);
 
   // Match creation state
   const teamKeys = Object.keys(teams).sort();
@@ -304,22 +320,82 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
 
   const handleApplyPointsModification = () => {
     if (!selectedUserForPoints) {
-      notify('الرجاء اختيار العضو المراد تعديل نقاطه!', 'error');
+      notify(language === 'fr' ? 'Veuillez sélectionner le membre !' : language === 'en' ? 'Please select a member!' : 'الرجاء اختيار العضو!', 'error');
       return;
     }
     const val = Number(pointsValue) || 0;
     const next = users.map(u => {
       if (u.username === selectedUserForPoints) {
-        let pts = u.points || 0;
-        if (pointsAction === 'add') pts += val;
-        else if (pointsAction === 'sub') pts = Math.max(0, pts - val);
-        else if (pointsAction === 'set') pts = Math.max(0, val);
-        return { ...u, points: pts };
+        if (pointsField === 'points') {
+          let pts = u.points || 0;
+          if (pointsAction === 'add') pts += val;
+          else if (pointsAction === 'sub') pts = Math.max(0, pts - val);
+          else if (pointsAction === 'set') pts = Math.max(0, val);
+          return { ...u, points: pts };
+        } else if (pointsField === 'exact') {
+          let ex = u.exactScoreCount || 0;
+          if (pointsAction === 'add') ex += val;
+          else if (pointsAction === 'sub') ex = Math.max(0, ex - val);
+          else if (pointsAction === 'set') ex = Math.max(0, val);
+          return { ...u, exactScoreCount: ex };
+        } else if (pointsField === 'mvp') {
+          let mv = u.correctMvpCount || 0;
+          if (pointsAction === 'add') mv += val;
+          else if (pointsAction === 'sub') mv = Math.max(0, mv - val);
+          else if (pointsAction === 'set') mv = Math.max(0, val);
+          return { ...u, correctMvpCount: mv };
+        } else if (pointsField === 'scorers') {
+          let sc = (u.correctScorersCount !== undefined && u.correctScorersCount !== null)
+            ? Number(u.correctScorersCount) || 0
+            : getInitialMemberScorers(u.username, u.originalUsername);
+          if (pointsAction === 'add') sc += val;
+          else if (pointsAction === 'sub') sc = Math.max(0, sc - val);
+          else if (pointsAction === 'set') sc = Math.max(0, val);
+          return { ...u, correctScorersCount: sc };
+        }
       }
       return u;
     });
     onUpdateUsers(next);
-    notify(`تم تعديل نقاط العضو (${selectedUserForPoints}) بنجاح!`, 'success');
+    notify(language === 'fr' ? `Modification enregistrée pour (${selectedUserForPoints}) !` : language === 'en' ? `Adjustment applied for (${selectedUserForPoints})!` : `تم تعديل بيانات وإحصائيات العضو (${selectedUserForPoints}) بنجاح!`, 'success');
+  };
+
+  const handleRecalculateAllStats = async () => {
+    setIsRecalculatingStats(true);
+    try {
+      const computedStats = calculateAllUserStats(users, matches, predictions);
+      const next = users.map(u => {
+        const stat = getUserStats(u, computedStats);
+        const calculatedPts = stat.totalPointsCalculated || 0;
+        const currentPts = Number(u.points) || 0;
+        const finalPts = Math.max(currentPts, calculatedPts);
+        const initialScorers = getInitialMemberScorers(u.username, u.originalUsername);
+        const currentScorers = (u.correctScorersCount !== undefined && u.correctScorersCount !== null)
+          ? Number(u.correctScorersCount) || 0
+          : initialScorers;
+        return {
+          ...u,
+          points: finalPts,
+          exactScoreCount: Math.max(Number(u.exactScoreCount) || 0, stat.exactScoreCount),
+          correctMvpCount: Math.max(Number(u.correctMvpCount) || 0, stat.correctMvpCount),
+          correctScorersCount: currentScorers
+        };
+      });
+      await onUpdateUsers(next);
+      notify(
+        language === 'fr'
+          ? 'Tous les points et statistiques (scores exacts, MVP, buteurs) ont été recalculés et synchronisés !'
+          : language === 'en'
+          ? 'All points and stats (exact scores, MVPs, scorers) recalculated and synced successfully!'
+          : 'تمت إعادة احتساب ومزامنة كافة النقاط والإحصائيات (النتائج الدقيقة، رجل المباراة، الهدافين) بنجاح!',
+        'success'
+      );
+    } catch (err) {
+      console.error(err);
+      notify(language === 'fr' ? 'Erreur lors de la synchronisation' : language === 'en' ? 'Sync error' : 'حدث خطأ أثناء المزامنة', 'error');
+    } finally {
+      setIsRecalculatingStats(false);
+    }
   };
 
   const handleCreateMatch = (e: React.FormEvent) => {
@@ -568,61 +644,136 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     const draft = getSettleDraft(match.id);
 
     const result = {
-      homeScore: draft.homeScore,
-      awayScore: draft.awayScore,
-      homeScorers: draft.homeScorers.slice(0, draft.homeScore),
-      awayScorers: draft.awayScorers.slice(0, draft.awayScore),
-      mvp: draft.mvp
+      homeScore: Number(draft.homeScore) || 0,
+      awayScore: Number(draft.awayScore) || 0,
+      homeScorers: (draft.homeScorers || []).slice(0, draft.homeScore).map(s => (s || '').trim()).filter(Boolean),
+      awayScorers: (draft.awayScorers || []).slice(0, draft.awayScore).map(s => (s || '').trim()).filter(Boolean),
+      mvp: (draft.mvp || '').trim()
     };
-
-    // Calculate user points
-    const userPointsDelta: Record<string, number> = {};
-
-    Object.values(predictions).forEach(pred => {
-      if (pred.matchId === match.id) {
-        let pts = 0;
-        // Exact Score (5 points)
-        if (pred.homeScore === result.homeScore && pred.awayScore === result.awayScore) {
-          pts += 5;
-        }
-
-        // Scorers points (1 point for each correct goal scorer)
-        (pred.homeScorers || []).forEach(sc => {
-          if (sc && result.homeScorers.includes(sc)) pts += 1;
-        });
-        (pred.awayScorers || []).forEach(sc => {
-          if (sc && result.awayScorers.includes(sc)) pts += 1;
-        });
-
-        // MVP point
-        if (pred.mvp && result.mvp && pred.mvp === result.mvp) {
-          pts += 3;
-        }
-
-        userPointsDelta[pred.username] = (userPointsDelta[pred.username] || 0) + pts;
-      }
-    });
-
-    // Update users points
-    const updatedUsers = users.map(u => {
-      if (userPointsDelta[u.username]) {
-        return { ...u, points: (u.points || 0) + userPointsDelta[u.username] };
-      }
-      return u;
-    });
 
     // Mark match as SETTLED
     const updatedMatches = matches.map(m => m.id === match.id ? { ...m, status: 'SETTLED' as const, result } : m);
+
+    // Calculate all stats & points across all matches using calculateAllUserStats!
+    const allStats = calculateAllUserStats(users, updatedMatches, predictions);
+
+    // Calculate points and stats delta for this specific match with robust name matching (stackable)
+    const userPointsDelta: Record<string, number> = {};
+    const userExactDelta: Record<string, number> = {};
+    const userMvpDelta: Record<string, number> = {};
+    const userScorersDelta: Record<string, number> = {};
+
+    const allActualScorers = [...result.homeScorers, ...result.awayScorers];
+    const matchIdStr = String(match.id).trim().toLowerCase();
+
+    Object.values(predictions).forEach(pred => {
+      if (!pred || !pred.username) return;
+      const predMatchId = String(pred.matchId || '').trim().toLowerCase();
+      if (predMatchId === matchIdStr || (matchIdStr && (predMatchId.endsWith(matchIdStr) || matchIdStr.endsWith(predMatchId)))) {
+        let pts = 0;
+        let exactCount = 0;
+        let mvpCount = 0;
+        let scorersCount = 0;
+
+        // Exact Score (+5 pts, +1 exact)
+        if (Number(pred.homeScore) === Number(result.homeScore) && Number(pred.awayScore) === Number(result.awayScore)) {
+          pts += 5;
+          exactCount += 1;
+        }
+
+        // Scorers (+1 pt per unique goal, +1 count)
+        const predScorers = [
+          ...extractScorers(pred.homeScorers),
+          ...extractScorers(pred.awayScorers)
+        ];
+        const usedScorers = new Set<number>();
+        predScorers.forEach(ps => {
+          for (let i = 0; i < allActualScorers.length; i++) {
+            if (!usedScorers.has(i) && isPlayerMatch(ps, allActualScorers[i])) {
+              usedScorers.add(i);
+              pts += 1;
+              scorersCount += 1;
+              break;
+            }
+          }
+        });
+
+        // MVP (+3 pts, +1 mvp count)
+        if (pred.mvp && result.mvp && isPlayerMatch(pred.mvp, result.mvp)) {
+          pts += 3;
+          mvpCount += 1;
+        }
+
+        const normPredUser = normalizeUsername(pred.username);
+        const targetUser = users.find((u) => {
+          const uNorm = normalizeUsername(u.username);
+          const uOrig = normalizeUsername(u.originalUsername);
+          return (
+            (uNorm && normPredUser === uNorm) ||
+            (uOrig && normPredUser === uOrig) ||
+            (u.email && pred.username && u.email.toLowerCase() === pred.username.toLowerCase()) ||
+            u.username === pred.username
+          );
+        });
+
+        const keysToCredit = [
+          pred.username,
+          normPredUser,
+          targetUser?.username,
+          targetUser?.username ? normalizeUsername(targetUser.username) : null,
+          targetUser?.originalUsername ? normalizeUsername(targetUser.originalUsername) : null
+        ].filter(Boolean) as string[];
+
+        keysToCredit.forEach(k => {
+          userPointsDelta[k] = (userPointsDelta[k] || 0) + pts;
+          userExactDelta[k] = (userExactDelta[k] || 0) + exactCount;
+          userMvpDelta[k] = (userMvpDelta[k] || 0) + mvpCount;
+          userScorersDelta[k] = (userScorersDelta[k] || 0) + scorersCount;
+        });
+      }
+    });
+
+    // Update users with their new points and updated stats (stackable across all matches!)
+    const updatedUsers = users.map(u => {
+      const normU = normalizeUsername(u.username);
+      const normOrig = normalizeUsername(u.originalUsername);
+
+      const deltaPts = userPointsDelta[normU] || (normOrig ? userPointsDelta[normOrig] : 0) || userPointsDelta[u.username] || 0;
+      const deltaExact = userExactDelta[normU] || (normOrig ? userExactDelta[normOrig] : 0) || userExactDelta[u.username] || 0;
+      const deltaMvp = userMvpDelta[normU] || (normOrig ? userMvpDelta[normOrig] : 0) || userMvpDelta[u.username] || 0;
+      const deltaScorers = userScorersDelta[normU] || (normOrig ? userScorersDelta[normOrig] : 0) || userScorersDelta[u.username] || 0;
+
+      const stat = getUserStats(u, allStats);
+
+      const initialScorers = getInitialMemberScorers(u.username, u.originalUsername);
+      const currentScorers = (u.correctScorersCount !== undefined && u.correctScorersCount !== null)
+        ? Number(u.correctScorersCount) || 0
+        : initialScorers;
+
+      // Add 1 for each correct guess in the stats counter (+5/+3/+1 for points)
+      const finalPts = (Number(u.points) || 0) + deltaPts;
+      const nextExact = (Number(u.exactScoreCount) || 0) + deltaExact;
+      const nextMvp = (Number(u.correctMvpCount) || 0) + deltaMvp;
+      const nextScorers = currentScorers + deltaScorers;
+
+      return {
+        ...u,
+        points: Math.max(finalPts, stat.totalPointsCalculated || 0),
+        exactScoreCount: Math.max(nextExact, stat.exactScoreCount || 0),
+        correctMvpCount: Math.max(nextMvp, stat.correctMvpCount || 0),
+        correctScorersCount: Math.max(nextScorers, stat.correctScorersCount || 0)
+      };
+    });
 
     onUpdateUsers(updatedUsers);
     onUpdateMatches(updatedMatches);
     setSettleConfirmMatch(null);
     notify(
       language === 'fr' 
-        ? 'Résultat validé et points calculés avec succès !' 
+        ? 'Résultat validé, points et statistiques calculés avec succès !' 
         : language === 'en' 
-        ? 'Match result settled and points calculated successfully!' 
-        : 'تم اعتماد النتيجة واحتساب النقاط للمتوقعين بنجاح!', 
+        ? 'Match result settled, points and stats calculated successfully!' 
+        : 'تم اعتماد النتيجة واحتساب النقاط والإحصائيات بنجاح!', 
       'success'
     );
   };
@@ -1162,7 +1313,8 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
         username: language === 'fr' ? 'Admin Système' : language === 'en' ? 'Master Admin' : 'الآدمن (Admin)',
         role: 'admin',
         points: 0,
-        status: 'approved'
+        status: 'approved',
+        createdAt: new Date().toISOString()
       };
       onUpdateUsers([...users, adminUser]);
     }
@@ -1498,11 +1650,6 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                               {language === 'ar' ? 'الاسم الأصلي:' : language === 'fr' ? 'Nom d\'origine :' : 'Original:'} {u.originalUsername}
                             </span>
                           )}
-                          {u.email && (
-                            <span className="text-[10px] text-[#9BA8AB] font-mono block truncate" dir="ltr">
-                              {u.email}
-                            </span>
-                          )}
                           <span className="text-[10px] text-amber-300 font-semibold">
                             {language === 'fr' ? 'En attente' : language === 'en' ? 'Awaiting approval' : 'بانتظار الموافقة'}
                           </span>
@@ -1562,12 +1709,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                               {language === 'ar' ? 'الاسم الأصلي:' : language === 'fr' ? 'Nom d\'origine :' : 'Original:'} {u.originalUsername}
                             </span>
                           )}
-                          {u.email && (
-                            <span className="text-[10px] text-[#9BA8AB] font-mono block truncate" dir="ltr">
-                              {u.email}
-                            </span>
-                          )}
-                          <span className="text-[10px] text-[#9BA8AB] font-semibold">{u.points || 0} {language === 'ar' ? 'نقطة' : 'pts'}</span>
+                          <span className="text-[10px] text-[#9BA8AB] font-semibold">{getUserEffectivePoints(u, adminUserStats)} {language === 'ar' ? 'نقطة' : 'pts'}</span>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           {onRenameUser && (
@@ -1679,7 +1821,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 : 'يمكنك إضافة أو خصم أو تعيين نقاط لأي عضو في حال وجود خطأ في الاحتساب.'}
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-2">
               <select
                 value={selectedUserForPoints}
                 onChange={(e) => setSelectedUserForPoints(e.target.value)}
@@ -1688,9 +1830,20 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 <option value="">{language === 'fr' ? 'Choisir le membre...' : language === 'en' ? 'Select member...' : 'اختر العضو...'}</option>
                 {users.filter(u => u.role !== 'admin').map(u => (
                   <option key={u.username} value={u.username}>
-                    {u.username} ({u.points || 0} {language === 'ar' ? 'نقطة' : 'pts'})
+                    {u.username} ({getUserEffectivePoints(u, adminUserStats)} {language === 'ar' ? 'نقطة' : 'pts'})
                   </option>
                 ))}
+              </select>
+
+              <select
+                value={pointsField}
+                onChange={(e) => setPointsField(e.target.value as 'points' | 'exact' | 'mvp' | 'scorers')}
+                className="bg-[#06141B] border border-[#253745] rounded-xl p-2.5 text-xs text-[#CCD0CF] font-semibold outline-none focus:border-[#4A5C6A] transition-all duration-200"
+              >
+                <option value="points">{language === 'fr' ? 'Points du classement' : language === 'en' ? 'Total Points' : 'النقاط الإجمالية'}</option>
+                <option value="exact">{language === 'fr' ? 'Scores exacts' : language === 'en' ? 'Exact Scores Count' : 'النتائج الدقيقة'}</option>
+                <option value="mvp">{language === 'fr' ? 'MVP trouvés' : language === 'en' ? 'MVP Guessed Count' : 'رجل المباراة (MVP)'}</option>
+                <option value="scorers">{language === 'fr' ? 'Buteurs trouvés' : language === 'en' ? 'Scorers Guessed Count' : 'الهدافين المتوقعين'}</option>
               </select>
 
               <select
@@ -1698,9 +1851,9 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                 onChange={(e) => setPointsAction(e.target.value as 'add' | 'sub' | 'set')}
                 className="bg-[#06141B] border border-[#253745] rounded-xl p-2.5 text-xs text-[#CCD0CF] font-semibold outline-none focus:border-[#4A5C6A] transition-all duration-200"
               >
-                <option value="add">{language === 'fr' ? 'Ajouter des points (+)' : language === 'en' ? 'Add points (+)' : 'إضافة نقاط (+)'}</option>
-                <option value="sub">{language === 'fr' ? 'Déduire des points (-)' : language === 'en' ? 'Deduct points (-)' : 'خصم نقاط (-)'}</option>
-                <option value="set">{language === 'fr' ? 'Définir le total (=)' : language === 'en' ? 'Set total points (=)' : 'تعيين إجمالي النقاط (=)'}</option>
+                <option value="add">{language === 'fr' ? 'Ajouter (+)' : language === 'en' ? 'Add (+)' : 'إضافة (+)'}</option>
+                <option value="sub">{language === 'fr' ? 'Déduire (-)' : language === 'en' ? 'Deduct (-)' : 'خصم (-)'}</option>
+                <option value="set">{language === 'fr' ? 'Définir (=)' : language === 'en' ? 'Set (=)' : 'تعيين القيمة (=)'}</option>
               </select>
 
               <div dir="ltr">
@@ -1710,17 +1863,67 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
                   dir="ltr"
                   value={pointsValue}
                   onChange={(e) => setPointsValue(parseInt(e.target.value) || 0)}
-                  placeholder={language === 'fr' ? 'Nombre de points...' : language === 'en' ? 'Points amount...' : 'عدد النقاط...'}
+                  placeholder={language === 'fr' ? 'Valeur...' : language === 'en' ? 'Amount...' : 'القيمة...'}
                   className="w-full bg-[#06141B] border border-[#253745] rounded-xl p-2.5 text-xs text-[#CCD0CF] outline-none focus:border-[#4A5C6A] force-ltr text-center font-mono transition-all duration-200"
                 />
               </div>
 
               <button
+                type="button"
                 onClick={handleApplyPointsModification}
                 className="bg-[#CCD0CF] hover:bg-white text-[#06141B] font-bold text-xs py-2.5 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
               >
                 <PenSquare className="w-3.5 h-3.5" />
-                <span>{language === 'fr' ? 'Appliquer' : language === 'en' ? 'Apply Adjustment' : 'تنفيذ التعديل'}</span>
+                <span>{language === 'fr' ? 'Appliquer' : language === 'en' ? 'Apply' : 'تنفيذ التعديل'}</span>
+              </button>
+            </div>
+
+            {/* Live Stats Preview for Selected Member */}
+            {selectedUserForPoints && (() => {
+              const u = users.find(x => x.username === selectedUserForPoints);
+              if (!u) return null;
+              const uStats = getUserStats(u, adminUserStats);
+              const uPts = getUserEffectivePoints(u, adminUserStats);
+              return (
+                <div className="mt-3 p-3 bg-[#06141B] rounded-xl border border-[#253745] flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-1.5 font-bold text-[#CCD0CF]">
+                    <span className="text-amber-400">●</span>
+                    <span>{u.username}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono">
+                    <span className="text-[#9BA8AB]">{language === 'fr' ? 'Points:' : language === 'en' ? 'Points:' : 'النقاط:'} <strong className="text-amber-300 font-bold">{uPts}</strong></span>
+                    <span className="text-[#9BA8AB]">{language === 'fr' ? 'Scores exacts:' : language === 'en' ? 'Exact:' : 'النتائج الدقيقة:'} <strong className="text-[#CCD0CF] font-bold">{uStats.exactScoreCount}</strong></span>
+                    <span className="text-[#9BA8AB]">MVP: <strong className="text-[#CCD0CF] font-bold">{uStats.correctMvpCount}</strong></span>
+                    <span className="text-[#9BA8AB]">{language === 'fr' ? 'Buteurs trouvés:' : language === 'en' ? 'Scorers Guessed:' : 'الهدافين المتوقعين:'} <strong className="text-emerald-400 font-bold">{uStats.correctScorersCount}</strong></span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Recalculate and Sync All Member Stats from Settled Matches */}
+            <div className="mt-4 pt-3.5 border-t border-[#253745] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="text-[11px] text-[#9BA8AB] flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>
+                  {language === 'fr' 
+                    ? 'Recalcul automatique des scores exacts, MVP et buteurs pour tous les membres à partir des matchs validés.'
+                    : language === 'en'
+                    ? 'Recalculate exact scores, MVP guesses, and scorers counters for all members from settled matches.'
+                    : 'إعادة احتساب وتحديث إحصائيات الأعضاء (النتائج الدقيقة، رجل المباراة، الهدافين) تلقائياً من المباريات المحسومة.'}
+                </span>
+              </div>
+              <button
+                type="button"
+                disabled={isRecalculatingStats}
+                onClick={handleRecalculateAllStats}
+                className="bg-[#253745] hover:bg-[#4A5C6A] text-[#CCD0CF] hover:text-white font-bold text-xs py-2 px-3.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50 shrink-0 border border-[#4A5C6A]"
+              >
+                <RotateCw className={`w-3.5 h-3.5 text-[#CCD0CF] ${isRecalculatingStats ? 'animate-spin' : ''}`} />
+                <span>
+                  {isRecalculatingStats
+                    ? (language === 'fr' ? 'Recalcul en cours...' : language === 'en' ? 'Recalculating...' : 'جاري الاحتساب...')
+                    : (language === 'fr' ? 'Recalculer & Synchroniser les Stats' : language === 'en' ? 'Recalculate & Sync All Stats' : 'إعادة احتساب ومزامنة كافة الإحصائيات')}
+                </span>
               </button>
             </div>
           </div>

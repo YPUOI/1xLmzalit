@@ -241,10 +241,31 @@ export const subscribeMatches = (onUpdate: (matches: Match[]) => void) => {
   );
 };
 
+/**
+ * Recursively strips undefined keys and handles undefined fields so Firestore setDoc never throws
+ * "Unsupported field value: undefined"
+ */
+export const sanitizeForFirestore = <T extends Record<string, any>>(obj: T): Record<string, any> => {
+  if (!obj || typeof obj !== 'object') return {};
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      if (value !== null && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+        result[key] = sanitizeForFirestore(value);
+      } else {
+        result[key] = value;
+      }
+    }
+  }
+  return result;
+};
+
 export const syncSaveMatch = async (match: Match) => {
+  if (!match || !match.id) return;
   const path = `matches/${match.id}`;
   try {
-    await setDoc(doc(db, 'matches', match.id), match);
+    const safeData = sanitizeForFirestore(match);
+    await setDoc(doc(db, 'matches', match.id), safeData);
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -282,10 +303,12 @@ export const subscribePredictions = (onUpdate: (predictions: Record<string, Pred
 };
 
 export const syncSavePrediction = async (prediction: Prediction) => {
+  if (!prediction || !prediction.username || !prediction.matchId) return;
   const docId = `${prediction.username}_${prediction.matchId}`;
   const path = `predictions/${docId}`;
   try {
-    await setDoc(doc(db, 'predictions', docId), prediction);
+    const safeData = sanitizeForFirestore(prediction);
+    await setDoc(doc(db, 'predictions', docId), safeData);
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
@@ -323,9 +346,20 @@ export const subscribeUsers = (onUpdate: (users: AppUser[]) => void) => {
 };
 
 export const syncSaveUser = async (user: AppUser) => {
+  if (!user || !user.username) return;
   const path = `users/${user.username}`;
   try {
-    await setDoc(doc(db, 'users', user.username), user);
+    const isIlyass = (user.username || '').toLowerCase().replace(/^@+/, '').startsWith('ilyas') ||
+                     (user.originalUsername || '').toLowerCase().replace(/^@+/, '').startsWith('ilyas');
+    const safeData = sanitizeForFirestore({
+      ...user,
+      points: Number(user.points) || 0,
+      exactScoreCount: Number(user.exactScoreCount) || 0,
+      correctMvpCount: Number(user.correctMvpCount) || 0,
+      correctScorersCount: Number(user.correctScorersCount) || 0,
+      createdAt: isIlyass ? '2020-01-01T00:00:00.000Z' : (user.createdAt || new Date().toISOString())
+    });
+    await setDoc(doc(db, 'users', user.username), safeData);
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, path);
   }
