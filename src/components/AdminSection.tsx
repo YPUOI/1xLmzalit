@@ -378,7 +378,7 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
           points: finalPts,
           exactScoreCount: Math.max(Number(u.exactScoreCount) || 0, stat.exactScoreCount),
           correctMvpCount: Math.max(Number(u.correctMvpCount) || 0, stat.correctMvpCount),
-          correctScorersCount: currentScorers
+          correctScorersCount: Math.max(currentScorers, stat.correctScorersCount)
         };
       });
       await onUpdateUsers(next);
@@ -666,82 +666,102 @@ export const AdminSection: React.FC<AdminSectionProps> = ({
     const allActualScorers = [...result.homeScorers, ...result.awayScorers];
     const matchIdStr = String(match.id).trim().toLowerCase();
 
-    Object.values(predictions).forEach(pred => {
-      if (!pred || !pred.username) return;
-      const predMatchId = String(pred.matchId || '').trim().toLowerCase();
-      if (predMatchId === matchIdStr || (matchIdStr && (predMatchId.endsWith(matchIdStr) || matchIdStr.endsWith(predMatchId)))) {
-        let pts = 0;
-        let exactCount = 0;
-        let mvpCount = 0;
-        let scorersCount = 0;
+    const predEntries = Array.isArray(predictions)
+      ? predictions.map((p, i) => [`pred_${i}`, p] as const)
+      : Object.entries(predictions || {});
 
-        // Exact Score (+5 pts, +1 exact)
-        if (Number(pred.homeScore) === Number(result.homeScore) && Number(pred.awayScore) === Number(result.awayScore)) {
-          pts += 5;
-          exactCount += 1;
-        }
-
-        // Scorers (+1 pt per unique goal, +1 count)
-        const predScorers = [
-          ...extractScorers(pred.homeScorers),
-          ...extractScorers(pred.awayScorers)
-        ];
-        const usedScorers = new Set<number>();
-        predScorers.forEach(ps => {
-          for (let i = 0; i < allActualScorers.length; i++) {
-            if (!usedScorers.has(i) && isPlayerMatch(ps, allActualScorers[i])) {
-              usedScorers.add(i);
-              pts += 1;
-              scorersCount += 1;
-              break;
-            }
-          }
-        });
-
-        // MVP (+3 pts, +1 mvp count)
-        if (pred.mvp && result.mvp && isPlayerMatch(pred.mvp, result.mvp)) {
-          pts += 3;
-          mvpCount += 1;
-        }
-
-        const normPredUser = normalizeUsername(pred.username);
-        const targetUser = users.find((u) => {
-          const uNorm = normalizeUsername(u.username);
-          const uOrig = normalizeUsername(u.originalUsername);
-          return (
-            (uNorm && normPredUser === uNorm) ||
-            (uOrig && normPredUser === uOrig) ||
-            (u.email && pred.username && u.email.toLowerCase() === pred.username.toLowerCase()) ||
-            u.username === pred.username
-          );
-        });
-
-        const keysToCredit = [
-          pred.username,
-          normPredUser,
-          targetUser?.username,
-          targetUser?.username ? normalizeUsername(targetUser.username) : null,
-          targetUser?.originalUsername ? normalizeUsername(targetUser.originalUsername) : null
-        ].filter(Boolean) as string[];
-
-        keysToCredit.forEach(k => {
-          userPointsDelta[k] = (userPointsDelta[k] || 0) + pts;
-          userExactDelta[k] = (userExactDelta[k] || 0) + exactCount;
-          userMvpDelta[k] = (userMvpDelta[k] || 0) + mvpCount;
-          userScorersDelta[k] = (userScorersDelta[k] || 0) + scorersCount;
-        });
+    predEntries.forEach(([key, rawPred]) => {
+      if (!rawPred) return;
+      const pred = { ...rawPred };
+      if (!pred.matchId && key.includes('_')) {
+        pred.matchId = key.split('_').slice(1).join('_');
       }
+      if (!pred.username && key.includes('_')) {
+        pred.username = key.split('_')[0];
+      }
+      if (!pred.username) return;
+
+      const predMatchId = String(pred.matchId || '').trim().toLowerCase();
+      const isThisMatch =
+        predMatchId === matchIdStr ||
+        (matchIdStr && (predMatchId.endsWith(matchIdStr) || matchIdStr.endsWith(predMatchId))) ||
+        key.toLowerCase().endsWith(matchIdStr) ||
+        key.toLowerCase().includes(matchIdStr);
+
+      if (!isThisMatch) return;
+
+      let pts = 0;
+      let exactCount = 0;
+      let mvpCount = 0;
+      let scorersCount = 0;
+
+      // Exact Score (+5 pts, +1 exact)
+      if (Number(pred.homeScore) === Number(result.homeScore) && Number(pred.awayScore) === Number(result.awayScore)) {
+        pts += 5;
+        exactCount += 1;
+      }
+
+      // Scorers (+1 pt per unique goal, +1 count)
+      const predScorers = [
+        ...extractScorers(pred.homeScorers),
+        ...extractScorers(pred.awayScorers)
+      ];
+      const usedScorers = new Set<number>();
+      predScorers.forEach(ps => {
+        for (let i = 0; i < allActualScorers.length; i++) {
+          if (!usedScorers.has(i) && isPlayerMatch(ps, allActualScorers[i])) {
+            usedScorers.add(i);
+            pts += 1;
+            scorersCount += 1;
+            break;
+          }
+        }
+      });
+
+      // MVP (+3 pts, +1 mvp count)
+      if (pred.mvp && result.mvp && isPlayerMatch(pred.mvp, result.mvp)) {
+        pts += 3;
+        mvpCount += 1;
+      }
+
+      const normPredUser = normalizeUsername(pred.username);
+      const targetUser = users.find((u) => {
+        const uNorm = normalizeUsername(u.username);
+        const uOrig = normalizeUsername(u.originalUsername);
+        return (
+          (uNorm && normPredUser === uNorm) ||
+          (uOrig && normPredUser === uOrig) ||
+          (u.email && pred.username && u.email.toLowerCase() === pred.username.toLowerCase()) ||
+          u.username === pred.username
+        );
+      });
+
+      const userCanonicalKey = targetUser ? targetUser.username : pred.username;
+      userPointsDelta[userCanonicalKey] = (userPointsDelta[userCanonicalKey] || 0) + pts;
+      userExactDelta[userCanonicalKey] = (userExactDelta[userCanonicalKey] || 0) + exactCount;
+      userMvpDelta[userCanonicalKey] = (userMvpDelta[userCanonicalKey] || 0) + mvpCount;
+      userScorersDelta[userCanonicalKey] = (userScorersDelta[userCanonicalKey] || 0) + scorersCount;
     });
+
+    const getDeltaForUser = (map: Record<string, number>, u: AppUser): number => {
+      if (map[u.username] !== undefined) return map[u.username];
+      const normU = normalizeUsername(u.username);
+      const normOrig = normalizeUsername(u.originalUsername);
+      for (const [key, val] of Object.entries(map)) {
+        const normKey = normalizeUsername(key);
+        if (normKey && (normKey === normU || normKey === normOrig)) {
+          return val;
+        }
+      }
+      return 0;
+    };
 
     // Update users with their new points and updated stats (stackable across all matches!)
     const updatedUsers = users.map(u => {
-      const normU = normalizeUsername(u.username);
-      const normOrig = normalizeUsername(u.originalUsername);
-
-      const deltaPts = userPointsDelta[normU] || (normOrig ? userPointsDelta[normOrig] : 0) || userPointsDelta[u.username] || 0;
-      const deltaExact = userExactDelta[normU] || (normOrig ? userExactDelta[normOrig] : 0) || userExactDelta[u.username] || 0;
-      const deltaMvp = userMvpDelta[normU] || (normOrig ? userMvpDelta[normOrig] : 0) || userMvpDelta[u.username] || 0;
-      const deltaScorers = userScorersDelta[normU] || (normOrig ? userScorersDelta[normOrig] : 0) || userScorersDelta[u.username] || 0;
+      const deltaPts = getDeltaForUser(userPointsDelta, u);
+      const deltaExact = getDeltaForUser(userExactDelta, u);
+      const deltaMvp = getDeltaForUser(userMvpDelta, u);
+      const deltaScorers = getDeltaForUser(userScorersDelta, u);
 
       const stat = getUserStats(u, allStats);
 

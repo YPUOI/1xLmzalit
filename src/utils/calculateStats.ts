@@ -245,10 +245,11 @@ export function calculateAllUserStats(
 
   // Initialize calculated stats for each registered user (derived from settled matches)
   users.forEach((u) => {
+    const initScorers = getInitialMemberScorers(u.username, u.originalUsername);
     const initStat: UserCalculatedStats = {
       exactScoreCount: 0,
       correctMvpCount: 0,
-      correctScorersCount: 0,
+      correctScorersCount: initScorers,
       totalPointsCalculated: 0
     };
     statsMap[u.username] = { ...initStat };
@@ -326,10 +327,11 @@ export function calculateAllUserStats(
 
       const userKey = targetUser ? targetUser.username : pred.username;
       if (!statsMap[userKey]) {
+        const initScorers = getInitialMemberScorers(userKey, targetUser?.originalUsername);
         statsMap[userKey] = {
           exactScoreCount: 0,
           correctMvpCount: 0,
-          correctScorersCount: 0,
+          correctScorersCount: initScorers,
           totalPointsCalculated: 0
         };
       }
@@ -419,11 +421,10 @@ export function getUserStats(
   const userPoints = Number((user as any).points) || 0;
   const initialScorers = getInitialMemberScorers(user.username, user.originalUsername);
 
-  // If user.correctScorersCount is explicitly defined (even 0), respect that exact number!
-  // Only fall back to initial baseline if correctScorersCount is undefined or null
-  const effectiveScorers = (user.correctScorersCount !== undefined && user.correctScorersCount !== null)
+  const userScorers = (user.correctScorersCount !== undefined && user.correctScorersCount !== null)
     ? Number(user.correctScorersCount) || 0
-    : Math.max(calculatedScorers, initialScorers);
+    : initialScorers;
+  const effectiveScorers = Math.max(userScorers, calculatedScorers, initialScorers);
 
   const calculatedPts = found?.totalPointsCalculated || 0;
 

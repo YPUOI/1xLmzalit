@@ -15,14 +15,16 @@ import firebaseAppletConfig from '../../firebase-applet-config.json';
 import { Match, Team, Prediction, AppUser, ArchivedSeason } from '../types';
 import { compressLogoDataUrl } from '../utils/removeBackground';
 
+const cfg = (firebaseAppletConfig || {}) as Record<string, string>;
+
 const firebaseConfig = {
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseAppletConfig.projectId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseAppletConfig.appId,
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseAppletConfig.apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseAppletConfig.authDomain,
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || firebaseAppletConfig.firestoreDatabaseId,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseAppletConfig.storageBucket,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseAppletConfig.messagingSenderId,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || cfg.projectId || 'upbeat-justice-5mn89',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || cfg.appId || '1:138043523092:web:b43126cf5d5fbeead36701',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || cfg.apiKey || 'AIzaSyDooALFMAhaTIQ21MbDGUrW6OAMoAMJtkg',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || cfg.authDomain || 'upbeat-justice-5mn89.firebaseapp.com',
+  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || cfg.firestoreDatabaseId || 'ai-studio-1xlmzalitucl2026-07edabaa-6a3b-4d35-b943-731b4163cdc8',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || cfg.storageBucket || 'upbeat-justice-5mn89.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || cfg.messagingSenderId || '138043523092',
 };
 
 const app = initializeApp(firebaseConfig);
